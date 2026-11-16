@@ -74,7 +74,7 @@ export const SCIENCE_RULES = {
 
   // Ramp-in: Weeks 1–2 use 2 working sets per exercise at 3–4 RIR to prioritize motor learning
   // and prevent debilitating delayed-onset muscle soreness (DOMS) in beginners.
-  RAMP_IN_SETS: 2,
+  RAMP_IN_SETS: 3,
   RAMP_IN_RIR: '3–4 RIR',
   DELOAD_FREQUENCY_WEEKS: 6,
 
@@ -232,7 +232,7 @@ export const WORKOUT_PLAN = [
       {
         id: 'mon-6',
         name: 'Triceps Rope Pushdown',
-        sets: 2,
+        sets: 3,
         repMin: 12,
         repMax: 15,
         repLabel: '12-15',
@@ -345,7 +345,7 @@ export const WORKOUT_PLAN = [
       {
         id: 'tue-6',
         name: 'Hammer Curl',
-        sets: 2,
+        sets: 3,
         repMin: 10,
         repMax: 12,
         repLabel: '10-12',
@@ -699,7 +699,7 @@ export const WORKOUT_PLAN = [
       {
         id: 'fri-6',
         name: 'Cable Curl',
-        sets: 2,
+        sets: 3,
         repMin: 12,
         repMax: 12,
         repLabel: '12',
