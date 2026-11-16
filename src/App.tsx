@@ -678,7 +678,7 @@ const INITIAL_MEAL_TEMPLATES = [
 ];
 
 // ============================================================================
-// CLEAN ZERO-FAKE-DATA INITIAL CONSTANTS
+// CLEAN ZERO-FAKE-DATA INITIAL CONSTANTS (DEFAULT NAME: 'XYZ')
 // ============================================================================
 
 const INITIAL_LAST_SESSION_LOGS = {};
@@ -688,7 +688,7 @@ const INITIAL_WORKOUT_HISTORY = [];
 const INITIAL_EXERCISE_HISTORY = {};
 
 const DEFAULT_PROFILE = {
-  name: 'Tejas',
+  name: 'XYZ',
   age: 22,
   heightCm: 173,
   startWeightKg: 55,
@@ -913,7 +913,7 @@ function runBuiltInUnitTests() {
 // LOCAL STORAGE KEY & INITIAL APP STATE BUILDER
 // ============================================================================
 
-const STORAGE_KEY = 'vtaper_tracker_state_v2';
+const STORAGE_KEY = 'vtaper_tracker_state_v3';
 
 function buildInitialActiveDrafts(lastLogs) {
   const drafts = {};
@@ -1035,6 +1035,11 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(!appState.onboarded);
   const [onboardingForm, setOnboardingForm] = useState(appState.profile);
 
+  const openProfileEditor = useCallback(() => {
+    setOnboardingForm(appState.profile);
+    setShowOnboarding(true);
+  }, [appState.profile]);
+
   const [workoutRunning, setWorkoutRunning] = useState(false);
   const [workoutElapsedSec, setWorkoutElapsedSec] = useState(0);
 
@@ -1083,7 +1088,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [restTimer.active, restTimer.paused, restTimer.remainingSec, showToast]);
 
-  // Solid Flat Theme Tokens (No Gradients Anywhere)
+  // Solid Flat Theme Tokens (No Gradients Anywhere, Electric Lime Accent in Both Modes)
   const isDark = appState.theme === 'dark';
   const colors = useMemo(
     () =>
@@ -1418,10 +1423,32 @@ export default function App() {
         backgroundColor: colors.bg,
         color: colors.text,
         fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, sans-serif",
-        '--ring': isDark ? '#CCFF00' : '#111113'
+        '--ring': isDark ? '#CCFF00' : '#84CC16'
       }}
-      className="min-h-screen flex flex-col md:flex-row selection:bg-[#CCFF00] selection:text-[#0A0A0B]"
+      className="min-h-screen w-full overflow-x-hidden flex flex-col md:flex-row selection:bg-[#CCFF00] selection:text-[#0A0A0B]"
     >
+      {/* Global CSS for Hiding Scrollbars & Number Spinners on Mobile/Desktop */}
+      <style>{`
+        * {
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+          -webkit-tap-highlight-color: transparent;
+        }
+        *::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+        input[type='number']::-webkit-inner-spin-button,
+        input[type='number']::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type='number'] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
+
       {/* ==================================================================== */}
       {/* DESKTOP SIDEBAR                                                      */}
       {/* ==================================================================== */}
@@ -1463,7 +1490,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* User Snapshot Card */}
+        {/* User Snapshot Card (Click to Edit Name / Profile) */}
         <div className="p-4">
           <div
             style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
@@ -1476,22 +1503,25 @@ export default function App() {
               >
                 Athlete Profile
               </span>
-              <span
+              <button
+                onClick={openProfileEditor}
                 style={{
                   backgroundColor: colors.accent,
                   color: colors.accentText
                 }}
-                className="text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tabular-nums"
+                className="text-[11px] font-bold px-2 py-0.5 rounded-md uppercase flex items-center gap-1"
               >
-                {vTaperRatio ? `Ratio ${vTaperRatio}` : 'Ratio —'}
-              </span>
+                <Edit3 className="w-3 h-3" />
+                <span>Edit Name</span>
+              </button>
             </div>
-            <div
+            <button
+              onClick={openProfileEditor}
               style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-2xl font-extrabold uppercase tracking-wide tabular-nums"
+              className="text-2xl font-extrabold uppercase tracking-wide tabular-nums text-left w-full truncate hover:underline"
             >
-              {appState.profile.name} • {appState.profile.age}y • {appState.profile.heightCm} cm
-            </div>
+              {appState.profile.name || 'XYZ'} • {appState.profile.age}y • {appState.profile.heightCm} cm
+            </button>
             <div
               className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t tabular-nums"
               style={{ borderColor: colors.border }}
@@ -1527,7 +1557,7 @@ export default function App() {
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 px-4 space-y-1.5" aria-label="Main Navigation">
+        <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto" aria-label="Main Navigation">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -1583,31 +1613,48 @@ export default function App() {
       {/* ==================================================================== */}
       {/* MAIN CONTENT AREA                                                    */}
       {/* ==================================================================== */}
-      <div className="flex-1 md:pl-64 lg:pl-72 flex flex-col min-h-screen pb-24 md:pb-10">
+      <div className="flex-1 md:pl-64 lg:pl-72 flex flex-col min-h-screen w-full max-w-full pb-24 md:pb-10">
         {/* Mobile Top Bar */}
         <header
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="md:hidden sticky top-0 z-20 border-b px-4 py-3 flex items-center justify-between"
+          className="md:hidden sticky top-0 z-20 border-b px-3.5 py-2.5 flex items-center justify-between gap-2"
         >
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
             <BrandLogo size={36} />
-            <div>
+            <div className="min-w-0">
               <div
                 style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
                 className="text-2xl font-extrabold uppercase tracking-wider leading-none"
               >
                 VTAPER
               </div>
-              <div style={{ color: colors.muted }} className="text-[11px] tabular-nums">
-                {appState.profile.name} •{' '}
-                {vTaperRatio
-                  ? `V-Ratio ${vTaperRatio}`
-                  : `${formatWeight(latestWeightKg)} ${appState.unit}`}
-              </div>
+              <button
+                onClick={openProfileEditor}
+                style={{ color: colors.muted }}
+                className="text-[11px] font-semibold tabular-nums flex items-center gap-1 truncate max-w-[160px] text-left"
+              >
+                <span className="truncate">{appState.profile.name || 'XYZ'}</span>
+                <span>•</span>
+                <span>
+                  {vTaperRatio
+                    ? `V ${vTaperRatio}`
+                    : `${formatWeight(latestWeightKg)} ${appState.unit}`}
+                </span>
+                <Edit3 className="w-3 h-3 shrink-0" />
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={openProfileEditor}
+              aria-label="Edit Profile & Name"
+              style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+              className="min-h-[42px] px-2.5 rounded-xl border text-xs font-bold flex items-center gap-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+            >
+              <User className="w-4 h-4" />
+              <span className="hidden xs:inline">Profile</span>
+            </button>
             <button
               onClick={() =>
                 setAppState((prev) => ({
@@ -1616,7 +1663,7 @@ export default function App() {
                 }))
               }
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[44px] min-w-[44px] px-3 rounded-xl border text-xs font-bold uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[42px] min-w-[42px] px-2.5 rounded-xl border text-xs font-bold uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
             >
               {appState.unit}
             </button>
@@ -1629,23 +1676,23 @@ export default function App() {
               }
               aria-label="Toggle Theme"
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[42px] min-w-[42px] rounded-xl border flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
             >
-              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
           </div>
         </header>
 
         {/* Toast Notification Banner */}
         {toast && (
-          <div className="fixed top-4 right-4 z-50 max-w-sm">
+          <div className="fixed top-16 md:top-4 inset-x-4 md:inset-x-auto md:right-4 z-50 md:max-w-sm">
             <div
               style={{
                 backgroundColor: colors.accent,
                 color: colors.accentText,
-                borderColor: colors.border
+                borderColor: colors.accentBorder
               }}
-              className="px-4 py-3 rounded-2xl border font-semibold text-sm flex items-center gap-2.5"
+              className="px-4 py-3 rounded-2xl border font-bold text-xs sm:text-sm flex items-center gap-2.5"
             >
               <CheckCircle2 className="w-5 h-5 shrink-0" />
               <span>{toast}</span>
@@ -1660,33 +1707,33 @@ export default function App() {
               backgroundColor: colors.card,
               borderColor: colors.accentBorder
             }}
-            className="sticky top-[61px] md:top-4 z-30 mx-4 mt-3 p-3.5 rounded-2xl border-2 flex flex-wrap items-center justify-between gap-3"
+            className="sticky top-[57px] md:top-4 z-30 mx-3 sm:mx-4 mt-2.5 p-3 rounded-2xl border-2 flex flex-wrap items-center justify-between gap-2.5"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div
                 style={{
                   backgroundColor: colors.accent,
                   color: colors.accentText,
                   fontFamily: "'Big Shoulders Display', sans-serif"
                 }}
-                className="px-3.5 py-1 rounded-xl font-extrabold text-3xl tabular-nums tracking-wide"
+                className="px-3 py-1 rounded-xl font-extrabold text-2xl sm:text-3xl tabular-nums tracking-wide shrink-0"
               >
                 {formatTime(restTimer.remainingSec)}
               </div>
-              <div>
+              <div className="min-w-0">
                 <div
-                  className="text-xs font-bold uppercase tracking-wider tabular-nums"
+                  className="text-[11px] font-bold uppercase tracking-wider tabular-nums"
                   style={{ color: isDark ? colors.accent : colors.text }}
                 >
-                  Rest Timer • {restTimer.exerciseType} ({restTimer.totalSec}s)
+                  Rest • {restTimer.exerciseType} ({restTimer.totalSec}s)
                 </div>
-                <div className="text-sm font-semibold truncate max-w-[200px] sm:max-w-xs">
+                <div className="text-xs sm:text-sm font-semibold truncate max-w-[150px] sm:max-w-xs">
                   {restTimer.exerciseName}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 tabular-nums">
+            <div className="flex items-center gap-1.5 tabular-nums ml-auto">
               <button
                 onClick={() =>
                   setRestTimer((prev) => ({
@@ -1695,7 +1742,7 @@ export default function App() {
                   }))
                 }
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[44px] px-3 rounded-xl border text-xs font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="min-h-[40px] px-2.5 rounded-xl border text-xs font-bold"
               >
                 -15s
               </button>
@@ -1707,7 +1754,7 @@ export default function App() {
                   }))
                 }
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[44px] px-3 rounded-xl border text-xs font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="min-h-[40px] px-2.5 rounded-xl border text-xs font-bold"
               >
                 +15s
               </button>
@@ -1717,7 +1764,7 @@ export default function App() {
                 }
                 aria-label={restTimer.paused ? 'Resume rest timer' : 'Pause rest timer'}
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="min-h-[40px] min-w-[40px] rounded-xl border flex items-center justify-center"
               >
                 {restTimer.paused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
               </button>
@@ -1729,7 +1776,7 @@ export default function App() {
                   color: colors.accentText,
                   borderColor: colors.accentBorder
                 }}
-                className="min-h-[44px] px-3 rounded-xl border text-xs font-bold flex items-center gap-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="min-h-[40px] px-3 rounded-xl border text-xs font-extrabold flex items-center gap-1"
               >
                 <SkipForward className="w-4 h-4" />
                 <span>Skip</span>
@@ -1739,7 +1786,7 @@ export default function App() {
         )}
 
         {/* Page Container */}
-        <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6 space-y-6">
+        <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-5">
           {activeTab === 'today' && (
             <TodayView
               colors={colors}
@@ -1826,12 +1873,12 @@ export default function App() {
       </div>
 
       {/* ==================================================================== */}
-      {/* MOBILE BOTTOM NAVIGATION BAR (44px+ Tap Targets)                     */}
+      {/* MOBILE BOTTOM NAVIGATION BAR (44px+ Tap Targets, Safe Area)          */}
       {/* ==================================================================== */}
       <nav
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
         aria-label="Mobile Navigation"
-        className="md:hidden fixed bottom-0 inset-x-0 border-t z-30 grid grid-cols-6 px-1 py-1.5"
+        className="md:hidden fixed bottom-0 inset-x-0 border-t z-30 grid grid-cols-6 px-1.5 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]"
       >
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -1844,26 +1891,26 @@ export default function App() {
                 backgroundColor: isActive ? colors.accent : 'transparent',
                 color: isActive ? colors.accentText : colors.muted
               }}
-              className="min-h-[48px] rounded-xl flex flex-col items-center justify-center gap-0.5 font-semibold text-[11px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[48px] rounded-xl flex flex-col items-center justify-center gap-0.5 font-bold text-[10px] sm:text-[11px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
             >
               <Icon className="w-5 h-5" />
-              <span>{item.label}</span>
+              <span className="truncate max-w-full px-0.5">{item.label}</span>
             </button>
           );
         })}
       </nav>
 
       {/* ==================================================================== */}
-      {/* FIRST-LAUNCH ONBOARDING MODAL                                        */}
+      {/* ONBOARDING & PROFILE EDITOR MODAL (SAVE YOUR OWN NAME)               */}
       {/* ==================================================================== */}
       {showOnboarding && (
         <div
           style={{ backgroundColor: 'rgba(10, 10, 11, 0.85)' }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
         >
           <div
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
-            className="w-full max-w-lg rounded-2xl border p-6 space-y-5"
+            className="w-full max-w-lg rounded-2xl border p-5 sm:p-6 space-y-5 my-auto"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -1874,23 +1921,25 @@ export default function App() {
                   }}
                   className="inline-block text-xs font-extrabold uppercase px-2.5 py-1 rounded-md mb-2"
                 >
-                  V-Taper Protocol Initialized
+                  V-Taper Protocol
                 </span>
                 <h2
                   style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-4xl font-extrabold uppercase tracking-wide"
+                  className="text-3xl sm:text-4xl font-extrabold uppercase tracking-wide"
                 >
-                  Athlete Onboarding
+                  Athlete Profile Setup
                 </h2>
-                <p style={{ color: colors.muted }} className="text-sm mt-1">
-                  Prefilled for your 55 kg → 65–68 kg lean-bulk & V-taper transformation (6 days/wk, ~70 min sessions).
+                <p style={{ color: colors.muted }} className="text-xs sm:text-sm mt-1">
+                  Enter your name and customize your 55 kg → 65–68 kg lean-bulk & V-taper targets.
                 </p>
               </div>
               <button
                 onClick={() => {
+                  const cleanName = String(onboardingForm.name || '').trim() || 'XYZ';
                   setAppState((prev) => ({
                     ...prev,
                     onboarded: true,
+                    profile: { ...onboardingForm, name: cleanName },
                     weightLogs: prev.onboarded
                       ? prev.weightLogs
                       : [
@@ -1904,34 +1953,40 @@ export default function App() {
                   }));
                   setShowOnboarding(false);
                 }}
-                aria-label="Close onboarding"
+                aria-label="Close profile setup"
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 tabular-nums">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 tabular-nums">
+              <div className="sm:col-span-2">
                 <label
                   className="block text-xs font-bold uppercase mb-1.5"
                   style={{ color: colors.muted }}
                 >
-                  Name
+                  Your Name
                 </label>
                 <input
                   type="text"
+                  placeholder="Enter your name (e.g. XYZ)"
                   value={onboardingForm.name}
+                  onFocus={(e) => {
+                    if (e.target.value === 'XYZ') {
+                      setOnboardingForm((prev) => ({ ...prev, name: '' }));
+                    }
+                  }}
                   onChange={(e) =>
                     setOnboardingForm((prev) => ({ ...prev, name: e.target.value }))
                   }
                   style={{
                     backgroundColor: colors.elevated,
-                    borderColor: colors.border,
+                    borderColor: colors.accentBorder,
                     color: colors.text
                   }}
-                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                  className="w-full min-h-[48px] px-3.5 rounded-xl border-2 text-base font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
                 />
               </div>
               <div>
@@ -1943,6 +1998,7 @@ export default function App() {
                 </label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   value={onboardingForm.age}
                   onChange={(e) =>
                     setOnboardingForm((prev) => ({ ...prev, age: Number(e.target.value) }))
@@ -1952,7 +2008,7 @@ export default function App() {
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-semibold tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-semibold tabular-nums"
                 />
               </div>
               <div>
@@ -1964,6 +2020,7 @@ export default function App() {
                 </label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   value={onboardingForm.heightCm}
                   onChange={(e) =>
                     setOnboardingForm((prev) => ({
@@ -1976,7 +2033,7 @@ export default function App() {
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-semibold tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-semibold tabular-nums"
                 />
               </div>
               <div>
@@ -1988,6 +2045,7 @@ export default function App() {
                 </label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.1"
                   value={onboardingForm.startWeightKg}
                   onChange={(e) =>
@@ -2002,94 +2060,98 @@ export default function App() {
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-semibold tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-semibold tabular-nums"
                 />
               </div>
-              <div>
-                <label
-                  className="block text-xs font-bold uppercase mb-1.5"
-                  style={{ color: colors.muted }}
-                >
-                  Goal Min Weight (kg)
-                </label>
-                <input
-                  type="number"
-                  step="0.5"
-                  value={onboardingForm.goalWeightMinKg}
-                  onChange={(e) =>
-                    setOnboardingForm((prev) => ({
-                      ...prev,
-                      goalWeightMinKg: Number(e.target.value)
-                    }))
-                  }
-                  style={{
-                    backgroundColor: colors.elevated,
-                    borderColor: colors.border,
-                    color: colors.text
-                  }}
-                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-semibold tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
-                />
-              </div>
-              <div>
-                <label
-                  className="block text-xs font-bold uppercase mb-1.5"
-                  style={{ color: colors.muted }}
-                >
-                  Goal Max Weight (kg)
-                </label>
-                <input
-                  type="number"
-                  step="0.5"
-                  value={onboardingForm.goalWeightMaxKg}
-                  onChange={(e) =>
-                    setOnboardingForm((prev) => ({
-                      ...prev,
-                      goalWeightMaxKg: Number(e.target.value)
-                    }))
-                  }
-                  style={{
-                    backgroundColor: colors.elevated,
-                    borderColor: colors.border,
-                    color: colors.text
-                  }}
-                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-semibold tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label
+                    className="block text-xs font-bold uppercase mb-1.5"
+                    style={{ color: colors.muted }}
+                  >
+                    Goal Min (kg)
+                  </label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.5"
+                    value={onboardingForm.goalWeightMinKg}
+                    onChange={(e) =>
+                      setOnboardingForm((prev) => ({
+                        ...prev,
+                        goalWeightMinKg: Number(e.target.value)
+                      }))
+                    }
+                    style={{
+                      backgroundColor: colors.elevated,
+                      borderColor: colors.border,
+                      color: colors.text
+                    }}
+                    className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-semibold tabular-nums"
+                  />
+                </div>
+                <div>
+                  <label
+                    className="block text-xs font-bold uppercase mb-1.5"
+                    style={{ color: colors.muted }}
+                  >
+                    Goal Max (kg)
+                  </label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.5"
+                    value={onboardingForm.goalWeightMaxKg}
+                    onChange={(e) =>
+                      setOnboardingForm((prev) => ({
+                        ...prev,
+                        goalWeightMaxKg: Number(e.target.value)
+                      }))
+                    }
+                    style={{
+                      backgroundColor: colors.elevated,
+                      borderColor: colors.border,
+                      color: colors.text
+                    }}
+                    className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-semibold tabular-nums"
+                  />
+                </div>
               </div>
             </div>
 
             <div
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="p-4 rounded-xl border grid grid-cols-3 gap-2 text-center tabular-nums"
+              className="p-3.5 rounded-xl border grid grid-cols-3 gap-2 text-center tabular-nums"
             >
               <div>
-                <div className="text-[11px] uppercase font-bold" style={{ color: colors.muted }}>
+                <div className="text-[10px] uppercase font-bold" style={{ color: colors.muted }}>
                   Daily Intake
                 </div>
                 <div
                   style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-2xl font-extrabold"
+                  className="text-xl sm:text-2xl font-extrabold"
                 >
                   2,900 kcal
                 </div>
               </div>
               <div>
-                <div className="text-[11px] uppercase font-bold" style={{ color: colors.muted }}>
+                <div className="text-[10px] uppercase font-bold" style={{ color: colors.muted }}>
                   Protein Goal
                 </div>
                 <div
                   style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-2xl font-extrabold"
+                  className="text-xl sm:text-2xl font-extrabold"
                 >
                   130g / day
                 </div>
               </div>
               <div>
-                <div className="text-[11px] uppercase font-bold" style={{ color: colors.muted }}>
+                <div className="text-[10px] uppercase font-bold" style={{ color: colors.muted }}>
                   V-Taper Goal
                 </div>
                 <div
                   style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-2xl font-extrabold"
+                  className="text-xl sm:text-2xl font-extrabold"
                 >
                   1.40–1.50x
                 </div>
@@ -2098,10 +2160,11 @@ export default function App() {
 
             <button
               onClick={() => {
+                const cleanName = String(onboardingForm.name || '').trim() || 'XYZ';
                 setAppState((prev) => ({
                   ...prev,
                   onboarded: true,
-                  profile: onboardingForm,
+                  profile: { ...onboardingForm, name: cleanName },
                   weightLogs: prev.onboarded
                     ? prev.weightLogs
                     : [
@@ -2114,7 +2177,7 @@ export default function App() {
                       ]
                 }));
                 setShowOnboarding(false);
-                showToast('Profile saved! Starting weight logged.');
+                showToast(`Profile saved as "${cleanName}"!`);
               }}
               style={{
                 backgroundColor: colors.accent,
@@ -2123,7 +2186,7 @@ export default function App() {
               }}
               className="w-full min-h-[48px] rounded-xl border font-extrabold text-sm uppercase tracking-wider focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
             >
-              Save & Launch VTaper Tracker
+              Save Profile & Launch VTaper
             </button>
           </div>
         </div>
@@ -2139,12 +2202,12 @@ export default function App() {
         >
           <div
             style={{ backgroundColor: colors.card, borderColor: colors.accentBorder }}
-            className="w-full max-w-md rounded-2xl border-2 p-6 space-y-5"
+            className="w-full max-w-md rounded-2xl border-2 p-5 sm:p-6 space-y-5"
           >
             <div className="flex items-center gap-3">
               <div
                 style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
               >
                 <Award className="w-7 h-7" />
               </div>
@@ -2164,12 +2227,12 @@ export default function App() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 tabular-nums">
+            <div className="grid grid-cols-3 gap-2.5 tabular-nums">
               <div
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="p-3.5 rounded-xl border text-center"
+                className="p-3 rounded-xl border text-center"
               >
-                <div className="text-xs font-semibold" style={{ color: colors.muted }}>
+                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
                   Duration
                 </div>
                 <div
@@ -2181,9 +2244,9 @@ export default function App() {
               </div>
               <div
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="p-3.5 rounded-xl border text-center"
+                className="p-3 rounded-xl border text-center"
               >
-                <div className="text-xs font-semibold" style={{ color: colors.muted }}>
+                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
                   Volume
                 </div>
                 <div
@@ -2195,9 +2258,9 @@ export default function App() {
               </div>
               <div
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="p-3.5 rounded-xl border text-center"
+                className="p-3 rounded-xl border text-center"
               >
-                <div className="text-xs font-semibold" style={{ color: colors.muted }}>
+                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
                   PRs Hit
                 </div>
                 <div
@@ -2223,13 +2286,13 @@ export default function App() {
                 </div>
                 {workoutSummary.prsAchieved.map((pr, idx) => (
                   <div key={idx} className="flex items-center justify-between text-sm">
-                    <span className="font-semibold">{pr.exerciseName}</span>
+                    <span className="font-semibold truncate pr-2">{pr.exerciseName}</span>
                     <span
                       style={{
                         backgroundColor: colors.accent,
                         color: colors.accentText
                       }}
-                      className="text-xs font-extrabold px-2 py-0.5 rounded-md"
+                      className="text-xs font-extrabold px-2 py-0.5 rounded-md shrink-0"
                     >
                       {formatWeight(pr.weightKg)} {appState.unit} × {pr.reps}
                     </span>
@@ -2245,7 +2308,7 @@ export default function App() {
                 color: colors.accentText,
                 borderColor: colors.accentBorder
               }}
-              className="w-full min-h-[48px] rounded-xl border font-extrabold text-sm uppercase tracking-wider focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="w-full min-h-[48px] rounded-xl border font-extrabold text-sm uppercase tracking-wider"
             >
               Done & View Progress
             </button>
@@ -2312,11 +2375,11 @@ function TodayView({
   }, [activeDayPlan, appState.activeDrafts, appState.lastSessionLogs]);
 
   return (
-    <div className="space-y-6">
-      {/* Day Selector Bar */}
+    <div className="space-y-4 sm:space-y-6">
+      {/* 7-Day Selector Bar — Fits All 7 Days on Mobile Without Scrollbar */}
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-3 rounded-2xl border flex items-center justify-between gap-1.5 overflow-x-auto"
+        className="p-2 sm:p-3 rounded-2xl border grid grid-cols-7 gap-1 sm:gap-1.5"
       >
         {orderedDays.map((day) => {
           const isSelected = day.dayIndex === selectedDayIndex;
@@ -2330,24 +2393,21 @@ function TodayView({
                 color: isSelected ? colors.accentText : colors.text,
                 borderColor: isSelected ? colors.accentBorder : colors.border
               }}
-              className="min-h-[52px] min-w-[68px] flex-1 px-3 py-2 rounded-xl border flex flex-col items-center justify-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[50px] px-1 py-1.5 rounded-xl border flex flex-col items-center justify-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
             >
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-extrabold uppercase">{day.shortDay}</span>
+              <div className="flex items-center gap-0.5">
+                <span className="text-[11px] sm:text-xs font-extrabold uppercase">{day.shortDay}</span>
                 {isToday && (
                   <span
                     style={{
-                      backgroundColor: isSelected ? '#0A0A0B' : colors.accent,
-                      color: isSelected ? '#CCFF00' : colors.accentText
+                      backgroundColor: isSelected ? '#0A0A0B' : colors.accent
                     }}
-                    className="text-[9px] font-extrabold px-1 rounded uppercase"
-                  >
-                    Now
-                  </span>
+                    className="w-1.5 h-1.5 rounded-full"
+                  />
                 )}
               </div>
               <span
-                className="text-[11px] font-semibold truncate max-w-[72px]"
+                className="text-[9px] sm:text-[11px] font-semibold truncate max-w-full"
                 style={{ opacity: isSelected ? 0.95 : 0.75 }}
               >
                 {day.isRest ? 'Rest' : day.title}
@@ -2361,9 +2421,9 @@ function TodayView({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="lg:col-span-2 p-6 rounded-2xl border flex flex-col justify-between gap-4"
+          className="lg:col-span-2 p-4 sm:p-6 rounded-2xl border flex flex-col justify-between gap-4"
         >
-          <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3.5">
             <div>
               <div className="flex items-center gap-2">
                 <span
@@ -2389,14 +2449,14 @@ function TodayView({
               </div>
               <h2
                 style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                className="text-4xl sm:text-5xl font-extrabold uppercase tracking-wide mt-2"
+                className="text-3xl sm:text-5xl font-extrabold uppercase tracking-wide mt-2 leading-tight"
               >
                 {activeDayPlan.title}: {activeDayPlan.subtitle}
               </h2>
             </div>
 
             {!activeDayPlan.isRest && (
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   onClick={() => setWorkoutRunning((prev) => !prev)}
                   style={{
@@ -2404,7 +2464,7 @@ function TodayView({
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="min-h-[48px] px-4 rounded-xl border font-bold text-sm flex items-center gap-2 tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                  className="flex-1 sm:flex-initial min-h-[46px] px-3.5 rounded-xl border font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 tabular-nums"
                 >
                   {workoutRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                   <span>
@@ -2425,7 +2485,7 @@ function TodayView({
                       borderColor: colors.border,
                       color: colors.muted
                     }}
-                    className="min-h-[48px] min-w-[48px] rounded-xl border flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                    className="min-h-[46px] min-w-[46px] rounded-xl border flex items-center justify-center shrink-0"
                   >
                     <RotateCcw className="w-4 h-4" />
                   </button>
@@ -2437,9 +2497,9 @@ function TodayView({
                     color: colors.accentText,
                     borderColor: colors.accentBorder
                   }}
-                  className="min-h-[48px] px-5 rounded-xl border font-extrabold text-sm uppercase tracking-wider flex items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                  className="flex-1 sm:flex-initial min-h-[46px] px-4 rounded-xl border font-extrabold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-1.5"
                 >
-                  <Check className="w-5 h-5 stroke-[2.5]" />
+                  <Check className="w-4 h-4 stroke-[2.5]" />
                   <span>Finish Workout</span>
                 </button>
               </div>
@@ -2448,33 +2508,33 @@ function TodayView({
 
           {!activeDayPlan.isRest && (
             <div
-              className="grid grid-cols-3 gap-3 pt-4 border-t tabular-nums"
+              className="grid grid-cols-3 gap-2 sm:gap-3 pt-3.5 border-t tabular-nums"
               style={{ borderColor: colors.border }}
             >
               <div>
-                <div className="text-xs font-medium" style={{ color: colors.muted }}>
+                <div className="text-[11px] font-medium" style={{ color: colors.muted }}>
                   Sets Logged
                 </div>
                 <div
                   style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-3xl font-extrabold"
+                  className="text-2xl sm:text-3xl font-extrabold"
                 >
                   {sessionProgress.completedSets} / {sessionProgress.totalSets}
                 </div>
               </div>
               <div>
-                <div className="text-xs font-medium" style={{ color: colors.muted }}>
+                <div className="text-[11px] font-medium" style={{ color: colors.muted }}>
                   Live Volume
                 </div>
                 <div
                   style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-3xl font-extrabold"
+                  className="text-2xl sm:text-3xl font-extrabold"
                 >
                   {formatWeight(sessionProgress.volumeKg)} {appState.unit}
                 </div>
               </div>
               <div>
-                <div className="text-xs font-medium" style={{ color: colors.muted }}>
+                <div className="text-[11px] font-medium" style={{ color: colors.muted }}>
                   Overload Targets
                 </div>
                 <div
@@ -2482,7 +2542,7 @@ function TodayView({
                     fontFamily: "'Big Shoulders Display', sans-serif",
                     color: isDark ? colors.accent : colors.text
                   }}
-                  className="text-3xl font-extrabold"
+                  className="text-2xl sm:text-3xl font-extrabold"
                 >
                   {sessionProgress.overloadReadyCount} Ready
                 </div>
@@ -2494,7 +2554,7 @@ function TodayView({
         {/* Rest Timer Quick Trigger Bento Card */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-6 rounded-2xl border flex flex-col justify-between gap-4"
+          className="p-4 sm:p-6 rounded-2xl border flex flex-col justify-between gap-3.5"
         >
           <div>
             <div className="text-xs font-bold uppercase tracking-wider" style={{ color: colors.muted }}>
@@ -2507,7 +2567,7 @@ function TodayView({
               120s Compounds • 75s Isolation
             </h3>
             <p className="text-xs mt-1" style={{ color: colors.muted }}>
-              Checking any set box automatically launches the exact rest countdown for maximum hypertrophy recovery.
+              Checking any set box automatically launches the exact rest countdown.
             </p>
           </div>
 
@@ -2524,7 +2584,7 @@ function TodayView({
                 })
               }
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[44px] px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[44px] px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5"
             >
               <Clock className="w-4 h-4" />
               <span>Start 120s</span>
@@ -2541,7 +2601,7 @@ function TodayView({
                 })
               }
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[44px] px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[44px] px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5"
             >
               <Zap className="w-4 h-4" />
               <span>Start 75s</span>
@@ -2554,7 +2614,7 @@ function TodayView({
       {activeDayPlan.isRest ? (
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-8 rounded-2xl border text-center space-y-4"
+          className="p-6 sm:p-8 rounded-2xl border text-center space-y-4"
         >
           <div
             style={{ backgroundColor: colors.accent, color: colors.accentText }}
@@ -2564,17 +2624,17 @@ function TodayView({
           </div>
           <h3
             style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-            className="text-4xl font-extrabold uppercase"
+            className="text-3xl sm:text-4xl font-extrabold uppercase"
           >
             Sunday Active Recovery: 20–30 Min Walk
           </h3>
-          <p style={{ color: colors.muted }} className="max-w-lg mx-auto text-sm">
+          <p style={{ color: colors.muted }} className="max-w-lg mx-auto text-xs sm:text-sm">
             Muscles grow during recovery. Complete a low-intensity 20–30 minute outdoor walk, hit your 2,900 kcal and 130g protein target, take 5g creatine, and prep for Monday Push A.
           </p>
         </div>
       ) : (
         /* Exercise Cards List */
-        <div className="space-y-4">
+        <div className="space-y-3.5 sm:space-y-4">
           {activeDayPlan.exercises.map((exercise, exIdx) => {
             const draftSets = appState.activeDrafts[exercise.id] || [];
             const prevSets = appState.lastSessionLogs[exercise.id] || [];
@@ -2584,31 +2644,34 @@ function TodayView({
               <div
                 key={exercise.id}
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                className="p-5 sm:p-6 rounded-2xl border space-y-4"
+                className="p-4 sm:p-6 rounded-2xl border space-y-3.5"
               >
                 {/* Exercise Header */}
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span
                         style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                        className="text-xs font-extrabold px-2.5 py-0.5 rounded-md border tabular-nums"
+                        className="text-[11px] font-extrabold px-2 py-0.5 rounded-md border tabular-nums"
                       >
                         #{exIdx + 1}
                       </span>
                       <h3
                         style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                        className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wide"
+                        className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wide leading-tight"
                       >
                         {exercise.name}
                       </h3>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                       <span
                         style={{
                           backgroundColor: colors.elevated,
                           borderColor: colors.border,
                           color: isDark ? colors.accent : colors.text
                         }}
-                        className="text-xs font-bold px-2.5 py-1 rounded-md border uppercase"
+                        className="text-[11px] font-bold px-2 py-0.5 rounded-md border uppercase"
                       >
                         {exercise.targetMuscle}
                       </span>
@@ -2618,19 +2681,19 @@ function TodayView({
                           borderColor: colors.border,
                           color: colors.muted
                         }}
-                        className="text-xs font-semibold px-2.5 py-1 rounded-md border tabular-nums"
+                        className="text-[11px] font-semibold px-2 py-0.5 rounded-md border tabular-nums"
                       >
-                        {exercise.type} • {exercise.type === 'Compound' ? '120s rest' : '75s rest'}
+                        {exercise.type} • {exercise.type === 'Compound' ? '120s' : '75s'}
                       </span>
                     </div>
 
                     {/* One-Line Form Cue */}
                     <p
                       style={{ color: colors.muted }}
-                      className="text-xs sm:text-sm flex items-center gap-1.5 pt-0.5"
+                      className="text-xs flex items-start gap-1.5 pt-1"
                     >
                       <Info
-                        className="w-4 h-4 shrink-0"
+                        className="w-3.5 h-3.5 shrink-0 mt-0.5"
                         style={{ color: isDark ? colors.accent : colors.text }}
                       />
                       <span>
@@ -2663,14 +2726,14 @@ function TodayView({
                   {/* Prescription Pill */}
                   <div
                     style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                    className="px-3.5 py-2 rounded-xl border text-right tabular-nums"
+                    className="px-3 py-1.5 rounded-xl border text-right tabular-nums shrink-0"
                   >
-                    <div className="text-[10px] font-bold uppercase" style={{ color: colors.muted }}>
-                      Target Sets × Reps
+                    <div className="text-[9px] font-bold uppercase" style={{ color: colors.muted }}>
+                      Sets × Reps
                     </div>
                     <div
                       style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                      className="text-2xl font-extrabold"
+                      className="text-xl sm:text-2xl font-extrabold"
                     >
                       {exercise.sets} × {exercise.repLabel}
                     </div>
@@ -2685,36 +2748,36 @@ function TodayView({
                       : colors.elevated,
                     borderColor: overload.shouldIncrease ? colors.accentBorder : colors.border
                   }}
-                  className="p-3.5 rounded-xl border flex flex-wrap items-center justify-between gap-3 tabular-nums"
+                  className="p-3 rounded-xl border flex flex-wrap items-center justify-between gap-2.5 tabular-nums"
                 >
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                      <span>Last Session:</span>
+                  <div className="space-y-0.5 min-w-0">
+                    <div className="text-xs font-bold uppercase tracking-wider flex flex-wrap items-center gap-1.5">
+                      <span>Last:</span>
                       <span style={{ color: colors.muted }}>
                         {prevSets.length > 0
                           ? prevSets
-                              .map((s) => `${formatWeight(s.weight)}${appState.unit} × ${s.reps}`)
-                              .join('  |  ')
-                          : 'First session — log your starting weights'}
+                              .map((s) => `${formatWeight(s.weight)}${appState.unit}×${s.reps}`)
+                              .join(' | ')
+                          : 'First session — log starting weights'}
                       </span>
                     </div>
-                    <div className="text-xs font-semibold" style={{ color: colors.muted }}>
+                    <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
                       {overload.reason}
                     </div>
                   </div>
 
                   {overload.shouldIncrease && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
                       <span
                         style={{
                           backgroundColor: colors.accent,
                           color: colors.accentText
                         }}
-                        className="text-xs font-extrabold uppercase px-3 py-1.5 rounded-lg flex items-center gap-1"
+                        className="text-[11px] font-extrabold uppercase px-2.5 py-1.5 rounded-lg flex items-center gap-1"
                       >
-                        <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
+                        <ArrowUpRight className="w-3.5 h-3.5 stroke-[2.5]" />
                         <span>
-                          +{formatWeight(overload.incrementKg)} {appState.unit} Suggested (
+                          +{formatWeight(overload.incrementKg)} {appState.unit} (
                           {formatWeight(overload.suggestedWeightKg)} {appState.unit})
                         </span>
                       </span>
@@ -2727,7 +2790,7 @@ function TodayView({
                           borderColor: colors.accentBorder,
                           color: colors.text
                         }}
-                        className="min-h-[44px] px-3 rounded-xl border text-xs font-bold uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                        className="min-h-[40px] px-3 rounded-xl border text-xs font-bold uppercase"
                       >
                         Apply
                       </button>
@@ -2739,11 +2802,11 @@ function TodayView({
                 <div className="space-y-2 tabular-nums">
                   <div
                     style={{ color: colors.muted }}
-                    className="grid grid-cols-12 gap-2 px-2 text-[11px] font-bold uppercase tracking-wider"
+                    className="grid grid-cols-12 gap-2 px-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider"
                   >
                     <div className="col-span-2">Set</div>
-                    <div className="col-span-4">Weight ({appState.unit})</div>
-                    <div className="col-span-4">Reps ({exercise.repLabel})</div>
+                    <div className="col-span-4 text-center">Weight ({appState.unit})</div>
+                    <div className="col-span-4 text-center">Reps ({exercise.repLabel})</div>
                     <div className="col-span-2 text-right">Done</div>
                   </div>
 
@@ -2758,18 +2821,18 @@ function TodayView({
                             : colors.elevated,
                           borderColor: setRow.completed ? colors.accentBorder : colors.border
                         }}
-                        className="grid grid-cols-12 gap-2 items-center p-2 rounded-xl border transition-colors"
+                        className="grid grid-cols-12 gap-2 items-center p-1.5 sm:p-2 rounded-xl border transition-colors"
                       >
-                        <div className="col-span-2 pl-2">
+                        <div className="col-span-2 pl-1.5">
                           <span
                             style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                            className="text-xl font-extrabold"
+                            className="text-lg sm:text-xl font-extrabold"
                           >
                             #{sIdx + 1}
                           </span>
                           {prevSet && (
-                            <div className="text-[10px]" style={{ color: colors.muted }}>
-                              Last: {formatWeight(prevSet.weight)}×{prevSet.reps}
+                            <div className="text-[9px] leading-tight" style={{ color: colors.muted }}>
+                              {formatWeight(prevSet.weight)}×{prevSet.reps}
                             </div>
                           )}
                         </div>
@@ -2777,6 +2840,7 @@ function TodayView({
                         <div className="col-span-4">
                           <input
                             type="number"
+                            inputMode="decimal"
                             step="0.5"
                             aria-label={`${exercise.name} set ${sIdx + 1} weight`}
                             value={setRow.weight === '' ? '' : formatWeight(setRow.weight)}
@@ -2788,13 +2852,14 @@ function TodayView({
                               borderColor: colors.border,
                               color: colors.text
                             }}
-                            className="w-full min-h-[44px] px-3 rounded-xl border text-center font-bold text-base tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                            className="w-full min-h-[44px] px-2 rounded-xl border text-center font-bold text-base tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
                           />
                         </div>
 
                         <div className="col-span-4">
                           <input
                             type="number"
+                            inputMode="numeric"
                             aria-label={`${exercise.name} set ${sIdx + 1} reps`}
                             value={setRow.reps}
                             onChange={(e) =>
@@ -2805,7 +2870,7 @@ function TodayView({
                               borderColor: colors.border,
                               color: colors.text
                             }}
-                            className="w-full min-h-[44px] px-3 rounded-xl border text-center font-bold text-base tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                            className="w-full min-h-[44px] px-2 rounded-xl border text-center font-bold text-base tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
                           />
                         </div>
 
@@ -2818,7 +2883,7 @@ function TodayView({
                               color: setRow.completed ? colors.accentText : colors.muted,
                               borderColor: setRow.completed ? colors.accentBorder : colors.border
                             }}
-                            className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                            className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center transition-colors"
                           >
                             <Check className="w-5 h-5 stroke-[2.5]" />
                           </button>
@@ -2862,10 +2927,10 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-6 rounded-2xl border space-y-4"
+        className="p-4 sm:p-6 rounded-2xl border space-y-4"
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -2877,18 +2942,18 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
             </span>
             <h2
               style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-4xl font-extrabold uppercase mt-2"
+              className="text-3xl sm:text-4xl font-extrabold uppercase mt-2"
             >
               Weekly Hypertrophy Blueprint
             </h2>
-            <p style={{ color: colors.muted }} className="text-sm">
+            <p style={{ color: colors.muted }} className="text-xs sm:text-sm">
               Prioritizes lateral delts (27 shoulder sets) and wide lats (20 back sets) while keeping waist tight (~70 min/session).
             </p>
           </div>
         </div>
 
-        {/* Muscle Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pt-2">
+        {/* Muscle Filter Pills (Hidden Scrollbar) */}
+        <div className="flex items-center gap-2 overflow-x-auto pt-1">
           {muscleCategories.map((cat) => {
             const active = muscleFilter === cat;
             return (
@@ -2900,7 +2965,7 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                   color: active ? colors.accentText : colors.text,
                   borderColor: active ? colors.accentBorder : colors.border
                 }}
-                className="min-h-[44px] px-3.5 rounded-xl border text-xs font-bold uppercase whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="min-h-[42px] px-3.5 rounded-xl border text-xs font-bold uppercase whitespace-nowrap shrink-0"
               >
                 {cat}
               </button>
@@ -2910,7 +2975,7 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
       </div>
 
       {/* Days Grid */}
-      <div className="grid grid-cols-1 gap-5">
+      <div className="grid grid-cols-1 gap-4 sm:gap-5">
         {orderedDays.map((day) => {
           const filteredExercises =
             muscleFilter === 'All'
@@ -2925,33 +2990,31 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
             <div
               key={day.dayIndex}
               style={{ backgroundColor: colors.card, borderColor: colors.border }}
-              className="p-6 rounded-2xl border space-y-4"
+              className="p-4 sm:p-6 rounded-2xl border space-y-4"
             >
               <div
-                className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b"
+                className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b"
                 style={{ borderColor: colors.border }}
               >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                      className="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded-md"
-                    >
-                      {day.shortDay}
-                    </span>
-                    <h3
-                      style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                      className="text-2xl sm:text-3xl font-extrabold uppercase"
-                    >
-                      {day.title} — {day.subtitle}
-                    </h3>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                    className="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded-md"
+                  >
+                    {day.shortDay}
+                  </span>
+                  <h3
+                    style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
+                    className="text-2xl sm:text-3xl font-extrabold uppercase"
+                  >
+                    {day.title} — {day.subtitle}
+                  </h3>
                 </div>
 
                 <button
                   onClick={() => onSelectWorkoutDay(day.dayIndex)}
                   style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                  className="min-h-[44px] px-4 rounded-xl border text-xs font-bold uppercase flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                  className="min-h-[42px] px-3.5 rounded-xl border text-xs font-bold uppercase flex items-center gap-1.5"
                 >
                   <span>Open in Today</span>
                   <ChevronRight className="w-4 h-4" />
@@ -2967,7 +3030,7 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                     className="w-6 h-6 shrink-0"
                     style={{ color: isDark ? colors.accent : colors.text }}
                   />
-                  <div className="text-sm">
+                  <div className="text-xs sm:text-sm">
                     <strong>Rest, 20-30 min walk.</strong> Full nervous system recovery, light stretching, and meal prep for the upcoming week.
                   </div>
                 </div>
@@ -2977,11 +3040,11 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                     <div
                       key={ex.id}
                       style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                      className="p-4 rounded-xl border flex flex-col justify-between gap-2"
+                      className="p-3.5 sm:p-4 rounded-xl border flex flex-col justify-between gap-2"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <div className="font-bold text-base">{ex.name}</div>
+                          <div className="font-bold text-sm sm:text-base">{ex.name}</div>
                           <div className="flex items-center gap-2 mt-1">
                             <span
                               style={{
@@ -3118,28 +3181,28 @@ function NutritionView({
   };
 
   const renderProgressRing = (percent, label, mainText, subText) => {
-    const radius = 54;
+    const radius = 50;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (percent / 100) * circumference;
 
     return (
-      <div className="flex items-center gap-4 tabular-nums">
-        <div className="relative w-32 h-32 shrink-0 flex items-center justify-center">
-          <svg className="w-32 h-32 -rotate-90" viewBox="0 0 128 128">
+      <div className="flex items-center gap-3.5 sm:gap-4 tabular-nums">
+        <div className="relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 flex items-center justify-center">
+          <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
             <circle
-              cx="64"
-              cy="64"
+              cx="60"
+              cy="60"
               r={radius}
               fill="none"
               stroke={colors.elevated}
               strokeWidth="12"
             />
             <circle
-              cx="64"
-              cy="64"
+              cx="60"
+              cy="60"
               r={radius}
               fill="none"
-              stroke={isDark ? colors.accent : colors.text}
+              stroke={colors.accent}
               strokeWidth="12"
               strokeDasharray={circumference}
               strokeDashoffset={offset}
@@ -3149,7 +3212,7 @@ function NutritionView({
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
             <span
               style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-3xl font-extrabold leading-none"
+              className="text-2xl sm:text-3xl font-extrabold leading-none"
             >
               {percent}%
             </span>
@@ -3158,13 +3221,13 @@ function NutritionView({
             </span>
           </div>
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="text-xs font-bold uppercase tracking-wider" style={{ color: colors.muted }}>
             {label} Target
           </div>
           <div
             style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-            className="text-4xl font-extrabold uppercase mt-0.5"
+            className="text-3xl sm:text-4xl font-extrabold uppercase mt-0.5 leading-none"
           >
             {mainText}
           </div>
@@ -3177,7 +3240,7 @@ function NutritionView({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Dynamic Gain-Rate Calorie Recommendation Banner */}
       {gainAnalysis.calorieAdjustment !== 0 && (
         <div
@@ -3192,7 +3255,7 @@ function NutritionView({
               className="w-6 h-6 shrink-0"
               style={{ color: isDark ? colors.accent : colors.text }}
             />
-            <div className="text-sm">
+            <div className="text-xs sm:text-sm">
               <strong>{gainAnalysis.headline}:</strong> {gainAnalysis.message}
             </div>
           </div>
@@ -3213,7 +3276,7 @@ function NutritionView({
               color: colors.accentText,
               borderColor: colors.accentBorder
             }}
-            className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+            className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase"
           >
             Apply {2900 + gainAnalysis.calorieAdjustment} kcal Target
           </button>
@@ -3224,7 +3287,7 @@ function NutritionView({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-6 rounded-2xl border flex items-center"
+          className="p-4 sm:p-6 rounded-2xl border flex items-center"
         >
           {renderProgressRing(
             kcalPct,
@@ -3236,7 +3299,7 @@ function NutritionView({
 
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-6 rounded-2xl border flex items-center"
+          className="p-4 sm:p-6 rounded-2xl border flex items-center"
         >
           {renderProgressRing(
             proteinPct,
@@ -3249,7 +3312,7 @@ function NutritionView({
         {/* Hydration (3.5L) + Creatine (5g) */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-6 rounded-2xl border flex flex-col justify-between gap-4 tabular-nums"
+          className="p-4 sm:p-6 rounded-2xl border flex flex-col justify-between gap-4 tabular-nums"
         >
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -3261,7 +3324,7 @@ function NutritionView({
                   className="w-4 h-4"
                   style={{ color: isDark ? colors.accent : colors.text }}
                 />
-                <span>Hydration (Target 3.5 L)</span>
+                <span>Hydration (3.5 L)</span>
               </span>
               <span
                 style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
@@ -3288,14 +3351,14 @@ function NutritionView({
               <button
                 onClick={() => addWater(-250)}
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[44px] rounded-xl border text-xs font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="min-h-[44px] rounded-xl border text-xs font-bold"
               >
                 -250 ml
               </button>
               <button
                 onClick={() => addWater(250)}
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[44px] rounded-xl border text-xs font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="min-h-[44px] rounded-xl border text-xs font-bold"
               >
                 +250 ml
               </button>
@@ -3306,7 +3369,7 @@ function NutritionView({
                   color: colors.accentText,
                   borderColor: colors.accentBorder
                 }}
-                className="min-h-[44px] rounded-xl border text-xs font-extrabold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="min-h-[44px] rounded-xl border text-xs font-extrabold"
               >
                 +500 ml
               </button>
@@ -3334,7 +3397,7 @@ function NutritionView({
                 color: appState.creatineTaken ? colors.accentText : colors.muted,
                 borderColor: appState.creatineTaken ? colors.accentBorder : colors.border
               }}
-              className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center"
             >
               <Check className="w-5 h-5 stroke-[2.5]" />
             </button>
@@ -3345,13 +3408,13 @@ function NutritionView({
       {/* Editable Meal Checklist */}
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-6 rounded-2xl border space-y-4"
+        className="p-4 sm:p-6 rounded-2xl border space-y-4"
       >
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
           <div>
             <h3
               style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-3xl font-extrabold uppercase"
+              className="text-2xl sm:text-3xl font-extrabold uppercase"
             >
               Daily Lean-Bulk Meal Checklist (2,950 kcal Template)
             </h3>
@@ -3369,7 +3432,7 @@ function NutritionView({
                 }))
               }
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[44px] px-3.5 rounded-xl border text-xs font-bold uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[42px] px-3 rounded-xl border text-xs font-bold uppercase"
             >
               Reset Day
             </button>
@@ -3381,9 +3444,9 @@ function NutritionView({
                 }))
               }
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[44px] px-4 rounded-xl border text-xs font-bold uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[42px] px-3.5 rounded-xl border text-xs font-bold uppercase"
             >
-              Check All Meals
+              Check All
             </button>
           </div>
         </div>
@@ -3399,7 +3462,7 @@ function NutritionView({
                   backgroundColor: meal.completed ? colors.accentSurface : colors.elevated,
                   borderColor: meal.completed ? colors.accentBorder : colors.border
                 }}
-                className="p-4 rounded-xl border transition-colors"
+                className="p-3.5 sm:p-4 rounded-xl border transition-colors"
               >
                 {isEditing ? (
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
@@ -3439,43 +3502,47 @@ function NutritionView({
                         className="w-full min-h-[44px] px-3 rounded-xl border text-sm"
                       />
                     </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-[10px] font-bold uppercase mb-1" style={{ color: colors.muted }}>
-                        Kcal
-                      </label>
-                      <input
-                        type="number"
-                        value={editMealForm.kcal}
-                        onChange={(e) =>
-                          setEditMealForm((p) => ({ ...p, kcal: e.target.value }))
-                        }
-                        style={{
-                          backgroundColor: colors.card,
-                          borderColor: colors.border,
-                          color: colors.text
-                        }}
-                        className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-bold"
-                      />
+                    <div className="grid grid-cols-2 gap-2 sm:col-span-3">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase mb-1" style={{ color: colors.muted }}>
+                          Kcal
+                        </label>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={editMealForm.kcal}
+                          onChange={(e) =>
+                            setEditMealForm((p) => ({ ...p, kcal: e.target.value }))
+                          }
+                          style={{
+                            backgroundColor: colors.card,
+                            borderColor: colors.border,
+                            color: colors.text
+                          }}
+                          className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase mb-1" style={{ color: colors.muted }}>
+                          Prot (g)
+                        </label>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={editMealForm.protein}
+                          onChange={(e) =>
+                            setEditMealForm((p) => ({ ...p, protein: e.target.value }))
+                          }
+                          style={{
+                            backgroundColor: colors.card,
+                            borderColor: colors.border,
+                            color: colors.text
+                          }}
+                          className="w-full min-h-[44px] px-2 rounded-xl border text-sm font-bold"
+                        />
+                      </div>
                     </div>
-                    <div className="sm:col-span-1">
-                      <label className="block text-[10px] font-bold uppercase mb-1" style={{ color: colors.muted }}>
-                        Prot (g)
-                      </label>
-                      <input
-                        type="number"
-                        value={editMealForm.protein}
-                        onChange={(e) =>
-                          setEditMealForm((p) => ({ ...p, protein: e.target.value }))
-                        }
-                        style={{
-                          backgroundColor: colors.card,
-                          borderColor: colors.border,
-                          color: colors.text
-                        }}
-                        className="w-full min-h-[44px] px-2 rounded-xl border text-sm font-bold"
-                      />
-                    </div>
-                    <div className="sm:col-span-2 flex items-end gap-2 pt-4 sm:pt-0">
+                    <div className="sm:col-span-2 flex items-end gap-2 pt-2 sm:pt-0">
                       <button
                         onClick={() => saveEditMeal(meal.id)}
                         style={{
@@ -3497,8 +3564,8 @@ function NutritionView({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3.5">
+                  <div className="flex items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-3 min-w-0">
                       <button
                         onClick={() => toggleMeal(meal.id)}
                         aria-label={`Toggle ${meal.name}`}
@@ -3507,37 +3574,37 @@ function NutritionView({
                           color: meal.completed ? colors.accentText : colors.muted,
                           borderColor: meal.completed ? colors.accentBorder : colors.border
                         }}
-                        className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                        className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center shrink-0"
                       >
                         <Check className="w-5 h-5 stroke-[2.5]" />
                       </button>
 
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-bold text-base">{meal.name}</span>
-                          <span className="text-xs font-medium" style={{ color: colors.muted }}>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="font-bold text-sm sm:text-base">{meal.name}</span>
+                          <span className="text-[11px] font-medium" style={{ color: colors.muted }}>
                             {meal.timeHint}
                           </span>
                         </div>
-                        <p className="text-xs sm:text-sm mt-0.5" style={{ color: colors.muted }}>
+                        <p className="text-xs mt-0.5 line-clamp-2" style={{ color: colors.muted }}>
                           {meal.items}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                       <div className="text-right">
                         <div
                           style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                          className="text-2xl font-extrabold leading-none"
+                          className="text-xl sm:text-2xl font-extrabold leading-none"
                         >
                           {meal.kcal} kcal
                         </div>
                         <div
                           style={{ color: isDark ? colors.accent : colors.text }}
-                          className="text-xs font-bold mt-0.5"
+                          className="text-[11px] font-bold mt-0.5"
                         >
-                          {meal.protein}g protein
+                          {meal.protein}g prot
                         </div>
                       </div>
 
@@ -3545,7 +3612,7 @@ function NutritionView({
                         onClick={() => startEditMeal(meal)}
                         aria-label={`Edit ${meal.name}`}
                         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                        className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                        className="min-h-[42px] min-w-[42px] rounded-xl border flex items-center justify-center"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
@@ -3662,7 +3729,7 @@ function ProgressView({
   const maxBand = formatWeight(appState.profile.goalWeightMaxKg || 68);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Weekly Gain Rate Status Banner */}
       <div
         style={{
@@ -3679,67 +3746,63 @@ function ProgressView({
               ? colors.accentBorder
               : colors.border
         }}
-        className="p-5 rounded-2xl border-2 space-y-3"
+        className="p-4 sm:p-5 rounded-2xl border-2 space-y-3"
       >
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3">
+          <div
+            style={{
+              backgroundColor:
+                gainAnalysis.status === 'FAST_GAIN_WARNING' ? colors.danger : colors.accent,
+              color: gainAnalysis.status === 'FAST_GAIN_WARNING' ? '#FFFFFF' : colors.accentText
+            }}
+            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+          >
+            {gainAnalysis.status === 'FAST_GAIN_WARNING' ? (
+              <AlertTriangle className="w-6 h-6" />
+            ) : (
+              <TrendingUp className="w-6 h-6" />
+            )}
+          </div>
+          <div>
             <div
-              style={{
-                backgroundColor:
-                  gainAnalysis.status === 'FAST_GAIN_WARNING' ? colors.danger : colors.accent,
-                color: gainAnalysis.status === 'FAST_GAIN_WARNING' ? '#FFFFFF' : colors.accentText
-              }}
-              className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+              className="text-xs font-extrabold uppercase tracking-wider"
+              style={{ color: colors.muted }}
             >
-              {gainAnalysis.status === 'FAST_GAIN_WARNING' ? (
-                <AlertTriangle className="w-6 h-6" />
-              ) : (
-                <TrendingUp className="w-6 h-6" />
-              )}
+              Weekly Gain Rate Analyzer
             </div>
-            <div>
-              <div
-                className="text-xs font-extrabold uppercase tracking-wider"
-                style={{ color: colors.muted }}
-              >
-                Weekly Gain Rate Analyzer
-              </div>
-              <h3
-                style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                className="text-2xl sm:text-3xl font-extrabold uppercase"
-              >
-                {gainAnalysis.headline}
-              </h3>
-              <p className="text-sm mt-1" style={{ color: colors.muted }}>
-                {gainAnalysis.message}
-              </p>
-            </div>
+            <h3
+              style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
+              className="text-2xl sm:text-3xl font-extrabold uppercase"
+            >
+              {gainAnalysis.headline}
+            </h3>
+            <p className="text-xs sm:text-sm mt-1" style={{ color: colors.muted }}>
+              {gainAnalysis.message}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Weight Chart + Log Form */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Line Chart with 65-68 kg Target Band */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="lg:col-span-2 p-6 rounded-2xl border space-y-4"
+          className="lg:col-span-2 p-4 sm:p-6 rounded-2xl border space-y-4"
         >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h3
-                style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                className="text-3xl font-extrabold uppercase tabular-nums"
-              >
-                Body Weight Trajectory & Target Band ({minBand}–{maxBand} {appState.unit})
-              </h3>
-              <p className="text-xs" style={{ color: colors.muted }}>
-                Solid reference band marks your 65–68 kg V-taper goal zone.
-              </p>
-            </div>
+          <div>
+            <h3
+              style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
+              className="text-2xl sm:text-3xl font-extrabold uppercase tabular-nums"
+            >
+              Body Weight Trajectory & Target Band ({minBand}–{maxBand} {appState.unit})
+            </h3>
+            <p className="text-xs" style={{ color: colors.muted }}>
+              Solid reference band marks your 65–68 kg V-taper goal zone.
+            </p>
           </div>
 
-          <div className="h-72 w-full">
+          <div className="h-64 sm:h-72 w-full">
             {chartData.length === 0 ? (
               <div
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
@@ -3748,18 +3811,18 @@ function ProgressView({
                 <Scale className="w-8 h-8 mb-2" style={{ color: colors.muted }} />
                 <div className="font-bold text-sm">No Weigh-Ins Logged Yet</div>
                 <p className="text-xs mt-1 max-w-xs" style={{ color: colors.muted }}>
-                  Add your first morning weigh-in on the right to visualize your trajectory toward 65–68 kg.
+                  Add your first morning weigh-in to visualize your trajectory toward 65–68 kg.
                 </p>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 12, right: 20, left: 0, bottom: 8 }}>
+                <LineChart data={chartData} margin={{ top: 12, right: 16, left: -12, bottom: 8 }}>
                   <CartesianGrid stroke={colors.border} strokeDasharray="3 3" />
-                  <XAxis dataKey="name" stroke={colors.muted} tick={{ fontSize: 12 }} />
+                  <XAxis dataKey="name" stroke={colors.muted} tick={{ fontSize: 11 }} />
                   <YAxis
                     domain={[Math.floor(formatWeight(52)), Math.ceil(formatWeight(70))]}
                     stroke={colors.muted}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 11 }}
                   />
                   <Tooltip
                     contentStyle={{
@@ -3797,7 +3860,7 @@ function ProgressView({
         {/* Add Weekly Weigh-In Form */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-6 rounded-2xl border flex flex-col justify-between gap-4 tabular-nums"
+          className="p-4 sm:p-6 rounded-2xl border flex flex-col justify-between gap-4 tabular-nums"
         >
           <form onSubmit={handleAddWeightLog} className="space-y-4">
             <div className="flex items-center gap-2">
@@ -3826,7 +3889,7 @@ function ProgressView({
                   borderColor: colors.border,
                   color: colors.text
                 }}
-                className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-semibold"
               />
             </div>
 
@@ -3839,6 +3902,7 @@ function ProgressView({
               </label>
               <input
                 type="number"
+                inputMode="decimal"
                 step="0.1"
                 placeholder={`e.g. ${formatWeight(55.5)}`}
                 value={newWeightInput}
@@ -3848,7 +3912,7 @@ function ProgressView({
                   borderColor: colors.border,
                   color: colors.text
                 }}
-                className="w-full min-h-[44px] px-3 rounded-xl border text-base font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="w-full min-h-[44px] px-3 rounded-xl border text-base font-bold"
               />
             </div>
 
@@ -3859,7 +3923,7 @@ function ProgressView({
                 color: colors.accentText,
                 borderColor: colors.accentBorder
               }}
-              className="w-full min-h-[48px] rounded-xl border font-extrabold text-sm uppercase tracking-wider focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="w-full min-h-[48px] rounded-xl border font-extrabold text-sm uppercase tracking-wider"
             >
               Add Weigh-In Entry
             </button>
@@ -3907,11 +3971,11 @@ function ProgressView({
       </div>
 
       {/* Body Measurements & Shoulder-to-Waist Ratio Calculator */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 tabular-nums">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 tabular-nums">
         {/* V-Taper Ratio Card */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-6 rounded-2xl border flex flex-col justify-between gap-4"
+          className="p-4 sm:p-6 rounded-2xl border flex flex-col justify-between gap-4"
         >
           <div>
             <span
@@ -3967,21 +4031,21 @@ function ProgressView({
         <form
           onSubmit={handleSaveMeasurements}
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="lg:col-span-2 p-6 rounded-2xl border space-y-4"
+          className="lg:col-span-2 p-4 sm:p-6 rounded-2xl border space-y-4"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Ruler className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
               <h3
                 style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                className="text-3xl font-extrabold uppercase"
+                className="text-2xl sm:text-3xl font-extrabold uppercase"
               >
                 Body Measurements (cm)
               </h3>
             </div>
             {latestMeasurement && (
               <span className="text-xs font-semibold" style={{ color: colors.muted }}>
-                Last updated: {latestMeasurement.date}
+                Updated: {latestMeasurement.date}
               </span>
             )}
           </div>
@@ -4003,6 +4067,7 @@ function ProgressView({
                 </label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.1"
                   placeholder={field.placeholder}
                   value={measureForm[field.key]}
@@ -4017,7 +4082,7 @@ function ProgressView({
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="w-full min-h-[44px] px-3 rounded-xl border font-bold text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                  className="w-full min-h-[44px] px-3 rounded-xl border font-bold text-base"
                 />
               </div>
             ))}
@@ -4030,7 +4095,7 @@ function ProgressView({
               color: colors.accentText,
               borderColor: colors.accentBorder
             }}
-            className="min-h-[48px] px-6 rounded-xl border font-extrabold text-sm uppercase tracking-wider focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+            className="w-full sm:w-auto min-h-[48px] px-6 rounded-xl border font-extrabold text-sm uppercase tracking-wider"
           >
             Save Body Measurements
           </button>
@@ -4070,12 +4135,12 @@ function StatsView({ colors, isDark, appState, formatWeight, formatTime }) {
   );
 
   return (
-    <div className="space-y-6 tabular-nums">
+    <div className="space-y-5 tabular-nums">
       {/* Top KPI Bento Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-5 rounded-2xl border"
+          className="p-4 sm:p-5 rounded-2xl border"
         >
           <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
             Workout Streak
@@ -4085,80 +4150,80 @@ function StatsView({ colors, isDark, appState, formatWeight, formatTime }) {
               fontFamily: "'Big Shoulders Display', sans-serif",
               color: isDark ? colors.accent : colors.text
             }}
-            className="text-5xl font-extrabold mt-1"
+            className="text-4xl sm:text-5xl font-extrabold mt-1"
           >
             {appState.workoutStreak} Days
           </div>
-          <div className="text-xs mt-1" style={{ color: colors.muted }}>
+          <div className="text-[11px] mt-1" style={{ color: colors.muted }}>
             Consistency drives hypertrophy
           </div>
         </div>
 
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-5 rounded-2xl border"
+          className="p-4 sm:p-5 rounded-2xl border"
         >
           <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
-            Weekly Split Completion
+            Weekly Completion
           </div>
           <div
             style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-            className="text-5xl font-extrabold mt-1"
+            className="text-4xl sm:text-5xl font-extrabold mt-1"
           >
             {Math.min(6, appState.workoutHistory.length)} / 6
           </div>
-          <div className="text-xs mt-1" style={{ color: colors.muted }}>
+          <div className="text-[11px] mt-1" style={{ color: colors.muted }}>
             Sessions logged
           </div>
         </div>
 
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-5 rounded-2xl border"
+          className="p-4 sm:p-5 rounded-2xl border"
         >
           <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
-            Prescribed Weekly Sets
+            Prescribed Sets
           </div>
           <div
             style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-            className="text-5xl font-extrabold mt-1"
+            className="text-4xl sm:text-5xl font-extrabold mt-1"
           >
             116 Sets
           </div>
-          <div className="text-xs mt-1" style={{ color: colors.muted }}>
+          <div className="text-[11px] mt-1" style={{ color: colors.muted }}>
             Across 6 PPL sessions
           </div>
         </div>
 
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-5 rounded-2xl border"
+          className="p-4 sm:p-5 rounded-2xl border"
         >
           <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
             Cumulative Volume
           </div>
           <div
             style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-            className="text-5xl font-extrabold mt-1"
+            className="text-4xl sm:text-5xl font-extrabold mt-1"
           >
             {formatWeight(totalHistoricalVolume)} {appState.unit}
           </div>
-          <div className="text-xs mt-1" style={{ color: colors.muted }}>
+          <div className="text-[11px] mt-1" style={{ color: colors.muted }}>
             Total weight moved
           </div>
         </div>
       </div>
 
       {/* Weekly Sets Per Muscle Group + Workout History */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-6 rounded-2xl border space-y-4"
+          className="p-4 sm:p-6 rounded-2xl border space-y-4"
         >
           <div>
             <h3
               style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-3xl font-extrabold uppercase"
+              className="text-2xl sm:text-3xl font-extrabold uppercase"
             >
               Sets Per Muscle Group / Week (Target: 10–20)
             </h3>
@@ -4199,12 +4264,12 @@ function StatsView({ colors, isDark, appState, formatWeight, formatTime }) {
         {/* Recent Workout Sessions Log */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-6 rounded-2xl border space-y-4"
+          className="p-4 sm:p-6 rounded-2xl border space-y-4"
         >
           <div>
             <h3
               style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-3xl font-extrabold uppercase"
+              className="text-2xl sm:text-3xl font-extrabold uppercase"
             >
               Completed Workout Sessions
             </h3>
@@ -4262,12 +4327,12 @@ function StatsView({ colors, isDark, appState, formatWeight, formatTime }) {
       {/* Live Unit Test Runner Verification Panel */}
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-6 rounded-2xl border space-y-4"
+        className="p-4 sm:p-6 rounded-2xl border space-y-4"
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <ShieldCheck
-              className="w-6 h-6"
+              className="w-6 h-6 shrink-0"
               style={{ color: isDark ? colors.accent : colors.text }}
             />
             <div>
@@ -4275,7 +4340,7 @@ function StatsView({ colors, isDark, appState, formatWeight, formatTime }) {
                 style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
                 className="text-2xl font-extrabold uppercase"
               >
-                Automated Unit Test Suite (Progressive Overload & Weekly Gain Logic)
+                Automated Unit Test Suite (Overload & Gain Logic)
               </h3>
               <p className="text-xs" style={{ color: colors.muted }}>
                 Verifies +2.5kg upper / +5kg lower overload and &gt;0.7kg/wk warning &amp; &lt;0.2kg/wk plateau rules.
@@ -4301,7 +4366,7 @@ function StatsView({ colors, isDark, appState, formatWeight, formatTime }) {
                 <span className="text-xs font-bold">{test.name}</span>
                 <span
                   style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                  className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded"
+                  className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded shrink-0"
                 >
                   PASS
                 </span>
@@ -4382,27 +4447,29 @@ function SettingsView({
     localStorage.removeItem(STORAGE_KEY);
     setAppState({
       ...getFreshInitialState(appState.theme),
-      onboarded: true
+      onboarded: false
     });
+    setOnboardingForm(DEFAULT_PROFILE);
     setConfirmReset(false);
-    showToast('All data wiped clean to fresh zero-state!');
+    setShowOnboarding(true);
+    showToast('All data wiped clean! Enter your name to start fresh.');
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-6 rounded-2xl border space-y-6"
+        className="p-4 sm:p-6 rounded-2xl border space-y-5"
       >
         <div>
           <h2
             style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-            className="text-4xl font-extrabold uppercase"
+            className="text-3xl sm:text-4xl font-extrabold uppercase"
           >
             Settings & Local Storage Backup
           </h2>
-          <p className="text-sm" style={{ color: colors.muted }}>
-            100% offline-first persistence (`vtaper_tracker_state_v2`). No backend, no login required.
+          <p className="text-xs sm:text-sm" style={{ color: colors.muted }}>
+            100% offline-first persistence (`vtaper_tracker_state_v3`). No backend, no login required.
           </p>
         </div>
 
@@ -4412,7 +4479,7 @@ function SettingsView({
           className="p-4 rounded-xl border flex flex-wrap items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3.5">
-            <BrandLogo size={52} />
+            <BrandLogo size={48} />
             <div>
               <div className="font-bold text-sm">VTaper Website Favicon (`public/icon.svg`)</div>
               <div className="text-xs" style={{ color: colors.muted }}>
@@ -4427,7 +4494,7 @@ function SettingsView({
               color: colors.accentText,
               borderColor: colors.accentBorder
             }}
-            className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+            className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase flex items-center gap-1.5"
           >
             <Download className="w-4 h-4" />
             <span>Download icon.svg</span>
@@ -4435,10 +4502,39 @@ function SettingsView({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Edit Profile & Name */}
+          <div
+            style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+            className="p-4 rounded-xl border flex items-center justify-between gap-2"
+          >
+            <div className="min-w-0">
+              <div className="font-bold text-sm">Athlete Name & Profile</div>
+              <div className="text-xs tabular-nums truncate" style={{ color: colors.muted }}>
+                {appState.profile.name || 'XYZ'}, {appState.profile.heightCm} cm, Goal{' '}
+                {appState.profile.goalWeightMinKg}–{appState.profile.goalWeightMaxKg} kg
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setOnboardingForm(appState.profile);
+                setShowOnboarding(true);
+              }}
+              style={{
+                backgroundColor: colors.accent,
+                color: colors.accentText,
+                borderColor: colors.accentBorder
+              }}
+              className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase flex items-center gap-1.5 shrink-0"
+            >
+              <User className="w-4 h-4" />
+              <span>Edit Name</span>
+            </button>
+          </div>
+
           {/* Theme Toggle */}
           <div
             style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="p-4 rounded-xl border flex items-center justify-between"
+            className="p-4 rounded-xl border flex items-center justify-between gap-2"
           >
             <div>
               <div className="font-bold text-sm">Solid Color Theme</div>
@@ -4458,7 +4554,7 @@ function SettingsView({
                 color: colors.accentText,
                 borderColor: colors.accentBorder
               }}
-              className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase shrink-0"
             >
               Switch to {isDark ? 'Light' : 'Dark'}
             </button>
@@ -4467,7 +4563,7 @@ function SettingsView({
           {/* Unit Toggle */}
           <div
             style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="p-4 rounded-xl border flex items-center justify-between"
+            className="p-4 rounded-xl border flex items-center justify-between gap-2"
           >
             <div>
               <div className="font-bold text-sm">Weight Units (kg / lb)</div>
@@ -4487,34 +4583,9 @@ function SettingsView({
                 color: colors.accentText,
                 borderColor: colors.accentBorder
               }}
-              className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase shrink-0"
             >
               Use {appState.unit === 'kg' ? 'Pounds (lb)' : 'Kilograms (kg)'}
-            </button>
-          </div>
-
-          {/* Edit Profile */}
-          <div
-            style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="p-4 rounded-xl border flex items-center justify-between"
-          >
-            <div>
-              <div className="font-bold text-sm">Athlete Profile & Goals</div>
-              <div className="text-xs tabular-nums" style={{ color: colors.muted }}>
-                {appState.profile.name}, {appState.profile.heightCm} cm, Goal{' '}
-                {appState.profile.goalWeightMinKg}–{appState.profile.goalWeightMaxKg} kg
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setOnboardingForm(appState.profile);
-                setShowOnboarding(true);
-              }}
-              style={{ backgroundColor: colors.card, borderColor: colors.border }}
-              className="min-h-[44px] px-4 rounded-xl border text-xs font-bold uppercase flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
-            >
-              <User className="w-4 h-4" />
-              <span>Edit Profile</span>
             </button>
           </div>
 
@@ -4533,7 +4604,7 @@ function SettingsView({
               <button
                 onClick={handleExportJson}
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                className="min-h-[44px] px-3.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="min-h-[44px] px-3.5 rounded-xl border text-xs font-bold flex items-center gap-1.5"
               >
                 <Download className="w-4 h-4" />
                 <span>Export</span>
@@ -4565,7 +4636,7 @@ function SettingsView({
               Reset All Tracker Data
             </div>
             <div className="text-xs" style={{ color: colors.muted }}>
-              Wipes all logs and resets to a clean zero-data state for Tejas (55 kg → 65–68 kg).
+              Wipes all logs and resets to a clean zero-data state (`XYZ`, 55 kg → 65–68 kg).
             </div>
           </div>
 
@@ -4577,7 +4648,7 @@ function SettingsView({
                 borderColor: colors.danger,
                 color: colors.danger
               }}
-              className="min-h-[44px] px-4 rounded-xl border text-xs font-bold uppercase flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[44px] px-4 rounded-xl border text-xs font-bold uppercase flex items-center gap-1.5"
             >
               <Trash2 className="w-4 h-4" />
               <span>Reset Data</span>
