@@ -35,9 +35,7 @@ import {
   Zap,
   RotateCcw,
   Plus,
-  ShoppingBag,
-  RefreshCw,
-  BedDouble
+  ShoppingBag
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -48,7 +46,15 @@ import {
   CartesianGrid,
   Tooltip,
   ReferenceArea,
-  ReferenceLine
+  ReferenceLine,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis
 } from 'recharts';
 
 // ============================================================================
@@ -1308,7 +1314,6 @@ export function generateWeeklyMenuRotation(dietTrack = 'non-veg') {
     const x = xOpts[idx % xOpts.length];
     const s = sOpts[idx % sOpts.length];
 
-    // Pick Dinner option so proteinAnchor !== lunch.proteinAnchor AND not >2 in a row
     let candidates = dOpts.filter((opt) => opt.proteinAnchor !== l.proteinAnchor);
     if (candidates.length === 0) candidates = dOpts;
 
@@ -1435,7 +1440,6 @@ export function calculateProgressiveOverload(
     };
   }
 
-  // Resolve active step code (accounting for Thu Push B variant choice if applicable)
   let stepCode = exercise.step || 'B2.5';
   let isAssisted = Boolean(exercise.flags?.assisted);
   const isBodyweight = Boolean(exercise.flags?.bodyweight);
@@ -1544,8 +1548,6 @@ export function analyzeWeeklyGainRate(weightLogs, ignoreInitial14Days = true) {
   const lastDateMs = new Date(sorted[sorted.length - 1].date).getTime();
   const totalSpanDays = (lastDateMs - firstDateMs) / (1000 * 60 * 60 * 24);
 
-  // Science Rule: Ignore initial 14 days when total span is <= 14 days AND more than 2 logs aren't past day 14
-  // However, if logs are weekly check-ins spaced >= 7 days apart, compute weekly deltas and flag if still inside first 14 days
   const weeklyDeltas = [];
   for (let i = 1; i < sorted.length; i++) {
     const prev = sorted[i - 1];
@@ -1643,7 +1645,6 @@ export function analyzeWeeklyGainRate(weightLogs, ignoreInitial14Days = true) {
 export function runBuiltInUnitTests() {
   const results = [];
 
-  // Test 1: Weekly primary sets per muscle group & 116 total sets
   const { primary } = computeWeeklyMuscleVolumes();
   const totalSets = Object.values(primary).reduce((a, b) => a + b, 0);
   const allMatchExpected = Object.entries(EXPECTED_WEEKLY_PRIMARY_SETS).every(
@@ -1656,7 +1657,6 @@ export function runBuiltInUnitTests() {
     actual: `${totalSets} sets (Lats/Back ${primary['Lats/Back']}, Quads ${primary.Quads}, Chest ${primary.Chest}, Side delts ${primary['Side delts']})`
   });
 
-  // Test 2: Assisted Pull-up progressive overload REDUCES assistance weight
   const assistPullup = WORKOUT_PLAN[1].exercises[1];
   const tAssist = calculateProgressiveOverload(assistPullup, [
     { weight: 25, reps: 10 },
@@ -1673,7 +1673,6 @@ export function runBuiltInUnitTests() {
     actual: `shouldIncrease: ${tAssist.shouldIncrease}, ${tAssist.incrementKg} kg -> ${tAssist.suggestedWeightKg} kg`
   });
 
-  // Test 3: All 17 Meal Options Within ±5% of Expected Macros from Food Database
   let allMealsWithin5Pct = true;
   let maxDeviationPct = 0;
   MEAL_SLOTS.forEach((slot) => {
@@ -1691,7 +1690,6 @@ export function runBuiltInUnitTests() {
     actual: `Max deviation ${(maxDeviationPct * 100).toFixed(2)}% across 17 options`
   });
 
-  // Test 4: Expected Full Non-Veg Day & Vegetarian Day Totals
   const findOpt = (code) => {
     for (const s of MEAL_SLOTS) {
       const found = s.options.find((o) => o.code === code);
@@ -1733,7 +1731,6 @@ export function runBuiltInUnitTests() {
     )}g P | Veg ${vegTotals.kcal} kcal/${Math.round(vegTotals.protein)}g P`
   });
 
-  // Test 5: Weekly Gain Rate > 0.7 kg/wk Warning & < 0.2 kg/wk Plateau (+300 kcal)
   const tFast = analyzeWeeklyGainRate(
     [
       { date: '2026-10-01', weightKg: 55.0 },
@@ -1856,7 +1853,10 @@ function getFreshInitialState(theme = 'dark') {
   };
 }
 
-// Flat Geometric VTaper SVG Brand Logo
+// ============================================================================
+// SHARED VISUALIZATION & BRANDING COMPONENTS
+// ============================================================================
+
 function BrandLogo({ size = 40 }) {
   return (
     <svg
@@ -1880,6 +1880,272 @@ function BrandLogo({ size = 40 }) {
   );
 }
 
+const tip = (colors) => ({
+  contentStyle: {
+    backgroundColor: colors.card,
+    border: `1px solid ${colors.border}`,
+    borderRadius: 12,
+    color: colors.text,
+    fontSize: 12
+  },
+  cursor: { fill: colors.elevated }
+});
+
+// Flat activity ring (SVG)
+function Ring({ value, max, size = 92, stroke = 10, color, track, label, sub }) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const pct = Math.min(1, max > 0 ? value / max : 0);
+
+  return (
+    <div className="relative shrink-0 mx-auto" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - pct)}
+          style={{ transition: 'stroke-dashoffset .6s ease' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none tabular-nums">
+        <span className="font-display text-xl font-black">{label}</span>
+        <span className="text-[9px] font-bold uppercase opacity-60 mt-0.5">{sub}</span>
+      </div>
+    </div>
+  );
+}
+
+// Semi-circle V-taper gauge (goal band 1.40-1.50)
+function VTaperGauge({ ratio, colors, isDark }) {
+  const MIN = 1.0,
+    MAX = 1.7,
+    cx = 110,
+    cy = 108,
+    r = 88;
+  const ang = (v) => Math.PI * (1 - (Math.min(MAX, Math.max(MIN, v)) - MIN) / (MAX - MIN));
+  const pt = (v, rad = r) => [cx + rad * Math.cos(ang(v)), cy - rad * Math.sin(ang(v))];
+  const arc = (a, b) => {
+    const [x1, y1] = pt(a),
+      [x2, y2] = pt(b);
+    return `M${x1} ${y1} A${r} ${r} 0 0 1 ${x2} ${y2}`;
+  };
+  const [nx, ny] = ratio ? pt(ratio, r - 20) : [cx, cy];
+  const hot = isDark ? colors.accent : colors.text;
+
+  return (
+    <div
+      style={{ backgroundColor: colors.card, borderColor: colors.border }}
+      className="p-4 sm:p-6 rounded-2xl border flex flex-col items-center justify-between"
+    >
+      <div
+        className="text-xs font-extrabold uppercase tracking-wider self-start"
+        style={{ color: colors.muted }}
+      >
+        V-Taper Gauge
+      </div>
+      <svg viewBox="0 0 220 130" className="w-full max-w-xs">
+        <path d={arc(MIN, MAX)} fill="none" stroke={colors.elevated} strokeWidth="14" strokeLinecap="round" />
+        <path d={arc(1.4, 1.5)} fill="none" stroke={colors.accent} strokeWidth="14" />
+        <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={colors.text} strokeWidth="3" strokeLinecap="round" />
+        <circle cx={cx} cy={cy} r="6" fill={colors.text} />
+        <text x="14" y="126" fontSize="10" fill={colors.muted}>
+          1.0
+        </text>
+        <text x="190" y="126" fontSize="10" fill={colors.muted}>
+          1.7
+        </text>
+        <text
+          x={cx}
+          y="94"
+          textAnchor="middle"
+          fontSize="26"
+          fontWeight="900"
+          fill={hot}
+          className="font-display"
+        >
+          {ratio ? `${ratio.toFixed(2)}x` : '--'}
+        </text>
+      </svg>
+      <div className="text-[11px]" style={{ color: colors.muted }}>
+        Goal band 1.40-1.50x
+      </div>
+    </div>
+  );
+}
+
+// Weekly sets radar (STATS tab)
+function MuscleRadar({ colors, isDark }) {
+  const { primary } = useMemo(() => computeWeeklyMuscleVolumes(), []);
+  const data = Object.entries(primary).map(([g, v]) => ({ g, v, t: 12 }));
+
+  return (
+    <div
+      style={{ backgroundColor: colors.card, borderColor: colors.border }}
+      className="p-4 sm:p-6 rounded-2xl border"
+    >
+      <h3 className="font-display text-2xl font-black uppercase">Muscle Balance Radar</h3>
+      <p className="text-xs mb-2" style={{ color: colors.muted }}>
+        Direct weekly sets vs 12-set reference ring
+      </p>
+      <div className="h-72 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart data={data} outerRadius="72%">
+            <PolarGrid stroke={colors.border} />
+            <PolarAngleAxis dataKey="g" tick={{ fill: colors.muted, fontSize: 10 }} />
+            <Radar dataKey="t" stroke={colors.muted} fill="none" strokeDasharray="4 4" />
+            <Radar
+              dataKey="v"
+              stroke={isDark ? colors.accent : '#111113'}
+              fill={colors.accent}
+              fillOpacity={0.25}
+              strokeWidth={2.5}
+            />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+// 28-day consistency heatmap + session volume bars + per-exercise strength curve
+function ProgressCharts({ appState, formatWeight, colors, isDark }) {
+  const hist = appState.workoutHistory || [];
+  const days = Array.from({ length: 28 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (27 - i));
+    return d.toLocaleDateString('en-CA');
+  });
+  const counts = {};
+  hist.forEach((h) => {
+    counts[h.date] = (counts[h.date] || 0) + 1;
+  });
+  const vol = hist
+    .slice(0, 8)
+    .reverse()
+    .map((h) => ({ d: h.date.slice(5), v: Math.round(formatWeight(h.totalVolumeKg)) }));
+  const exList = WORKOUT_PLAN.flatMap((d) => d.exercises).filter(
+    (e) => (appState.exerciseHistory?.[e.id] || []).length > 0
+  );
+  const [exId, setExId] = useState(null);
+  const sel = exList.find((e) => e.id === exId) || exList[0];
+  const strength = (appState.exerciseHistory?.[sel?.id] || []).map((h) => ({
+    d: h.date.slice(5),
+    w: formatWeight(h.topWeightKg)
+  }));
+  const hot = isDark ? colors.accent : '#111113';
+  const card = { backgroundColor: colors.card, borderColor: colors.border };
+
+  return (
+    <div className="space-y-4">
+      <div style={card} className="p-4 sm:p-6 rounded-2xl border">
+        <h3 className="font-display text-2xl font-black uppercase">Last 28 Days Consistency</h3>
+        <div className="grid grid-cols-7 gap-1.5 mt-3">
+          {days.map((d) => (
+            <div
+              key={d}
+              title={d}
+              style={{
+                backgroundColor: counts[d] ? colors.accent : colors.elevated,
+                aspectRatio: '1'
+              }}
+              className="rounded-md"
+            />
+          ))}
+        </div>
+      </div>
+
+      <div style={card} className="p-4 sm:p-6 rounded-2xl border">
+        <h3 className="font-display text-2xl font-black uppercase">
+          Session Volume ({appState.unit})
+        </h3>
+        <div className="h-44 w-full mt-2">
+          {vol.length ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={vol} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="d" stroke={colors.muted} fontSize={10} />
+                <YAxis stroke={colors.muted} fontSize={10} />
+                <Tooltip {...tip(colors)} />
+                <Bar dataKey="v" fill={colors.accent} radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div
+              className="h-full flex items-center justify-center text-xs"
+              style={{ color: colors.muted }}
+            >
+              Finish a workout to see volume bars.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={card} className="p-4 sm:p-6 rounded-2xl border">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-display text-2xl font-black uppercase">Strength Curve</h3>
+          {exList.length > 0 && (
+            <select
+              value={sel?.id || ''}
+              onChange={(e) => setExId(e.target.value)}
+              style={{
+                backgroundColor: colors.elevated,
+                borderColor: colors.border,
+                color: colors.text
+              }}
+              className="min-h-[40px] max-w-[55%] px-2 rounded-xl border text-xs font-bold"
+            >
+              {exList.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        <div className="h-48 w-full mt-2">
+          {strength.length ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={strength} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="d" stroke={colors.muted} fontSize={10} />
+                <YAxis
+                  stroke={colors.muted}
+                  fontSize={10}
+                  domain={['dataMin - 2', 'dataMax + 2']}
+                />
+                <Tooltip {...tip(colors)} />
+                <Area
+                  type="monotone"
+                  dataKey="w"
+                  stroke={hot}
+                  strokeWidth={3}
+                  fill={colors.accent}
+                  fillOpacity={0.14}
+                  dot={{ r: 3, fill: colors.accent }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div
+              className="h-full flex items-center justify-center text-xs"
+              style={{ color: colors.muted }}
+            >
+              Log workouts to plot top-set weight per exercise.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ============================================================================
 // MAIN APPLICATION COMPONENT
 // ============================================================================
@@ -1892,7 +2158,7 @@ export default function App() {
       link.id = fontId;
       link.rel = 'stylesheet';
       link.href =
-        'https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=JetBrains+Mono:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap';
+        'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=JetBrains+Mono:wght@600;700&family=Sora:wght@400;500;600;700;800&display=swap';
       document.head.appendChild(link);
     }
   }, []);
@@ -1996,7 +2262,6 @@ export default function App() {
     return () => clearInterval(interval);
   }, [restTimer.active, restTimer.paused, restTimer.remainingSec, showToast]);
 
-  // Section 2: Design Lock Color Tokens (Zero Gradients)
   const isDark = appState.theme === 'dark';
   const colors = useMemo(
     () =>
@@ -2445,7 +2710,7 @@ export default function App() {
       style={{
         backgroundColor: colors.bg,
         color: colors.text,
-        fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, sans-serif",
+        fontFamily: "'Sora', -apple-system, BlinkMacSystemFont, sans-serif",
         '--ring': isDark ? '#CCFF00' : '#84CC16'
       }}
       className="min-h-screen w-full overflow-x-hidden antialiased flex flex-col md:flex-row selection:bg-[#CCFF00] selection:text-[#0A0A0B]"
@@ -2499,14 +2764,14 @@ export default function App() {
         }
         input[type='number'] {
           -moz-appearance: textfield;
-          font-family: 'JetBrains Mono', 'Manrope', monospace;
+          font-family: 'JetBrains Mono', 'Sora', monospace;
         }
         .font-display {
-          font-family: 'Big Shoulders Display', sans-serif;
+          font-family: 'Barlow Condensed', sans-serif;
           letter-spacing: 0.03em;
         }
         .font-mono-num {
-          font-family: 'JetBrains Mono', 'Manrope', monospace;
+          font-family: 'JetBrains Mono', 'Sora', monospace;
           font-variant-numeric: tabular-nums;
         }
         @media (prefers-reduced-motion: reduce) {
@@ -2668,7 +2933,7 @@ export default function App() {
       {/* ==================================================================== */}
       {/* MAIN CONTENT AREA                                                    */}
       {/* ==================================================================== */}
-      <div className="flex-1 min-w-0 md:pl-64 lg:pl-72 flex flex-col min-h-screen w-full max-w-full pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-10">
+      <div className="flex-1 min-w-0 md:pl-64 lg:pl-72 flex flex-col min-h-screen w-full max-w-full pb-[calc(9.5rem+env(safe-area-inset-bottom))] md:pb-10">
         {/* Mobile Top Bar */}
         <header
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -2732,14 +2997,14 @@ export default function App() {
           </div>
         )}
 
-        {/* Active Rest Timer Floating Bar */}
+        {/* Active Rest Timer Floating Bar (Docked above mobile nav for thumb reach) */}
         {restTimer.active && (
           <div
             style={{
               backgroundColor: colors.card,
               borderColor: colors.accentBorder
             }}
-            className="sticky top-[57px] md:top-4 z-30 mx-3 sm:mx-4 mt-2.5 p-3 rounded-2xl border-2 flex flex-wrap items-center justify-between gap-2.5"
+            className="fixed inset-x-2 bottom-[calc(4.9rem+env(safe-area-inset-bottom))] z-40 p-3 rounded-2xl border-2 flex flex-wrap items-center justify-between gap-2.5 md:sticky md:inset-x-auto md:bottom-auto md:top-4 md:mx-4 md:mt-2.5"
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div
@@ -2910,39 +3175,42 @@ export default function App() {
       </div>
 
       {/* ==================================================================== */}
-      {/* MOBILE BOTTOM NAVIGATION BAR (44px+ Tap Targets)                     */}
+      {/* MOBILE BOTTOM NAVIGATION BAR (Top Bar Indicator + Thumb Ergonomics)  */}
       {/* ==================================================================== */}
       <nav
-        style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        style={{ backgroundColor: colors.bg, borderColor: colors.border }}
         aria-label="Mobile Navigation"
-        className="md:hidden fixed bottom-0 inset-x-0 border-t z-30 grid grid-cols-6 px-1.5 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+        className="md:hidden fixed bottom-0 inset-x-0 border-t z-30 grid grid-cols-6 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
       >
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
+          const on = isDark ? colors.accent : colors.text;
           return (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              style={{
-                backgroundColor: isActive ? colors.accent : 'transparent',
-                color: isActive ? colors.accentText : colors.muted
-              }}
-              className="min-h-[48px] rounded-xl flex flex-col items-center justify-center gap-0.5 font-extrabold text-[10px] sm:text-[11px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              aria-current={isActive ? 'page' : undefined}
+              style={{ color: isActive ? on : colors.muted }}
+              className="relative min-h-[54px] flex flex-col items-center justify-center gap-1 text-[10px] font-bold"
             >
-              <Icon className="w-5 h-5" />
-              <span className="truncate max-w-full px-0.5">{item.label}</span>
+              <span
+                style={{ backgroundColor: isActive ? on : 'transparent' }}
+                className="absolute top-0 h-[3px] w-8 rounded-b-full"
+              />
+              <Icon className="w-[22px] h-[22px]" strokeWidth={isActive ? 2.5 : 2} />
+              <span>{item.label}</span>
             </button>
           );
         })}
       </nav>
 
       {/* ==================================================================== */}
-      {/* ONBOARDING & PROFILE EDITOR MODAL (PROFILE & DIET TRACK)      */}
+      {/* ONBOARDING & PROFILE EDITOR MODAL (PROFILE & DIET TRACK)             */}
       {/* ==================================================================== */}
       {showOnboarding && (
         <div
-          style={{ backgroundColor: 'rgba(10, 10, 11, 0.85)' }}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)' }}
           className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain"
         >
           <div
@@ -3232,7 +3500,7 @@ export default function App() {
       {/* ==================================================================== */}
       {workoutSummary && (
         <div
-          style={{ backgroundColor: 'rgba(10, 10, 11, 0.85)' }}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)' }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
         >
           <div
@@ -3414,7 +3682,6 @@ function TodayView({
     getEffectiveSetCount
   ]);
 
-  // First compound working weight for Warm-up Protocol ramp calculation
   const firstCompoundWorkingWeightKg = useMemo(() => {
     if (activeDayPlan.isRest || !activeDayPlan.exercises.length) return 0;
     const firstEx = activeDayPlan.exercises[0];
@@ -3612,7 +3879,7 @@ function TodayView({
           )}
         </div>
 
-        {/* Section 4 Warm-Up Protocol Card */}
+        {/* Warm-Up Protocol Card */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
           className="p-4 sm:p-6 rounded-2xl border flex flex-col justify-between gap-3.5"
@@ -4373,7 +4640,7 @@ function NutritionView({
 
   return (
     <div className="space-y-5">
-      {/* Top Track Switcher & Sub-Navigation */}
+      {/* Top Track Switcher */}
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
         className="p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
@@ -4409,6 +4676,48 @@ function NutritionView({
             );
           })}
         </div>
+      </div>
+
+      {/* Activity Rings Card */}
+      <div
+        style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        className="p-4 rounded-2xl border grid grid-cols-3 gap-2 justify-items-center tabular-nums"
+      >
+        {[
+          {
+            v: nutritionTotals.consumedKcal,
+            m: kcalTarget,
+            c: colors.accent,
+            s: 'kcal',
+            t: `${nutritionTotals.consumedKcal}/${kcalTarget}`
+          },
+          {
+            v: nutritionTotals.consumedProtein,
+            m: proteinTarget,
+            c: '#FF7A1A',
+            s: 'protein',
+            t: `${nutritionTotals.consumedProtein}/${proteinTarget}g`
+          },
+          {
+            v: appState.waterMl,
+            m: waterTarget,
+            c: '#38BDF8',
+            s: 'water',
+            t: `${(appState.waterMl / 1000).toFixed(1)}/${(waterTarget / 1000).toFixed(1)}L`
+          }
+        ].map((r) => (
+          <div key={r.s} className="text-center">
+            <Ring
+              value={r.v}
+              max={r.m}
+              color={r.c}
+              track={colors.elevated}
+              label={`${Math.min(100, Math.round((r.v / r.m) * 100))}%`}
+              sub={r.s}
+            />
+            <div className="text-[11px] font-bold mt-1.5 font-mono-num">{r.t}</div>
+          </div>
+        ))}
       </div>
 
       {/* Macro & Hydration Bento Grid */}
@@ -4542,8 +4851,8 @@ function NutritionView({
         </div>
       </div>
 
-      {/* Sub-Tabs for Daily Checklist vs 7-Day Rotation & Grocery List vs IFCT Food DB */}
-      <div className="flex items-center gap-2">
+      {/* Sub-Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto">
         {[
           { id: 'daily', label: 'Today 7-Slot Checklist' },
           { id: 'rotation', label: '7-Day Rotation & Grocery List' },
@@ -4559,7 +4868,7 @@ function NutritionView({
                 color: active ? colors.accentText : colors.text,
                 borderColor: active ? colors.accentBorder : colors.border
               }}
-              className="min-h-[42px] px-3.5 rounded-xl border text-xs font-extrabold uppercase"
+              className="min-h-[42px] px-3.5 rounded-xl border text-xs font-extrabold uppercase whitespace-nowrap"
             >
               {tab.label}
             </button>
@@ -4569,7 +4878,6 @@ function NutritionView({
 
       {subView === 'daily' && (
         <div className="space-y-4">
-          {/* 7 Meal Slots */}
           <div className="space-y-3">
             {MEAL_SLOTS.map((slot) => {
               const allowedOptions = slot.options.filter((o) =>
@@ -4634,9 +4942,11 @@ function NutritionView({
                     </button>
                   </div>
 
-                  {/* Option Switcher Pills */}
                   {allowedOptions.length > 1 && (
-                    <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t" style={{ borderColor: colors.border }}>
+                    <div
+                      className="flex flex-wrap items-center gap-1.5 pt-2 border-t"
+                      style={{ borderColor: colors.border }}
+                    >
                       <span className="text-[11px] font-bold uppercase" style={{ color: colors.muted }}>
                         Swap Option:
                       </span>
@@ -4664,7 +4974,7 @@ function NutritionView({
             })}
           </div>
 
-          {/* Appetite Helpers (One-Tap Calorie Boosters) */}
+          {/* Appetite Helpers */}
           <div
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
             className="p-4 sm:p-5 rounded-2xl border space-y-3"
@@ -4750,7 +5060,6 @@ function NutritionView({
             </div>
           </div>
 
-          {/* Auto-Computed Weekly Grocery List */}
           <div
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
             className="p-4 sm:p-6 rounded-2xl border space-y-4"
@@ -4768,7 +5077,10 @@ function NutritionView({
                   style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
                   className="p-4 rounded-xl border space-y-2"
                 >
-                  <div className="text-xs font-extrabold uppercase tracking-wider" style={{ color: isDark ? colors.accent : colors.text }}>
+                  <div
+                    className="text-xs font-extrabold uppercase tracking-wider"
+                    style={{ color: isDark ? colors.accent : colors.text }}
+                  >
                     {category}
                   </div>
                   <div className="space-y-1.5 text-xs">
@@ -4899,6 +5211,9 @@ function ProgressView({
       weight: formatWeight(w.weightKg)
     }));
   }, [appState.weightLogs, formatWeight]);
+
+  const liveRatio =
+    vTaperRatio || Number((measForm.shoulders / Math.max(1, measForm.waist)).toFixed(2));
 
   return (
     <div className="space-y-5">
@@ -5058,14 +5373,7 @@ function ProgressView({
                     fontSize={11}
                     domain={['dataMin - 2', 'dataMax + 5']}
                   />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: colors.card,
-                      borderColor: colors.border,
-                      borderRadius: '12px',
-                      color: colors.text
-                    }}
-                  />
+                  <Tooltip {...tip(colors)} />
                   <ReferenceArea
                     y1={formatWeight(appState.profile.goalWeightMinKg)}
                     y2={formatWeight(appState.profile.goalWeightMaxKg)}
@@ -5098,82 +5406,92 @@ function ProgressView({
         </div>
       </div>
 
-      {/* Body Measurements & Shoulder-to-Waist V-Taper Calculator */}
-      <div
-        style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-4 sm:p-6 rounded-2xl border space-y-4"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Ruler className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
-            <div>
-              <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
-                V-Taper Body Measurements (cm)
-              </h3>
-              <p className="text-xs" style={{ color: colors.muted }}>
-                Auto-calculates Shoulder-to-Waist Ratio (Goal: 1.40–1.50x). Keep waist gain ≤ 4 cm across the bulk.
-              </p>
+      {/* Body Measurements + V-Taper Gauge */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          className="lg:col-span-2 p-4 sm:p-6 rounded-2xl border space-y-4 flex flex-col justify-between"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Ruler className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
+              <div>
+                <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
+                  V-Taper Body Measurements (cm)
+                </h3>
+                <p className="text-xs" style={{ color: colors.muted }}>
+                  Auto-calculates Shoulder-to-Waist Ratio (Goal: 1.40–1.50x). Keep waist gain ≤ 4 cm across the bulk.
+                </p>
+              </div>
+            </div>
+
+            <div
+              style={{ backgroundColor: colors.accent, color: colors.accentText }}
+              className="px-3.5 py-2 rounded-xl font-mono-num text-right"
+            >
+              <div className="text-[10px] font-extrabold uppercase">Current V-Taper Ratio</div>
+              <div className="font-display text-2xl font-black">{liveRatio}x</div>
             </div>
           </div>
 
-          <div
-            style={{ backgroundColor: colors.accent, color: colors.accentText }}
-            className="px-3.5 py-2 rounded-xl font-mono-num text-right"
-          >
-            <div className="text-[10px] font-extrabold uppercase">Current V-Taper Ratio</div>
-            <div className="font-display text-2xl font-black">
-              {vTaperRatio ? `${vTaperRatio}x` : `${(measForm.shoulders / Math.max(1, measForm.waist)).toFixed(2)}x`}
-            </div>
-          </div>
+          <form onSubmit={handleSaveMeasurements} className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 items-end">
+            {[
+              { key: 'shoulders', label: 'Shoulders (cm)' },
+              { key: 'chest', label: 'Chest (cm)' },
+              { key: 'waist', label: 'Waist @ Navel (cm)' },
+              { key: 'arms', label: 'Arms (cm)' },
+              { key: 'thighs', label: 'Thighs (cm)' }
+            ].map((field) => (
+              <div key={field.key}>
+                <label className="block text-[11px] font-bold uppercase mb-1" style={{ color: colors.muted }}>
+                  {field.label}
+                </label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.5"
+                  value={measForm[field.key]}
+                  onChange={(e) =>
+                    setMeasForm((prev) => ({ ...prev, [field.key]: Number(e.target.value) }))
+                  }
+                  style={{
+                    backgroundColor: colors.elevated,
+                    borderColor: colors.border,
+                    color: colors.text
+                  }}
+                  className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-extrabold font-mono-num"
+                />
+              </div>
+            ))}
+            <button
+              type="submit"
+              style={{ backgroundColor: colors.accent, color: colors.accentText }}
+              className="col-span-2 sm:col-span-1 min-h-[44px] rounded-xl font-extrabold text-xs uppercase tracking-wider"
+            >
+              Save Tape
+            </button>
+          </form>
         </div>
 
-        <form onSubmit={handleSaveMeasurements} className="grid grid-cols-2 sm:grid-cols-6 gap-2.5 items-end">
-          {[
-            { key: 'shoulders', label: 'Shoulders (cm)' },
-            { key: 'chest', label: 'Chest (cm)' },
-            { key: 'waist', label: 'Waist @ Navel (cm)' },
-            { key: 'arms', label: 'Arms (cm)' },
-            { key: 'thighs', label: 'Thighs (cm)' }
-          ].map((field) => (
-            <div key={field.key}>
-              <label className="block text-[11px] font-bold uppercase mb-1" style={{ color: colors.muted }}>
-                {field.label}
-              </label>
-              <input
-                type="number"
-                inputMode="decimal"
-                step="0.5"
-                value={measForm[field.key]}
-                onChange={(e) =>
-                  setMeasForm((prev) => ({ ...prev, [field.key]: Number(e.target.value) }))
-                }
-                style={{
-                  backgroundColor: colors.elevated,
-                  borderColor: colors.border,
-                  color: colors.text
-                }}
-                className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-extrabold font-mono-num"
-              />
-            </div>
-          ))}
-          <button
-            type="submit"
-            style={{ backgroundColor: colors.accent, color: colors.accentText }}
-            className="col-span-2 sm:col-span-1 min-h-[44px] rounded-xl font-extrabold text-xs uppercase tracking-wider"
-          >
-            Save Tape
-          </button>
-        </form>
+        <VTaperGauge ratio={liveRatio} colors={colors} isDark={isDark} />
       </div>
+
+      {/* Consistency Heatmap, Volume Bars & Strength Curve */}
+      <ProgressCharts
+        appState={appState}
+        formatWeight={formatWeight}
+        colors={colors}
+        isDark={isDark}
+      />
     </div>
   );
 }
 
 // ============================================================================
-// 5. STATS VIEW COMPONENT (MUSCLE VOLUMES, HISTORY & UNIT TESTS)
+// 5. STATS VIEW COMPONENT (MUSCLE VOLUMES, RADAR, HISTORY & UNIT TESTS)
 // ============================================================================
 
-function StatsView({ colors, isDark, appState, formatWeight, formatTime }) {
+function StatsView({ colors, isDark, appState }) {
   const volumes = useMemo(() => computeWeeklyMuscleVolumes(), []);
   const unitTests = useMemo(() => runBuiltInUnitTests(), []);
 
@@ -5228,48 +5546,52 @@ function StatsView({ colors, isDark, appState, formatWeight, formatTime }) {
         </div>
       </div>
 
-      {/* Weekly Sets Per Muscle Group (Primary vs Secondary Credit) */}
-      <div
-        style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-4 sm:p-6 rounded-2xl border space-y-4"
-      >
-        <div>
-          <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
-            Weekly Hypertrophy Volume Per Muscle Group (Target 10–20 Sets)
-          </h3>
-          <p className="text-xs" style={{ color: colors.muted }}>
-            Shows direct primary sets and effective sets including 0.5× secondary compound credit.
-          </p>
-        </div>
+      {/* Muscle Balance Radar + Weekly Sets Per Muscle Group */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <MuscleRadar colors={colors} isDark={isDark} />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 tabular-nums">
-          {Object.entries(volumes.primary).map(([group, primSets]) => {
-            const effSets = volumes.totalWithSecondary[group];
-            const pct = Math.min(100, Math.round((primSets / 20) * 100));
-            return (
-              <div
-                key={group}
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="p-3.5 rounded-xl border space-y-2"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-extrabold uppercase">{group}</span>
-                  <span className="font-mono-num font-bold">
-                    {primSets} direct ({effSets} eff)
-                  </span>
-                </div>
+        <div
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          className="lg:col-span-2 p-4 sm:p-6 rounded-2xl border space-y-4"
+        >
+          <div>
+            <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
+              Weekly Hypertrophy Volume Per Muscle Group (Target 10–20 Sets)
+            </h3>
+            <p className="text-xs" style={{ color: colors.muted }}>
+              Shows direct primary sets and effective sets including 0.5× secondary compound credit.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 tabular-nums">
+            {Object.entries(volumes.primary).map(([group, primSets]) => {
+              const effSets = volumes.totalWithSecondary[group];
+              const pct = Math.min(100, Math.round((primSets / 20) * 100));
+              return (
                 <div
-                  style={{ backgroundColor: colors.card }}
-                  className="w-full h-2.5 rounded-full overflow-hidden"
+                  key={group}
+                  style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                  className="p-3.5 rounded-xl border space-y-2"
                 >
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-extrabold uppercase">{group}</span>
+                    <span className="font-mono-num font-bold">
+                      {primSets} direct ({effSets} eff)
+                    </span>
+                  </div>
                   <div
-                    style={{ width: `${pct}%`, backgroundColor: colors.accent }}
-                    className="h-full"
-                  />
+                    style={{ backgroundColor: colors.card }}
+                    className="w-full h-2.5 rounded-full overflow-hidden"
+                  >
+                    <div
+                      style={{ width: `${pct}%`, backgroundColor: colors.accent }}
+                      className="h-full"
+                    />
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -5318,12 +5640,10 @@ function StatsView({ colors, isDark, appState, formatWeight, formatTime }) {
 
 function SettingsView({
   colors,
-  isDark,
   appState,
   setAppState,
   setShowOnboarding,
   setOnboardingForm,
-  handleDietTrackChange,
   showToast
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
