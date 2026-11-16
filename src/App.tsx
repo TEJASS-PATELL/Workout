@@ -5379,7 +5379,7 @@ function ProgressView({
         >
           <div className="vt-between-center vt-flex-wrap vt-gap-3">
             <div className="vt-flex vt-items-center vt-gap-2">
-              <Ruler className="vt-icon-5" style={{ color: isDark ? colors.accent : colors.text }} />
+              
               <div>
                 <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
                   V-Taper Body Measurements (cm)
