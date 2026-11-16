@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import './App.css';
 import {
   Dumbbell,
   Calendar,
@@ -1866,7 +1867,7 @@ function BrandLogo({ size = 40 }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-label="VTaper Logo"
-      className="shrink-0 rounded-xl"
+      className="vt-brand-logo"
     >
       <rect width="512" height="512" rx="112" fill="#0A0A0B" />
       <rect x="16" y="16" width="480" height="480" rx="96" stroke="#27272A" strokeWidth="14" />
@@ -1898,8 +1899,8 @@ function Ring({ value, max, size = 92, stroke = 10, color, track, label, sub }) 
   const pct = Math.min(1, max > 0 ? value / max : 0);
 
   return (
-    <div className="relative shrink-0 mx-auto" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
+    <div className="vt-ring-wrap" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="vt-ring-svg">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={stroke} />
         <circle
           cx={size / 2}
@@ -1914,9 +1915,9 @@ function Ring({ value, max, size = 92, stroke = 10, color, track, label, sub }) 
           style={{ transition: 'stroke-dashoffset .6s ease' }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none tabular-nums">
-        <span className="font-display text-xl font-black">{label}</span>
-        <span className="text-[9px] font-bold uppercase opacity-60 mt-0.5">{sub}</span>
+      <div className="vt-ring-center">
+        <span className="vt-ring-label font-display">{label}</span>
+        <span className="vt-ring-sub">{sub}</span>
       </div>
     </div>
   );
@@ -1942,15 +1943,12 @@ function VTaperGauge({ ratio, colors, isDark }) {
   return (
     <div
       style={{ backgroundColor: colors.card, borderColor: colors.border }}
-      className="p-4 sm:p-6 rounded-2xl border flex flex-col items-center justify-between"
+      className="vt-card vt-gauge-card"
     >
-      <div
-        className="text-xs font-extrabold uppercase tracking-wider self-start"
-        style={{ color: colors.muted }}
-      >
+      <div className="vt-gauge-title" style={{ color: colors.muted }}>
         V-Taper Gauge
       </div>
-      <svg viewBox="0 0 220 130" className="w-full max-w-xs">
+      <svg viewBox="0 0 220 130" className="vt-gauge-svg">
         <path d={arc(MIN, MAX)} fill="none" stroke={colors.elevated} strokeWidth="14" strokeLinecap="round" />
         <path d={arc(1.4, 1.5)} fill="none" stroke={colors.accent} strokeWidth="14" />
         <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={colors.text} strokeWidth="3" strokeLinecap="round" />
@@ -1973,7 +1971,7 @@ function VTaperGauge({ ratio, colors, isDark }) {
           {ratio ? `${ratio.toFixed(2)}x` : '--'}
         </text>
       </svg>
-      <div className="text-[11px]" style={{ color: colors.muted }}>
+      <div className="vt-gauge-sub" style={{ color: colors.muted }}>
         Goal band 1.40-1.50x
       </div>
     </div>
@@ -1988,13 +1986,13 @@ function MuscleRadar({ colors, isDark }) {
   return (
     <div
       style={{ backgroundColor: colors.card, borderColor: colors.border }}
-      className="p-4 sm:p-6 rounded-2xl border"
+      className="vt-card"
     >
-      <h3 className="font-display text-2xl font-black uppercase">Muscle Balance Radar</h3>
-      <p className="text-xs mb-2" style={{ color: colors.muted }}>
+      <h3 className="vt-section-title font-display">Muscle Balance Radar</h3>
+      <p className="vt-radar-sub" style={{ color: colors.muted }}>
         Direct weekly sets vs 12-set reference ring
       </p>
-      <div className="h-72 w-full">
+      <div className="vt-radar-chart">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={data} outerRadius="72%">
             <PolarGrid stroke={colors.border} />
@@ -2043,29 +2041,28 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
   const card = { backgroundColor: colors.card, borderColor: colors.border };
 
   return (
-    <div className="space-y-4">
-      <div style={card} className="p-4 sm:p-6 rounded-2xl border">
-        <h3 className="font-display text-2xl font-black uppercase">Last 28 Days Consistency</h3>
-        <div className="grid grid-cols-7 gap-1.5 mt-3">
+    <div className="vt-stack-4">
+      <div style={card} className="vt-card">
+        <h3 className="vt-section-title font-display">Last 28 Days Consistency</h3>
+        <div className="vt-heatmap-grid">
           {days.map((d) => (
             <div
               key={d}
               title={d}
               style={{
-                backgroundColor: counts[d] ? colors.accent : colors.elevated,
-                aspectRatio: '1'
+                backgroundColor: counts[d] ? colors.accent : colors.elevated
               }}
-              className="rounded-md"
+              className="vt-heatmap-cell"
             />
           ))}
         </div>
       </div>
 
-      <div style={card} className="p-4 sm:p-6 rounded-2xl border">
-        <h3 className="font-display text-2xl font-black uppercase">
+      <div style={card} className="vt-card">
+        <h3 className="vt-section-title font-display">
           Session Volume ({appState.unit})
         </h3>
-        <div className="h-44 w-full mt-2">
+        <div className="vt-chart-box-sm">
           {vol.length ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={vol} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
@@ -2077,19 +2074,16 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div
-              className="h-full flex items-center justify-center text-xs"
-              style={{ color: colors.muted }}
-            >
+            <div className="vt-chart-empty" style={{ color: colors.muted }}>
               Finish a workout to see volume bars.
             </div>
           )}
         </div>
       </div>
 
-      <div style={card} className="p-4 sm:p-6 rounded-2xl border">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="font-display text-2xl font-black uppercase">Strength Curve</h3>
+      <div style={card} className="vt-card">
+        <div className="vt-flex-between">
+          <h3 className="vt-section-title font-display">Strength Curve</h3>
           {exList.length > 0 && (
             <select
               value={sel?.id || ''}
@@ -2099,7 +2093,7 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
                 borderColor: colors.border,
                 color: colors.text
               }}
-              className="min-h-[40px] max-w-[55%] px-2 rounded-xl border text-xs font-bold"
+              className="vt-select-compact"
             >
               {exList.map((e) => (
                 <option key={e.id} value={e.id}>
@@ -2109,7 +2103,7 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
             </select>
           )}
         </div>
-        <div className="h-48 w-full mt-2">
+        <div className="vt-chart-box-md">
           {strength.length ? (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={strength} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
@@ -2133,10 +2127,7 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div
-              className="h-full flex items-center justify-center text-xs"
-              style={{ color: colors.muted }}
-            >
+            <div className="vt-chart-empty" style={{ color: colors.muted }}>
               Log workouts to plot top-set weight per exercise.
             </div>
           )}
@@ -2713,93 +2704,21 @@ export default function App() {
         fontFamily: "'Sora', -apple-system, BlinkMacSystemFont, sans-serif",
         '--ring': isDark ? '#CCFF00' : '#84CC16'
       }}
-      className="min-h-screen w-full overflow-x-hidden antialiased flex flex-col md:flex-row selection:bg-[#CCFF00] selection:text-[#0A0A0B]"
+      className="vt-app"
     >
-      {/* Global Typography & Zero-Scrollbar Rules */}
-      <style>{`
-        html {
-          -webkit-text-size-adjust: 100%;
-          text-size-adjust: 100%;
-          scroll-behavior: smooth;
-        }
-        body {
-          margin: 0;
-          min-width: 320px;
-          overflow-x: hidden;
-          overscroll-behavior-y: contain;
-        }
-        button, input, select, textarea {
-          font: inherit;
-        }
-        button {
-          touch-action: manipulation;
-        }
-        main, section, article, .recharts-responsive-container {
-          min-width: 0;
-          max-width: 100%;
-        }
-        @media (max-width: 640px) {
-          input, select, textarea {
-            font-size: 16px !important;
-          }
-          .recharts-wrapper, .recharts-surface {
-            max-width: 100%;
-          }
-        }
-        * {
-          box-sizing: border-box;
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-          -webkit-tap-highlight-color: transparent;
-        }
-        *::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
-          height: 0 !important;
-        }
-        input[type='number']::-webkit-inner-spin-button,
-        input[type='number']::-webkit-outer-spin-button {
-          -webkit-appearance: none;
-          margin: 0;
-        }
-        input[type='number'] {
-          -moz-appearance: textfield;
-          font-family: 'JetBrains Mono', 'Sora', monospace;
-        }
-        .font-display {
-          font-family: 'Barlow Condensed', sans-serif;
-          letter-spacing: 0.03em;
-        }
-        .font-mono-num {
-          font-family: 'JetBrains Mono', 'Sora', monospace;
-          font-variant-numeric: tabular-nums;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          * {
-            animation-duration: 0.01ms !important;
-            transition-duration: 0.01ms !important;
-          }
-        }
-      `}</style>
-
       {/* ==================================================================== */}
       {/* DESKTOP SIDEBAR                                                      */}
       {/* ==================================================================== */}
       <aside
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="hidden md:flex md:w-64 lg:w-72 md:flex-col md:fixed md:inset-y-0 border-r z-30"
+        className="vt-sidebar"
       >
-        <div
-          style={{ borderColor: colors.border }}
-          className="p-6 border-b flex items-center justify-between"
-        >
-          <div className="flex items-center gap-3">
+        <div style={{ borderColor: colors.border }} className="vt-sidebar-header">
+          <div className="vt-brand-group">
             <BrandLogo size={42} />
             <div>
-              <h1 className="font-display text-3xl font-black uppercase tracking-wider leading-none">
-                VTAPER
-              </h1>
-              <p style={{ color: colors.muted }} className="text-xs mt-0.5 font-semibold tabular-nums">
+              <h1 className="vt-brand-title font-display">VTAPER</h1>
+              <p style={{ color: colors.muted }} className="vt-brand-sub">
                 Whole-Food Bulk • {appState.profile.startWeightKg}→{appState.profile.goalWeightMaxKg}kg
               </p>
             </div>
@@ -2813,24 +2732,21 @@ export default function App() {
               }))
             }
             aria-label="Toggle color theme"
-            style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="w-11 h-11 rounded-xl border flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+            style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+            className="vt-icon-btn-44"
           >
-            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {isDark ? <Sun size={20} /> : <Moon size={20} />}
           </button>
         </div>
 
         {/* User Snapshot Card */}
-        <div className="p-4">
+        <div className="vt-sidebar-snapshot-wrap">
           <div
             style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="p-4 rounded-2xl border"
+            className="vt-sidebar-snapshot"
           >
-            <div className="flex items-center justify-between mb-2">
-              <span
-                className="text-xs font-bold uppercase tracking-wider"
-                style={{ color: colors.muted }}
-              >
+            <div className="vt-snapshot-top">
+              <span className="vt-track-label" style={{ color: colors.muted }}>
                 {appState.profile.dietTrack} Track
               </span>
               <button
@@ -2839,34 +2755,31 @@ export default function App() {
                   backgroundColor: colors.accent,
                   color: colors.accentText
                 }}
-                className="text-[11px] font-extrabold px-2 py-0.5 rounded-md uppercase flex items-center gap-1"
+                className="vt-edit-goals-btn"
               >
-                <Edit3 className="w-3 h-3" />
+                <Edit3 size={12} />
                 <span>Edit Goals</span>
               </button>
             </div>
-            <div className="font-display text-2xl font-extrabold uppercase tracking-wide tabular-nums truncate">
+            <div className="vt-snapshot-stats font-display">
               {appState.profile.age} years • {appState.profile.heightCm} cm
             </div>
-            <div
-              className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t tabular-nums"
-              style={{ borderColor: colors.border }}
-            >
+            <div className="vt-snapshot-grid" style={{ borderColor: colors.border }}>
               <div>
-                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
+                <div className="vt-stat-caption" style={{ color: colors.muted }}>
                   Current
                 </div>
-                <div className="font-display text-xl font-extrabold">
+                <div className="vt-stat-value-xl font-display">
                   {formatWeight(latestWeightKg)} {appState.unit}
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
+                <div className="vt-stat-caption" style={{ color: colors.muted }}>
                   Goal Band
                 </div>
                 <div
                   style={{ color: isDark ? colors.accent : colors.text }}
-                  className="font-display text-xl font-extrabold"
+                  className="vt-stat-value-xl font-display"
                 >
                   {formatWeight(appState.profile.goalWeightMinKg)}–
                   {formatWeight(appState.profile.goalWeightMaxKg)} {appState.unit}
@@ -2877,7 +2790,7 @@ export default function App() {
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto" aria-label="Main Navigation">
+        <nav className="vt-sidebar-nav" aria-label="Main Navigation">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -2890,9 +2803,9 @@ export default function App() {
                   color: isActive ? colors.accentText : colors.text,
                   borderColor: isActive ? colors.accentBorder : 'transparent'
                 }}
-                className="w-full min-h-[48px] px-4 rounded-xl border flex items-center gap-3 font-bold text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="vt-nav-btn"
               >
-                <Icon className="w-5 h-5 shrink-0" />
+                <Icon size={20} style={{ flexShrink: 0 }} />
                 <span>{item.label}</span>
                 {item.id === 'today' && workoutRunning && (
                   <span
@@ -2900,7 +2813,7 @@ export default function App() {
                       backgroundColor: isActive ? '#0A0A0B' : colors.accent,
                       color: isActive ? '#CCFF00' : colors.accentText
                     }}
-                    className="ml-auto text-xs font-extrabold px-2 py-0.5 rounded-md font-mono-num"
+                    className="vt-nav-timer-badge font-mono-num"
                   >
                     {formatTime(workoutElapsedSec)}
                   </span>
@@ -2911,19 +2824,16 @@ export default function App() {
         </nav>
 
         {/* Daily Targets Mini Footer */}
-        <div
-          style={{ borderColor: colors.border }}
-          className="p-4 border-t text-xs space-y-2 tabular-nums"
-        >
-          <div className="flex items-center justify-between">
+        <div style={{ borderColor: colors.border }} className="vt-sidebar-footer">
+          <div className="vt-footer-row">
             <span style={{ color: colors.muted }}>Calories Today</span>
-            <span className="font-extrabold font-mono-num">
+            <span style={{ fontWeight: 800 }} className="font-mono-num">
               {nutritionTotals.consumedKcal} / {kcalTarget} kcal
             </span>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="vt-footer-row">
             <span style={{ color: colors.muted }}>Protein (Floor 110g)</span>
-            <span className="font-extrabold font-mono-num">
+            <span style={{ fontWeight: 800 }} className="font-mono-num">
               {nutritionTotals.consumedProtein}g / {proteinTarget}g
             </span>
           </div>
@@ -2933,25 +2843,23 @@ export default function App() {
       {/* ==================================================================== */}
       {/* MAIN CONTENT AREA                                                    */}
       {/* ==================================================================== */}
-      <div className="flex-1 min-w-0 md:pl-64 lg:pl-72 flex flex-col min-h-screen w-full max-w-full pb-[calc(9.5rem+env(safe-area-inset-bottom))] md:pb-10">
+      <div className="vt-main-wrap">
         {/* Mobile Top Bar */}
         <header
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="md:hidden sticky top-0 z-20 border-b px-3.5 py-2.5 flex items-center justify-between gap-2"
+          className="vt-mobile-header"
         >
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="vt-mobile-brand">
             <BrandLogo size={36} />
-            <div className="min-w-0">
-              <div className="font-display text-2xl font-black uppercase tracking-wider leading-none">
-                VTAPER
-              </div>
-              <div style={{ color: colors.muted }} className="text-[11px] font-bold uppercase truncate">
+            <div style={{ minWidth: 0 }}>
+              <div className="vt-mobile-title font-display">VTAPER</div>
+              <div style={{ color: colors.muted }} className="vt-mobile-sub">
                 {appState.profile.dietTrack} • {appState.profile.age}y • {appState.profile.heightCm} cm
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="vt-mobile-actions">
             <button
               onClick={() =>
                 setAppState((prev) => ({
@@ -2959,8 +2867,8 @@ export default function App() {
                   unit: prev.unit === 'kg' ? 'lb' : 'kg'
                 }))
               }
-              style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[44px] min-w-[44px] px-2.5 rounded-xl border text-xs font-extrabold uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+              className="vt-unit-btn"
             >
               {appState.unit}
             </button>
@@ -2972,64 +2880,62 @@ export default function App() {
                 }))
               }
               aria-label="Toggle Theme"
-              style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+              className="vt-icon-btn-44"
             >
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {isDark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
           </div>
         </header>
 
         {/* Toast Notification Banner */}
         {toast && (
-          <div className="fixed top-16 md:top-4 inset-x-4 md:inset-x-auto md:right-4 z-50 md:max-w-sm">
+          <div className="vt-toast-wrap">
             <div
               style={{
                 backgroundColor: colors.accent,
                 color: colors.accentText,
                 borderColor: colors.accentBorder
               }}
-              className="px-4 py-3 rounded-2xl border font-extrabold text-xs sm:text-sm flex items-center gap-2.5"
+              className="vt-toast-card"
             >
-              <CheckCircle2 className="w-5 h-5 shrink-0" />
+              <CheckCircle2 size={20} style={{ flexShrink: 0 }} />
               <span>{toast}</span>
             </div>
           </div>
         )}
 
-        {/* Active Rest Timer Floating Bar (Docked above mobile nav for thumb reach) */}
+        {/* Active Rest Timer Floating Bar */}
         {restTimer.active && (
           <div
             style={{
               backgroundColor: colors.card,
               borderColor: colors.accentBorder
             }}
-            className="fixed inset-x-2 bottom-[calc(4.9rem+env(safe-area-inset-bottom))] z-40 p-3 rounded-2xl border-2 flex flex-wrap items-center justify-between gap-2.5 md:sticky md:inset-x-auto md:bottom-auto md:top-4 md:mx-4 md:mt-2.5"
+            className="vt-rest-bar"
           >
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="vt-rest-info">
               <div
                 style={{
                   backgroundColor: colors.accent,
                   color: colors.accentText
                 }}
-                className="font-display px-3 py-1 rounded-xl font-black text-2xl sm:text-3xl tabular-nums tracking-wide shrink-0"
+                className="vt-rest-clock font-display tabular-nums"
               >
                 {formatTime(restTimer.remainingSec)}
               </div>
-              <div className="min-w-0">
+              <div style={{ minWidth: 0 }}>
                 <div
-                  className="text-[11px] font-extrabold uppercase tracking-wider tabular-nums"
+                  className="vt-rest-meta tabular-nums"
                   style={{ color: isDark ? colors.accent : colors.text }}
                 >
                   Rest • {restTimer.exerciseType} ({restTimer.totalSec}s target)
                 </div>
-                <div className="text-xs sm:text-sm font-bold truncate max-w-[160px] sm:max-w-xs">
-                  {restTimer.exerciseName}
-                </div>
+                <div className="vt-rest-ex-name">{restTimer.exerciseName}</div>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 tabular-nums ml-auto">
+            <div className="vt-rest-controls tabular-nums">
               <button
                 onClick={() =>
                   setRestTimer((prev) => ({
@@ -3037,8 +2943,8 @@ export default function App() {
                     remainingSec: Math.max(0, prev.remainingSec - 15)
                   }))
                 }
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[44px] px-2.5 rounded-xl border text-xs font-extrabold"
+                style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+                className="vt-rest-step-btn"
               >
                 -15s
               </button>
@@ -3049,8 +2955,8 @@ export default function App() {
                     remainingSec: prev.remainingSec + 15
                   }))
                 }
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[44px] px-2.5 rounded-xl border text-xs font-extrabold"
+                style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+                className="vt-rest-step-btn"
               >
                 +15s
               </button>
@@ -3059,10 +2965,10 @@ export default function App() {
                   setRestTimer((prev) => ({ ...prev, paused: !prev.paused }))
                 }
                 aria-label={restTimer.paused ? 'Resume rest timer' : 'Pause rest timer'}
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center"
+                style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+                className="vt-icon-btn-44"
               >
-                {restTimer.paused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                {restTimer.paused ? <Play size={16} /> : <Pause size={16} />}
               </button>
               <button
                 onClick={() => setRestTimer((prev) => ({ ...prev, active: false }))}
@@ -3072,9 +2978,9 @@ export default function App() {
                   color: colors.accentText,
                   borderColor: colors.accentBorder
                 }}
-                className="min-h-[44px] px-3 rounded-xl border text-xs font-extrabold flex items-center gap-1"
+                className="vt-rest-skip-btn"
               >
-                <SkipForward className="w-4 h-4" />
+                <SkipForward size={16} />
                 <span>Skip</span>
               </button>
             </div>
@@ -3082,7 +2988,7 @@ export default function App() {
         )}
 
         {/* Page Container */}
-        <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-5">
+        <main className="vt-page-main">
           {activeTab === 'today' && (
             <TodayView
               colors={colors}
@@ -3175,12 +3081,12 @@ export default function App() {
       </div>
 
       {/* ==================================================================== */}
-      {/* MOBILE BOTTOM NAVIGATION BAR (Top Bar Indicator + Thumb Ergonomics)  */}
+      {/* MOBILE BOTTOM NAVIGATION BAR                                         */}
       {/* ==================================================================== */}
       <nav
         style={{ backgroundColor: colors.bg, borderColor: colors.border }}
         aria-label="Mobile Navigation"
-        className="md:hidden fixed bottom-0 inset-x-0 border-t z-30 grid grid-cols-6 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+        className="vt-mobile-nav"
       >
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -3192,13 +3098,13 @@ export default function App() {
               onClick={() => setActiveTab(item.id)}
               aria-current={isActive ? 'page' : undefined}
               style={{ color: isActive ? on : colors.muted }}
-              className="relative min-h-[54px] flex flex-col items-center justify-center gap-1 text-[10px] font-bold"
+              className="vt-mobile-nav-btn"
             >
               <span
                 style={{ backgroundColor: isActive ? on : 'transparent' }}
-                className="absolute top-0 h-[3px] w-8 rounded-b-full"
+                className="vt-mobile-nav-indicator"
               />
-              <Icon className="w-[22px] h-[22px]" strokeWidth={isActive ? 2.5 : 2} />
+              <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
               <span>{item.label}</span>
             </button>
           );
@@ -3206,32 +3112,33 @@ export default function App() {
       </nav>
 
       {/* ==================================================================== */}
-      {/* ONBOARDING & PROFILE EDITOR MODAL (PROFILE & DIET TRACK)             */}
+      {/* ONBOARDING & PROFILE EDITOR MODAL                                    */}
       {/* ==================================================================== */}
       {showOnboarding && (
         <div
           style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)' }}
-          className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain"
+          className="vt-modal-overlay"
         >
           <div
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
-            className="w-full max-w-lg max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl border p-4 sm:p-6 space-y-4 sm:space-y-5 my-auto"
+            className="vt-modal-card"
           >
-            <div className="flex items-start justify-between gap-4">
+            <div className="vt-flex-start-between">
               <div>
                 <span
                   style={{
                     backgroundColor: colors.accent,
-                    color: colors.accentText
+                    color: colors.accentText,
+                    marginBottom: '0.5rem'
                   }}
-                  className="inline-block text-xs font-extrabold uppercase px-2.5 py-1 rounded-md mb-2"
+                  className="vt-badge-accent"
                 >
                   Whole-Food V-Taper Protocol
                 </span>
-                <h2 className="font-display text-3xl sm:text-4xl font-black uppercase tracking-wide">
+                <h2 className="vt-section-title vt-section-title-lg font-display">
                   Athlete Profile Setup
                 </h2>
-                <p style={{ color: colors.muted }} className="text-xs sm:text-sm mt-1">
+                <p style={{ color: colors.muted, fontSize: '0.8125rem', margin: '0.25rem 0 0 0' }}>
                   22y • 173 cm • 55 kg → 65–68 kg goal. 100% Indian home-style food (zero supplements).
                 </p>
               </div>
@@ -3259,23 +3166,22 @@ export default function App() {
                   setShowOnboarding(false);
                 }}
                 aria-label="Close profile setup"
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center shrink-0"
+                style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+                className="vt-icon-btn-44"
               >
-                <X className="w-5 h-5" />
+                <X size={20} />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 tabular-nums">
+            <div className="vt-modal-form-grid tabular-nums">
               {/* Indian Diet Track Selector */}
-              <div className="sm:col-span-2">
+              <div className="vt-col-span-2-sm">
                 <label
-                  className="block text-xs font-bold uppercase mb-1.5"
-                  style={{ color: colors.muted }}
+                  style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.375rem', color: colors.muted }}
                 >
                   Indian Home-Style Diet Track (No Supplements)
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="vt-track-selector-grid">
                   {[
                     { id: 'non-veg', label: 'Non-Veg', sub: 'Eggs + Chicken + Dairy' },
                     { id: 'eggetarian', label: 'Eggetarian', sub: 'Eggs + Dairy + Soya' },
@@ -3294,10 +3200,10 @@ export default function App() {
                           color: active ? colors.accentText : colors.text,
                           borderColor: active ? colors.accentBorder : colors.border
                         }}
-                        className="min-h-[54px] p-2 rounded-xl border text-left flex flex-col justify-center"
+                        className="vt-track-option-btn"
                       >
-                        <div className="text-xs font-extrabold uppercase">{t.label}</div>
-                        <div className="text-[10px] opacity-80 leading-tight mt-0.5">{t.sub}</div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>{t.label}</div>
+                        <div style={{ fontSize: '10px', opacity: 0.8, lineHeight: 1.25, marginTop: '0.125rem' }}>{t.sub}</div>
                       </button>
                     );
                   })}
@@ -3306,8 +3212,7 @@ export default function App() {
 
               <div>
                 <label
-                  className="block text-xs font-bold uppercase mb-1.5"
-                  style={{ color: colors.muted }}
+                  style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.375rem', color: colors.muted }}
                 >
                   Age (Years)
                 </label>
@@ -3323,13 +3228,12 @@ export default function App() {
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-bold"
+                  className="vt-form-input"
                 />
               </div>
               <div>
                 <label
-                  className="block text-xs font-bold uppercase mb-1.5"
-                  style={{ color: colors.muted }}
+                  style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.375rem', color: colors.muted }}
                 >
                   Height (cm)
                 </label>
@@ -3348,13 +3252,12 @@ export default function App() {
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-bold"
+                  className="vt-form-input"
                 />
               </div>
               <div>
                 <label
-                  className="block text-xs font-bold uppercase mb-1.5"
-                  style={{ color: colors.muted }}
+                  style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.375rem', color: colors.muted }}
                 >
                   Start Weight (kg)
                 </label>
@@ -3375,14 +3278,13 @@ export default function App() {
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-bold"
+                  className="vt-form-input"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="vt-grid-2">
                 <div>
                   <label
-                    className="block text-xs font-bold uppercase mb-1.5"
-                    style={{ color: colors.muted }}
+                    style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.375rem', color: colors.muted }}
                   >
                     Goal Min (kg)
                   </label>
@@ -3402,13 +3304,12 @@ export default function App() {
                       borderColor: colors.border,
                       color: colors.text
                     }}
-                    className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-bold"
+                    className="vt-form-input"
                   />
                 </div>
                 <div>
                   <label
-                    className="block text-xs font-bold uppercase mb-1.5"
-                    style={{ color: colors.muted }}
+                    style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.375rem', color: colors.muted }}
                   >
                     Goal Max (kg)
                   </label>
@@ -3428,35 +3329,43 @@ export default function App() {
                       borderColor: colors.border,
                       color: colors.text
                     }}
-                    className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-bold"
+                    className="vt-form-input"
                   />
                 </div>
               </div>
             </div>
 
             <div
-              style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="p-3.5 rounded-xl border grid grid-cols-3 gap-2 text-center tabular-nums"
+              style={{
+                backgroundColor: colors.elevated,
+                borderColor: colors.border,
+                padding: '0.875rem',
+                borderRadius: '0.75rem',
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                textAlign: 'center'
+              }}
+              className="vt-grid-3 tabular-nums"
             >
               <div>
-                <div className="text-[10px] uppercase font-bold" style={{ color: colors.muted }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: colors.muted }}>
                   Daily Surplus
                 </div>
-                <div className="font-display text-xl sm:text-2xl font-extrabold">2,900 kcal</div>
+                <div className="vt-stat-value-xl font-display">2,900 kcal</div>
               </div>
               <div>
-                <div className="text-[10px] uppercase font-bold" style={{ color: colors.muted }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: colors.muted }}>
                   Protein Target
                 </div>
-                <div className="font-display text-xl sm:text-2xl font-extrabold">
+                <div className="vt-stat-value-xl font-display">
                   130g (110g floor)
                 </div>
               </div>
               <div>
-                <div className="text-[10px] uppercase font-bold" style={{ color: colors.muted }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: colors.muted }}>
                   V-Taper Goal
                 </div>
-                <div className="font-display text-xl sm:text-2xl font-extrabold">1.40–1.50x</div>
+                <div className="vt-stat-value-xl font-display">1.40–1.50x</div>
               </div>
             </div>
 
@@ -3485,9 +3394,11 @@ export default function App() {
               style={{
                 backgroundColor: colors.accent,
                 color: colors.accentText,
-                borderColor: colors.accentBorder
+                borderColor: colors.accentBorder,
+                minHeight: '48px',
+                fontSize: '0.875rem'
               }}
-              className="w-full min-h-[48px] rounded-xl border font-extrabold text-sm uppercase tracking-wider focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="vt-primary-cta"
             >
               Save Profile & Launch VTaper
             </button>
@@ -3501,65 +3412,105 @@ export default function App() {
       {workoutSummary && (
         <div
           style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)' }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="vt-summary-overlay"
         >
           <div
             style={{ backgroundColor: colors.card, borderColor: colors.accentBorder }}
-            className="w-full max-w-md rounded-2xl border-2 p-5 sm:p-6 space-y-5"
+            className="vt-summary-card"
           >
-            <div className="flex items-center gap-3">
+            <div className="vt-flex-center-gap-3">
               <div
-                style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+                style={{
+                  backgroundColor: colors.accent,
+                  color: colors.accentText,
+                  width: '3rem',
+                  height: '3rem',
+                  borderRadius: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
               >
-                <Award className="w-7 h-7" />
+                <Award size={28} />
               </div>
               <div>
                 <div
-                  className="text-xs font-extrabold uppercase tracking-wider"
-                  style={{ color: isDark ? colors.accent : colors.text }}
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    color: isDark ? colors.accent : colors.text
+                  }}
                 >
                   Session Complete
                 </div>
-                <h3 className="font-display text-3xl font-black uppercase">
+                <h3 className="vt-section-title vt-section-title-lg font-display">
                   {workoutSummary.dayTitle}
                 </h3>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2.5 tabular-nums">
+            <div className="vt-grid-3 tabular-nums">
               <div
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="p-3 rounded-xl border text-center"
+                style={{
+                  backgroundColor: colors.elevated,
+                  borderColor: colors.border,
+                  padding: '0.75rem',
+                  borderRadius: '0.75rem',
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  textAlign: 'center'
+                }}
               >
-                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
+                <div className="vt-stat-caption" style={{ color: colors.muted }}>
                   Duration
                 </div>
-                <div className="font-display text-2xl font-extrabold mt-0.5">
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '0.125rem' }} className="font-display">
                   {formatTime(workoutSummary.durationSec)}
                 </div>
               </div>
               <div
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="p-3 rounded-xl border text-center"
+                style={{
+                  backgroundColor: colors.elevated,
+                  borderColor: colors.border,
+                  padding: '0.75rem',
+                  borderRadius: '0.75rem',
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  textAlign: 'center'
+                }}
               >
-                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
+                <div className="vt-stat-caption" style={{ color: colors.muted }}>
                   Volume
                 </div>
-                <div className="font-display text-2xl font-extrabold mt-0.5">
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, marginTop: '0.125rem' }} className="font-display">
                   {formatWeight(workoutSummary.totalVolumeKg)} {appState.unit}
                 </div>
               </div>
               <div
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="p-3 rounded-xl border text-center"
+                style={{
+                  backgroundColor: colors.elevated,
+                  borderColor: colors.border,
+                  padding: '0.75rem',
+                  borderRadius: '0.75rem',
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  textAlign: 'center'
+                }}
               >
-                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
+                <div className="vt-stat-caption" style={{ color: colors.muted }}>
                   PRs Hit
                 </div>
                 <div
-                  style={{ color: isDark ? colors.accent : colors.text }}
-                  className="font-display text-2xl font-extrabold mt-0.5"
+                  style={{
+                    color: isDark ? colors.accent : colors.text,
+                    fontSize: '1.5rem',
+                    fontWeight: 800,
+                    marginTop: '0.125rem'
+                  }}
+                  className="font-display"
                 >
                   {workoutSummary.prsAchieved.length}
                 </div>
@@ -3568,22 +3519,44 @@ export default function App() {
 
             {workoutSummary.prsAchieved.length > 0 && (
               <div
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="p-4 rounded-xl border space-y-2 tabular-nums"
+                style={{
+                  backgroundColor: colors.elevated,
+                  borderColor: colors.border,
+                  padding: '1rem',
+                  borderRadius: '0.75rem',
+                  borderWidth: '1px',
+                  borderStyle: 'solid'
+                }}
+                className="vt-stack-2 tabular-nums"
               >
-                <div className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4" />
+                <div
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '0.5rem'
+                  }}
+                  className="vt-flex-center-gap-2"
+                >
+                  <Sparkles size={16} />
                   <span>New Personal Records</span>
                 </div>
                 {workoutSummary.prsAchieved.map((pr, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-sm">
-                    <span className="font-semibold truncate pr-2">{pr.exerciseName}</span>
+                  <div key={idx} className="vt-flex-between" style={{ fontSize: '0.875rem', marginTop: '0.375rem' }}>
+                    <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: '0.5rem' }}>
+                      {pr.exerciseName}
+                    </span>
                     <span
                       style={{
                         backgroundColor: colors.accent,
-                        color: colors.accentText
+                        color: colors.accentText,
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                        padding: '0.125rem 0.5rem',
+                        borderRadius: '0.375rem',
+                        flexShrink: 0
                       }}
-                      className="text-xs font-extrabold px-2 py-0.5 rounded-md shrink-0"
                     >
                       {pr.isAssisted ? 'Assist ' : ''}
                       {formatWeight(pr.weightKg)} {appState.unit} × {pr.reps}
@@ -3598,9 +3571,11 @@ export default function App() {
               style={{
                 backgroundColor: colors.accent,
                 color: colors.accentText,
-                borderColor: colors.accentBorder
+                borderColor: colors.accentBorder,
+                minHeight: '48px',
+                fontSize: '0.875rem'
               }}
-              className="w-full min-h-[48px] rounded-xl border font-extrabold text-sm uppercase tracking-wider"
+              className="vt-primary-cta"
             >
               Done & View Progress
             </button>
@@ -3693,11 +3668,11 @@ function TodayView({
   const roundToPlate = (kg) => Math.max(0, Math.round(kg / 2.5) * 2.5);
 
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="vt-stack-4">
       {/* 7-Day Selector Bar */}
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-2 sm:p-3 rounded-2xl border grid grid-cols-7 gap-1 sm:gap-1.5"
+        className="vt-day-bar"
       >
         {orderedDays.map((day) => {
           const isSelected = day.dayIndex === selectedDayIndex;
@@ -3711,21 +3686,21 @@ function TodayView({
                 color: isSelected ? colors.accentText : colors.text,
                 borderColor: isSelected ? colors.accentBorder : colors.border
               }}
-              className="min-h-[50px] px-1 py-1.5 rounded-xl border flex flex-col items-center justify-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="vt-day-btn"
             >
-              <div className="flex items-center gap-0.5">
-                <span className="text-[11px] sm:text-xs font-extrabold uppercase">{day.shortDay}</span>
+              <div className="vt-day-btn-top">
+                <span className="vt-day-short">{day.shortDay}</span>
                 {isToday && (
                   <span
                     style={{
                       backgroundColor: isSelected ? '#0A0A0B' : colors.accent
                     }}
-                    className="w-1.5 h-1.5 rounded-full"
+                    className="vt-today-dot"
                   />
                 )}
               </div>
               <span
-                className="text-[9px] sm:text-[11px] font-bold truncate max-w-full"
+                className="vt-day-sub"
                 style={{ opacity: isSelected ? 0.95 : 0.75 }}
               >
                 {day.isRest ? 'Rest' : day.title}
@@ -3736,20 +3711,20 @@ function TodayView({
       </div>
 
       {/* Bento Header Summary + Warm-up & Ramp-in Controls */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="vt-bento-3">
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="lg:col-span-2 p-4 sm:p-6 rounded-2xl border flex flex-col justify-between gap-4"
+          className="vt-card vt-span-2-lg vt-today-hero-card"
         >
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3.5">
+          <div className="vt-today-hero-top">
             <div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="vt-pill-row">
                 <span
                   style={{
                     backgroundColor: colors.accent,
                     color: colors.accentText
                   }}
-                  className="text-xs font-extrabold uppercase px-2.5 py-1 rounded-md"
+                  className="vt-badge-accent"
                 >
                   {activeDayPlan.dayName}
                 </span>
@@ -3759,9 +3734,9 @@ function TodayView({
                     borderColor: colors.border,
                     color: colors.muted
                   }}
-                  className="text-xs font-bold px-2.5 py-1 rounded-md border flex items-center gap-1 tabular-nums"
+                  className="vt-meta-pill tabular-nums"
                 >
-                  <Clock className="w-3.5 h-3.5" />
+                  <Clock size={14} />
                   <span>~{activeDayPlan.estimatedMinutes} min</span>
                 </span>
                 {!activeDayPlan.isRest && (
@@ -3779,7 +3754,7 @@ function TodayView({
                       borderColor: appState.rampInEnabled ? colors.accentBorder : colors.border,
                       color: colors.text
                     }}
-                    className="text-xs font-extrabold px-2.5 py-1 rounded-md border uppercase"
+                    className="vt-ramp-btn"
                   >
                     {appState.rampInEnabled
                       ? 'Wk 1–2 Ramp-In: ON (2 sets @ 3–4 RIR)'
@@ -3787,13 +3762,13 @@ function TodayView({
                   </button>
                 )}
               </div>
-              <h2 className="font-display text-3xl sm:text-5xl font-black uppercase tracking-wide mt-2 leading-tight">
+              <h2 className="vt-hero-heading font-display">
                 {activeDayPlan.title}: {activeDayPlan.subtitle}
               </h2>
             </div>
 
             {!activeDayPlan.isRest && (
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="vt-workout-actions">
                 <button
                   onClick={() => setWorkoutRunning((prev) => !prev)}
                   style={{
@@ -3801,9 +3776,9 @@ function TodayView({
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="flex-1 sm:flex-initial min-h-[46px] px-3.5 rounded-xl border font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 font-mono-num"
+                  className="vt-timer-btn font-mono-num"
                 >
-                  {workoutRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  {workoutRunning ? <Pause size={16} /> : <Play size={16} />}
                   <span>
                     {workoutRunning || workoutElapsedSec > 0
                       ? formatTime(workoutElapsedSec)
@@ -3822,9 +3797,9 @@ function TodayView({
                       borderColor: colors.border,
                       color: colors.muted
                     }}
-                    className="min-h-[46px] min-w-[46px] rounded-xl border flex items-center justify-center shrink-0"
+                    className="vt-reset-timer-btn"
                   >
-                    <RotateCcw className="w-4 h-4" />
+                    <RotateCcw size={16} />
                   </button>
                 )}
                 <button
@@ -3834,9 +3809,9 @@ function TodayView({
                     color: colors.accentText,
                     borderColor: colors.accentBorder
                   }}
-                  className="flex-1 sm:flex-initial min-h-[46px] px-4 rounded-xl border font-extrabold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-1.5"
+                  className="vt-finish-btn"
                 >
-                  <Check className="w-4 h-4 stroke-[2.5]" />
+                  <Check size={16} strokeWidth={2.5} />
                   <span>Finish Workout</span>
                 </button>
               </div>
@@ -3844,33 +3819,30 @@ function TodayView({
           </div>
 
           {!activeDayPlan.isRest && (
-            <div
-              className="grid grid-cols-3 gap-2 sm:gap-3 pt-3.5 border-t tabular-nums"
-              style={{ borderColor: colors.border }}
-            >
+            <div className="vt-hero-metrics" style={{ borderColor: colors.border }}>
               <div>
-                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
+                <div className="vt-stat-caption" style={{ color: colors.muted }}>
                   Sets Logged
                 </div>
-                <div className="font-display text-2xl sm:text-3xl font-extrabold">
+                <div className="vt-metric-val font-display">
                   {sessionProgress.completedSets} / {sessionProgress.totalSets}
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
+                <div className="vt-stat-caption" style={{ color: colors.muted }}>
                   Live Volume
                 </div>
-                <div className="font-display text-2xl sm:text-3xl font-extrabold">
+                <div className="vt-metric-val font-display">
                   {formatWeight(sessionProgress.volumeKg)} {appState.unit}
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
+                <div className="vt-stat-caption" style={{ color: colors.muted }}>
                   Effort Target
                 </div>
                 <div
                   style={{ color: isDark ? colors.accent : colors.text }}
-                  className="font-display text-2xl sm:text-3xl font-extrabold"
+                  className="vt-metric-val font-display"
                 >
                   {appState.rampInEnabled ? '3–4 RIR' : '1–3 RIR'}
                 </div>
@@ -3882,17 +3854,17 @@ function TodayView({
         {/* Warm-Up Protocol Card */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-6 rounded-2xl border flex flex-col justify-between gap-3.5"
+          className="vt-card vt-warmup-card"
         >
           <div>
-            <div className="text-xs font-extrabold uppercase tracking-wider" style={{ color: colors.muted }}>
+            <div className="vt-track-label" style={{ color: colors.muted }}>
               Warm-Up & Rest Protocol
             </div>
-            <h3 className="font-display text-2xl font-extrabold uppercase mt-1">
+            <h3 className="vt-warmup-title font-display">
               5 Min Cardio + 3 Compound Ramp Sets
             </h3>
             {!activeDayPlan.isRest && (
-              <div className="text-xs mt-1.5 space-y-1 tabular-nums" style={{ color: colors.muted }}>
+              <div className="vt-warmup-list tabular-nums" style={{ color: colors.muted }}>
                 <p>
                   <strong style={{ color: colors.text }}>1st Compound Ramp:</strong>{' '}
                   {formatWeight(roundToPlate(firstCompoundWorkingWeightKg * 0.5))}
@@ -3909,7 +3881,7 @@ function TodayView({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 tabular-nums">
+          <div className="vt-rest-presets tabular-nums">
             <button
               onClick={() =>
                 setRestTimer({
@@ -3921,10 +3893,10 @@ function TodayView({
                   exerciseType: 'compound'
                 })
               }
-              style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[44px] px-2.5 rounded-xl border text-xs font-extrabold flex items-center justify-center gap-1"
+              style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+              className="vt-preset-btn"
             >
-              <Clock className="w-3.5 h-3.5" />
+              <Clock size={14} />
               <span>150s Heavy</span>
             </button>
             <button
@@ -3938,10 +3910,10 @@ function TodayView({
                   exerciseType: 'isolation'
                 })
               }
-              style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[44px] px-2.5 rounded-xl border text-xs font-extrabold flex items-center justify-center gap-1"
+              style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+              className="vt-preset-btn"
             >
-              <Zap className="w-3.5 h-3.5" />
+              <Zap size={14} />
               <span>75s Iso</span>
             </button>
           </div>
@@ -3952,19 +3924,19 @@ function TodayView({
       {activeDayPlan.isRest ? (
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-6 sm:p-8 rounded-2xl border text-center space-y-4"
+          className="vt-card vt-rest-day-card"
         >
           <div
             style={{ backgroundColor: colors.accent, color: colors.accentText }}
-            className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center"
+            className="vt-rest-day-icon"
           >
-            <Footprints className="w-8 h-8" />
+            <Footprints size={32} />
           </div>
-          <h3 className="font-display text-3xl sm:text-4xl font-black uppercase">
+          <h3 className="vt-section-title vt-section-title-lg font-display">
             Sunday Active Recovery: 20–30 Min Easy Walk
           </h3>
-          <p style={{ color: colors.muted }} className="max-w-lg mx-auto text-xs sm:text-sm">
-            Light mobility, no lifting. Keep nutrition identical to training days (2,900 kcal &amp; 130 g protein from whole Indian foods) and sleep ≥ 7.5 hours.
+          <p style={{ color: colors.muted }} className="vt-rest-day-desc">
+            Light mobility, no lifting. Keep nutrition identical to training days (2,900 kcal & 130 g protein from whole Indian foods) and sleep ≥ 7.5 hours.
           </p>
           <button
             onClick={() => {
@@ -3976,9 +3948,9 @@ function TodayView({
               color: appState.sundayWalkDone ? colors.accentText : colors.text,
               borderColor: appState.sundayWalkDone ? colors.accentBorder : colors.border
             }}
-            className="min-h-[48px] px-6 rounded-xl border font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2"
+            className="vt-walk-btn"
           >
-            <Check className="w-4 h-4 stroke-[2.5]" />
+            <Check size={16} strokeWidth={2.5} />
             <span>
               {appState.sundayWalkDone
                 ? '20–30 Min Walk Completed ✓'
@@ -3988,7 +3960,7 @@ function TodayView({
         </div>
       ) : (
         /* Exercise Cards List */
-        <div className="space-y-3.5 sm:space-y-4">
+        <div className="vt-stack-3-5">
           {activeDayPlan.exercises.map((exercise, exIdx) => {
             const limit = getEffectiveSetCount(exercise);
             const draftSets = (appState.activeDrafts[exercise.id] || []).slice(0, limit);
@@ -4019,39 +3991,39 @@ function TodayView({
               <div
                 key={exercise.id}
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                className="p-4 sm:p-6 rounded-2xl border space-y-3.5"
+                className="vt-card vt-p-card vt-stack-3-5"
               >
                 {/* Exercise Header */}
-                <div className="flex items-start justify-between gap-2.5">
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
+                <div className="vt-between-start vt-gap-2-5">
+                  <div className="vt-stack-1 vt-min-w-0 vt-flex-1">
+                    <div className="vt-row-wrap vt-gap-1-5">
                       <span
                         style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                        className="text-[11px] font-extrabold px-2 py-0.5 rounded-md border font-mono-num"
+                        className="vt-badge vt-border vt-text-11 vt-font-extrabold font-mono-num"
                       >
                         #{exIdx + 1}
                       </span>
                       {exercise.flags?.updatedInV2 && (
                         <span
                           style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                          className="text-[10px] font-extrabold px-1.5 py-0.5 rounded uppercase"
+                          className="vt-badge-xs vt-text-10 vt-font-extrabold vt-uppercase"
                         >
                           ★ Stretch Priority
                         </span>
                       )}
-                      <h3 className="font-display text-2xl sm:text-3xl font-black uppercase tracking-wide leading-tight">
+                      <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase vt-tracking-wide vt-leading-tight">
                         {displayName}
                       </h3>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                    <div className="vt-row-wrap vt-gap-1-5 vt-pt-0-5">
                       <span
                         style={{
                           backgroundColor: colors.elevated,
                           borderColor: colors.border,
                           color: isDark ? colors.accent : colors.text
                         }}
-                        className="text-[11px] font-extrabold px-2 py-0.5 rounded-md border uppercase"
+                        className="vt-badge vt-border vt-text-11 vt-font-extrabold vt-uppercase"
                       >
                         {exercise.targetMuscle}
                       </span>
@@ -4062,7 +4034,7 @@ function TodayView({
                             borderColor: colors.border,
                             color: colors.muted
                           }}
-                          className="text-[11px] font-semibold px-2 py-0.5 rounded-md border"
+                          className="vt-badge vt-border vt-text-11 vt-font-semibold"
                         >
                           sec: {exercise.secondaryGroups.join(', ')}
                         </span>
@@ -4073,7 +4045,7 @@ function TodayView({
                           borderColor: colors.border,
                           color: colors.muted
                         }}
-                        className="text-[11px] font-bold px-2 py-0.5 rounded-md border font-mono-num"
+                        className="vt-badge vt-border vt-text-11 vt-font-bold font-mono-num"
                       >
                         {exercise.type} • {exercise.restSec}s rest • Step {activeStepCode}
                       </span>
@@ -4083,7 +4055,7 @@ function TodayView({
                             backgroundColor: colors.accentSurface,
                             borderColor: colors.accentBorder
                           }}
-                          className="text-[11px] font-extrabold px-2 py-0.5 rounded-md border uppercase"
+                          className="vt-badge vt-border vt-text-11 vt-font-extrabold vt-uppercase"
                         >
                           Unilateral (Per Leg)
                         </span>
@@ -4091,8 +4063,8 @@ function TodayView({
                     </div>
 
                     {exercise.flags?.variants && (
-                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                        <span className="text-[11px] font-bold uppercase" style={{ color: colors.muted }}>
+                      <div className="vt-row-wrap vt-gap-1-5 vt-pt-1">
+                        <span className="vt-text-11 vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
                           Variant:
                         </span>
                         {exercise.flags.variants.map((v) => {
@@ -4115,7 +4087,7 @@ function TodayView({
                                 color: isChosen ? colors.accentText : colors.text,
                                 borderColor: isChosen ? colors.accentBorder : colors.border
                               }}
-                              className="min-h-[36px] px-2.5 py-1 rounded-lg border text-xs font-extrabold"
+                              className="vt-btn vt-h-36 vt-px-2-5 vt-py-1 vt-rounded-lg vt-border vt-text-xs vt-font-extrabold"
                             >
                               {v.name}
                             </button>
@@ -4126,8 +4098,8 @@ function TodayView({
 
                     {/* Equipment Busy Alternative Swapper */}
                     {exercise.alternatives?.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                        <span className="text-[11px] font-bold uppercase" style={{ color: colors.muted }}>
+                      <div className="vt-row-wrap vt-gap-1-5 vt-pt-1">
+                        <span className="vt-text-11 vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
                           Busy? Swap:
                         </span>
                         <button
@@ -4144,7 +4116,7 @@ function TodayView({
                             borderColor: !swappedName ? colors.accentBorder : colors.border,
                             color: colors.text
                           }}
-                          className="min-h-[32px] px-2 py-0.5 rounded-lg border text-[11px] font-bold"
+                          className="vt-btn vt-h-32 vt-px-2 vt-py-0-5 vt-rounded-lg vt-border vt-text-11 vt-font-bold"
                         >
                           Default
                         </button>
@@ -4168,7 +4140,7 @@ function TodayView({
                                 color: isSwapped ? colors.accentText : colors.text,
                                 borderColor: isSwapped ? colors.accentBorder : colors.border
                               }}
-                              className="min-h-[32px] px-2 py-0.5 rounded-lg border text-[11px] font-bold"
+                              className="vt-btn vt-h-32 vt-px-2 vt-py-0-5 vt-rounded-lg vt-border vt-text-11 vt-font-bold"
                             >
                               {alt}
                             </button>
@@ -4180,10 +4152,10 @@ function TodayView({
                     {/* One-Line Form Cue */}
                     <p
                       style={{ color: colors.muted }}
-                      className="text-xs sm:text-sm flex items-start gap-1.5 pt-1"
+                      className="vt-text-resp-xs-sm vt-flex vt-items-start vt-gap-1-5 vt-pt-1"
                     >
                       <Info
-                        className="w-4 h-4 shrink-0 mt-0.5"
+                        className="vt-icon-4 vt-shrink-0 vt-mt-0-5"
                         style={{ color: isDark ? colors.accent : colors.text }}
                       />
                       <span>
@@ -4195,12 +4167,12 @@ function TodayView({
                   {/* Prescription Pill */}
                   <div
                     style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                    className="px-3 py-1.5 rounded-xl border text-right tabular-nums shrink-0"
+                    className="vt-px-3 vt-py-1-5 vt-box-xl vt-text-right vt-tabular vt-shrink-0"
                   >
-                    <div className="text-[10px] font-bold uppercase" style={{ color: colors.muted }}>
+                    <div className="vt-text-10 vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
                       Sets × Reps
                     </div>
-                    <div className="font-display text-xl sm:text-2xl font-extrabold">
+                    <div className="font-display vt-text-resp-xl-2xl vt-font-extrabold">
                       {limit} × {exercise.repLabel}
                     </div>
                   </div>
@@ -4212,10 +4184,10 @@ function TodayView({
                     backgroundColor: overload.shouldIncrease ? colors.accentSurface : colors.elevated,
                     borderColor: overload.shouldIncrease ? colors.accentBorder : colors.border
                   }}
-                  className="p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 tabular-nums"
+                  className="vt-p-3 vt-box-xl vt-resp-row vt-tabular"
                 >
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-bold uppercase tracking-wider flex flex-wrap items-center gap-1.5">
+                  <div className="vt-stack-0-5">
+                    <div className="vt-text-xs vt-font-bold vt-uppercase vt-tracking-wider vt-row-wrap vt-gap-1-5">
                       <span>Last Session:</span>
                       <span style={{ color: colors.muted }} className="font-mono-num">
                         {prevSets.length > 0
@@ -4230,24 +4202,24 @@ function TodayView({
                           : 'First session — log your starting working weights'}
                       </span>
                     </div>
-                    <div className="text-xs font-semibold" style={{ color: colors.muted }}>
+                    <div className="vt-text-xs vt-font-semibold" style={{ color: colors.muted }}>
                       {overload.reason}
                     </div>
                   </div>
 
                   {overload.shouldIncrease && (
-                    <div className="flex items-center justify-between sm:justify-end gap-2">
+                    <div className="vt-overload-actions">
                       <span
                         style={{
                           backgroundColor: colors.accent,
                           color: colors.accentText
                         }}
-                        className="text-xs font-extrabold uppercase px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-mono-num"
+                        className="vt-pill-lg vt-text-xs vt-font-extrabold vt-uppercase vt-gap-1 font-mono-num"
                       >
                         {overload.mode === 'assist' ? (
-                          <ArrowDownRight className="w-4 h-4 stroke-[2.5]" />
+                          <ArrowDownRight className="vt-icon-4 vt-stroke-2-5" />
                         ) : (
-                          <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
+                          <ArrowUpRight className="vt-icon-4 vt-stroke-2-5" />
                         )}
                         <span>
                           {overload.mode === 'assist'
@@ -4268,7 +4240,7 @@ function TodayView({
                           borderColor: colors.accentBorder,
                           color: colors.text
                         }}
-                        className="min-h-[44px] px-3 rounded-xl border text-xs font-extrabold uppercase shrink-0"
+                        className="vt-btn vt-h-44 vt-px-3 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-shrink-0"
                       >
                         Apply
                       </button>
@@ -4277,17 +4249,17 @@ function TodayView({
                 </div>
 
                 {/* Set Rows Table */}
-                <div className="space-y-2 tabular-nums">
+                <div className="vt-stack-2 vt-tabular">
                   <div
                     style={{ color: colors.muted }}
-                    className="grid grid-cols-12 gap-1.5 sm:gap-2 px-2 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider"
+                    className="vt-grid-12 vt-set-grid-gap vt-px-2 vt-text-resp-10-11 vt-font-extrabold vt-uppercase vt-tracking-wider"
                   >
-                    <div className="col-span-2">Set</div>
-                    <div className="col-span-4">
+                    <div className="vt-col-span-2">Set</div>
+                    <div className="vt-col-span-4">
                       {isAssisted ? `Assist (${appState.unit})` : `Weight (${appState.unit})`}
                     </div>
-                    <div className="col-span-4">Reps ({exercise.repLabel})</div>
-                    <div className="col-span-2 text-right">Done</div>
+                    <div className="vt-col-span-4">Reps ({exercise.repLabel})</div>
+                    <div className="vt-col-span-2 vt-text-right">Done</div>
                   </div>
 
                   {draftSets.map((setRow, sIdx) => {
@@ -4299,15 +4271,15 @@ function TodayView({
                           backgroundColor: setRow.completed ? colors.accentSurface : colors.elevated,
                           borderColor: setRow.completed ? colors.accentBorder : colors.border
                         }}
-                        className="grid grid-cols-12 gap-1.5 sm:gap-2 items-center p-2 rounded-xl border transition-colors"
+                        className="vt-grid-12 vt-set-grid-gap vt-items-center vt-p-2 vt-box-xl vt-transition-colors"
                       >
-                        <div className="col-span-2 pl-1">
-                          <span className="font-display text-xl font-extrabold">
+                        <div className="vt-col-span-2 vt-pl-1">
+                          <span className="font-display vt-text-xl vt-font-extrabold">
                             #{sIdx + 1}
                           </span>
                           {prevSet && (
                             <div
-                              className="text-[10px] font-mono-num leading-tight"
+                              className="vt-text-10 font-mono-num vt-leading-tight"
                               style={{ color: colors.muted }}
                             >
                               {formatWeight(prevSet.weight)}×{prevSet.reps}
@@ -4315,7 +4287,7 @@ function TodayView({
                           )}
                         </div>
 
-                        <div className="col-span-4">
+                        <div className="vt-col-span-4">
                           <input
                             type="number"
                             inputMode="decimal"
@@ -4330,11 +4302,11 @@ function TodayView({
                               borderColor: colors.border,
                               color: colors.text
                             }}
-                            className="w-full min-h-[44px] px-2 rounded-xl border text-center font-extrabold text-base font-mono-num focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                            className="vt-input vt-h-44 vt-px-2 vt-text-center vt-font-extrabold vt-text-base font-mono-num"
                           />
                         </div>
 
-                        <div className="col-span-4">
+                        <div className="vt-col-span-4">
                           <input
                             type="number"
                             inputMode="numeric"
@@ -4348,11 +4320,11 @@ function TodayView({
                               borderColor: colors.border,
                               color: colors.text
                             }}
-                            className="w-full min-h-[44px] px-2 rounded-xl border text-center font-extrabold text-base font-mono-num focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                            className="vt-input vt-h-44 vt-px-2 vt-text-center vt-font-extrabold vt-text-base font-mono-num"
                           />
                         </div>
 
-                        <div className="col-span-2 flex justify-end">
+                        <div className="vt-col-span-2 vt-flex vt-justify-end">
                           <button
                             onClick={() => handleToggleSetComplete(exercise, sIdx)}
                             aria-label={`Mark ${displayName} set ${sIdx + 1} complete`}
@@ -4361,9 +4333,9 @@ function TodayView({
                               color: setRow.completed ? colors.accentText : colors.muted,
                               borderColor: setRow.completed ? colors.accentBorder : colors.border
                             }}
-                            className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                            className="vt-btn vt-sq-44 vt-box-xl vt-transition-colors"
                           >
-                            <Check className="w-5 h-5 stroke-[2.5]" />
+                            <Check className="vt-icon-5 vt-stroke-2-5" />
                           </button>
                         </div>
                       </div>
@@ -4383,7 +4355,7 @@ function TodayView({
 // 2. PLAN VIEW COMPONENT
 // ============================================================================
 
-function PlanView({ colors, isDark, appState, onSelectWorkoutDay }) {
+function PlanView({ colors, isDark, onSelectWorkoutDay }) {
   const [muscleFilter, setMuscleFilter] = useState('All');
 
   const muscleCategories = [
@@ -4407,30 +4379,30 @@ function PlanView({ colors, isDark, appState, onSelectWorkoutDay }) {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="vt-stack-5">
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-4 sm:p-6 rounded-2xl border space-y-4"
+        className="vt-card vt-p-card vt-stack-4"
       >
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="vt-between-center vt-flex-wrap vt-gap-4">
           <div>
             <span
               style={{ backgroundColor: colors.accent, color: colors.accentText }}
-              className="text-xs font-extrabold uppercase px-2.5 py-1 rounded-md"
+              className="vt-badge-lg vt-text-xs vt-font-extrabold vt-uppercase"
             >
               6-Day PPL V-Taper Split (116 Primary Sets)
             </span>
-            <h2 className="font-display text-3xl sm:text-4xl font-black uppercase mt-2">
+            <h2 className="font-display vt-text-resp-3xl-4xl vt-font-black vt-uppercase vt-mt-2">
               Weekly Hypertrophy Blueprint
             </h2>
-            <p style={{ color: colors.muted }} className="text-xs sm:text-sm">
+            <p style={{ color: colors.muted }} className="vt-text-resp-xs-sm">
               20 direct Lat/Back sets + 27 total Deltoid sets (11 Side, 7 Front, 9 Rear) engineered for maximum shoulder-to-waist ratio.
             </p>
           </div>
         </div>
 
         {/* Muscle Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pt-1">
+        <div className="vt-flex vt-items-center vt-gap-1-5 vt-overflow-x-auto vt-pt-1">
           {muscleCategories.map((cat) => {
             const active = muscleFilter === cat;
             return (
@@ -4442,7 +4414,7 @@ function PlanView({ colors, isDark, appState, onSelectWorkoutDay }) {
                   color: active ? colors.accentText : colors.text,
                   borderColor: active ? colors.accentBorder : colors.border
                 }}
-                className="min-h-[40px] px-3 rounded-xl border text-xs font-extrabold uppercase whitespace-nowrap"
+                className="vt-btn vt-h-40 vt-px-3 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-nowrap"
               >
                 {cat}
               </button>
@@ -4452,7 +4424,7 @@ function PlanView({ colors, isDark, appState, onSelectWorkoutDay }) {
       </div>
 
       {/* Days Grid */}
-      <div className="grid grid-cols-1 gap-4">
+      <div className="vt-grid-1 vt-gap-4">
         {orderedDays.map((day) => {
           const filteredExercises =
             muscleFilter === 'All'
@@ -4471,20 +4443,20 @@ function PlanView({ colors, isDark, appState, onSelectWorkoutDay }) {
             <div
               key={day.dayIndex}
               style={{ backgroundColor: colors.card, borderColor: colors.border }}
-              className="p-4 sm:p-6 rounded-2xl border space-y-4"
+              className="vt-card vt-p-card vt-stack-4"
             >
               <div
-                className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b"
+                className="vt-between-center vt-flex-wrap vt-gap-3 vt-pb-3 vt-border-b"
                 style={{ borderColor: colors.border }}
               >
-                <div className="flex items-center gap-2">
+                <div className="vt-flex vt-items-center vt-gap-2">
                   <span
                     style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                    className="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded-md"
+                    className="vt-badge-lg vt-text-xs vt-font-extrabold vt-uppercase"
                   >
                     {day.shortDay}
                   </span>
-                  <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
+                  <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
                     {day.title} — {day.subtitle}
                   </h3>
                 </div>
@@ -4492,49 +4464,49 @@ function PlanView({ colors, isDark, appState, onSelectWorkoutDay }) {
                 <button
                   onClick={() => onSelectWorkoutDay(day.dayIndex)}
                   style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                  className="min-h-[42px] px-3.5 rounded-xl border text-xs font-extrabold uppercase flex items-center gap-1"
+                  className="vt-btn vt-h-42 vt-px-3-5 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-1"
                 >
                   <span>Open in Today</span>
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="vt-icon-4" />
                 </button>
               </div>
 
               {day.isRest ? (
                 <div
                   style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                  className="p-4 rounded-xl border flex items-center gap-3"
+                  className="vt-p-4 vt-box-xl vt-flex vt-items-center vt-gap-3"
                 >
                   <Footprints
-                    className="w-6 h-6 shrink-0"
+                    className="vt-icon-6 vt-shrink-0"
                     style={{ color: isDark ? colors.accent : colors.text }}
                   />
-                  <div className="text-xs sm:text-sm">
+                  <div className="vt-text-resp-xs-sm">
                     <strong>Rest, 20–30 min easy walk.</strong> Active recovery, light mobility, and weekly grocery prep.
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="vt-grid-md-2 vt-gap-3">
                   {filteredExercises.map((ex) => (
                     <div
                       key={ex.id}
                       style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                      className="p-3.5 rounded-xl border flex flex-col justify-between gap-2"
+                      className="vt-p-3-5 vt-box-xl vt-col-between vt-gap-2"
                     >
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="vt-between-start vt-gap-2">
                         <div>
-                          <div className="font-extrabold text-sm sm:text-base">{ex.name}</div>
-                          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                          <div className="vt-font-extrabold vt-text-resp-sm-base">{ex.name}</div>
+                          <div className="vt-row-wrap vt-gap-1-5 vt-mt-1">
                             <span
                               style={{
                                 backgroundColor: colors.card,
                                 borderColor: colors.border,
                                 color: isDark ? colors.accent : colors.text
                               }}
-                              className="text-[10px] font-extrabold px-2 py-0.5 rounded border uppercase"
+                              className="vt-badge-xs vt-border vt-text-10 vt-font-extrabold vt-uppercase"
                             >
                               {ex.primaryGroup}
                             </span>
-                            <span className="text-[11px] font-semibold font-mono-num" style={{ color: colors.muted }}>
+                            <span className="vt-text-11 vt-font-semibold font-mono-num" style={{ color: colors.muted }}>
                               {ex.type} • {ex.restSec}s • Step {ex.step}
                             </span>
                           </div>
@@ -4544,14 +4516,14 @@ function PlanView({ colors, isDark, appState, onSelectWorkoutDay }) {
                             backgroundColor: colors.card,
                             borderColor: colors.border
                           }}
-                          className="font-display px-2.5 py-1 rounded-lg border text-lg font-extrabold shrink-0 tabular-nums"
+                          className="font-display vt-px-2-5 vt-py-1 vt-rounded-lg vt-border vt-text-lg vt-font-extrabold vt-shrink-0 vt-tabular"
                         >
                           {ex.sets} × {ex.repLabel}
                         </div>
                       </div>
 
                       <p
-                        className="text-xs pt-2 border-t"
+                        className="vt-text-xs vt-pt-2 vt-border-t"
                         style={{ color: colors.muted, borderColor: colors.border }}
                       >
                         <strong style={{ color: colors.text }}>Cue:</strong> {ex.cue}
@@ -4578,7 +4550,6 @@ function NutritionView({
   appState,
   setAppState,
   nutritionTotals,
-  gainAnalysis,
   handleDietTrackChange,
   showToast
 }) {
@@ -4639,25 +4610,25 @@ function NutritionView({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="vt-stack-5">
       {/* Top Track Switcher */}
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+        className="vt-card vt-p-card-md vt-resp-row-md"
       >
         <div>
           <span
             style={{ backgroundColor: colors.accent, color: colors.accentText }}
-            className="text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded-md"
+            className="vt-badge-lg vt-text-11 vt-font-extrabold vt-uppercase"
           >
             Zero Supplements • 100% Indian Kitchen
           </span>
-          <h2 className="font-display text-3xl sm:text-4xl font-black uppercase mt-1">
+          <h2 className="font-display vt-text-resp-3xl-4xl vt-font-black vt-uppercase vt-mt-1">
             Whole-Food Lean Bulk Nutrition
           </h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="vt-row-wrap vt-gap-1-5">
           {['non-veg', 'eggetarian', 'veg'].map((t) => {
             const active = (appState.profile.dietTrack || 'non-veg') === t;
             return (
@@ -4669,7 +4640,7 @@ function NutritionView({
                   color: active ? colors.accentText : colors.text,
                   borderColor: active ? colors.accentBorder : colors.border
                 }}
-                className="min-h-[40px] px-3 rounded-xl border text-xs font-extrabold uppercase"
+                className="vt-btn vt-h-40 vt-px-3 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase"
               >
                 {t}
               </button>
@@ -4681,7 +4652,7 @@ function NutritionView({
       {/* Activity Rings Card */}
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-4 rounded-2xl border grid grid-cols-3 gap-2 justify-items-center tabular-nums"
+        className="vt-card vt-p-4 vt-grid-3 vt-gap-2 vt-justify-items-center vt-tabular"
       >
         {[
           {
@@ -4706,7 +4677,7 @@ function NutritionView({
             t: `${(appState.waterMl / 1000).toFixed(1)}/${(waterTarget / 1000).toFixed(1)}L`
           }
         ].map((r) => (
-          <div key={r.s} className="text-center">
+          <div key={r.s} className="vt-text-center">
             <Ring
               value={r.v}
               max={r.m}
@@ -4715,46 +4686,43 @@ function NutritionView({
               label={`${Math.min(100, Math.round((r.v / r.m) * 100))}%`}
               sub={r.s}
             />
-            <div className="text-[11px] font-bold mt-1.5 font-mono-num">{r.t}</div>
+            <div className="vt-text-11 vt-font-bold vt-mt-1-5 font-mono-num">{r.t}</div>
           </div>
         ))}
       </div>
 
       {/* Macro & Hydration Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 tabular-nums">
+      <div className="vt-grid-md-3 vt-gap-4 vt-tabular">
         {/* Calories Card */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-5 rounded-2xl border space-y-3"
+          className="vt-card vt-p-card-md vt-stack-3"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-extrabold uppercase" style={{ color: colors.muted }}>
+          <div className="vt-between-center">
+            <span className="vt-text-xs vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
               Daily Energy
             </span>
-            <Flame className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
+            <Flame className="vt-icon-5" style={{ color: isDark ? colors.accent : colors.text }} />
           </div>
-          <div className="flex items-baseline justify-between">
-            <div className="font-display text-3xl sm:text-4xl font-black">
+          <div className="vt-flex vt-items-baseline vt-justify-between">
+            <div className="font-display vt-text-resp-3xl-4xl vt-font-black">
               {nutritionTotals.consumedKcal}{' '}
-              <span className="text-lg font-bold" style={{ color: colors.muted }}>
+              <span className="vt-text-lg vt-font-bold" style={{ color: colors.muted }}>
                 / {kcalTarget} kcal
               </span>
             </div>
-            <span className="text-xs font-extrabold font-mono-num">{kcalPercent}%</span>
+            <span className="vt-text-xs vt-font-extrabold font-mono-num">{kcalPercent}%</span>
           </div>
-          <div
-            style={{ backgroundColor: colors.elevated }}
-            className="w-full h-3 rounded-full overflow-hidden"
-          >
+          <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track">
             <div
               style={{
                 width: `${kcalPercent}%`,
                 backgroundColor: colors.accent
               }}
-              className="h-full transition-all"
+              className="vt-progress-fill"
             />
           </div>
-          <div className="text-[11px] flex justify-between" style={{ color: colors.muted }}>
+          <div className="vt-text-11 vt-between-center" style={{ color: colors.muted }}>
             <span>Planned Menu: {nutritionTotals.plannedKcal} kcal</span>
             <span>Floor: {SCIENCE_RULES.MIN_ACCEPTABLE_KCAL} kcal</span>
           </div>
@@ -4763,39 +4731,36 @@ function NutritionView({
         {/* Protein Card */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-5 rounded-2xl border space-y-3"
+          className="vt-card vt-p-card-md vt-stack-3"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-extrabold uppercase" style={{ color: colors.muted }}>
+          <div className="vt-between-center">
+            <span className="vt-text-xs vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
               Whole-Food Protein
             </span>
             <ShieldCheck
-              className="w-5 h-5"
+              className="vt-icon-5"
               style={{ color: isDark ? colors.accent : colors.text }}
             />
           </div>
-          <div className="flex items-baseline justify-between">
-            <div className="font-display text-3xl sm:text-4xl font-black">
+          <div className="vt-flex vt-items-baseline vt-justify-between">
+            <div className="font-display vt-text-resp-3xl-4xl vt-font-black">
               {nutritionTotals.consumedProtein}g{' '}
-              <span className="text-lg font-bold" style={{ color: colors.muted }}>
+              <span className="vt-text-lg vt-font-bold" style={{ color: colors.muted }}>
                 / {proteinTarget}g
               </span>
             </div>
-            <span className="text-xs font-extrabold font-mono-num">{proteinPercent}%</span>
+            <span className="vt-text-xs vt-font-extrabold font-mono-num">{proteinPercent}%</span>
           </div>
-          <div
-            style={{ backgroundColor: colors.elevated }}
-            className="w-full h-3 rounded-full overflow-hidden"
-          >
+          <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track">
             <div
               style={{
                 width: `${proteinPercent}%`,
                 backgroundColor: colors.accent
               }}
-              className="h-full transition-all"
+              className="vt-progress-fill"
             />
           </div>
-          <div className="text-[11px] flex justify-between" style={{ color: colors.muted }}>
+          <div className="vt-text-11 vt-between-center" style={{ color: colors.muted }}>
             <span>Feedings ≥18g: {nutritionTotals.proteinFeedingsCount}/4</span>
             <span>Floor: 110g/day</span>
           </div>
@@ -4804,30 +4769,30 @@ function NutritionView({
         {/* Hydration & Sleep Card */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-5 rounded-2xl border space-y-3"
+          className="vt-card vt-p-card-md vt-stack-3"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-extrabold uppercase" style={{ color: colors.muted }}>
-              Water (3.5L) &amp; Sleep
+          <div className="vt-between-center">
+            <span className="vt-text-xs vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+              Water (3.5L) & Sleep
             </span>
-            <Droplets className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
+            <Droplets className="vt-icon-5" style={{ color: isDark ? colors.accent : colors.text }} />
           </div>
-          <div className="flex items-baseline justify-between">
-            <div className="font-display text-3xl sm:text-4xl font-black">
+          <div className="vt-flex vt-items-baseline vt-justify-between">
+            <div className="font-display vt-text-resp-3xl-4xl vt-font-black">
               {(appState.waterMl / 1000).toFixed(2)}L{' '}
-              <span className="text-lg font-bold" style={{ color: colors.muted }}>
+              <span className="vt-text-lg vt-font-bold" style={{ color: colors.muted }}>
                 / {(waterTarget / 1000).toFixed(1)}L
               </span>
             </div>
-            <span className="text-xs font-extrabold font-mono-num">{waterPercent}%</span>
+            <span className="vt-text-xs vt-font-extrabold font-mono-num">{waterPercent}%</span>
           </div>
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="vt-grid-3 vt-gap-1-5">
             <button
               onClick={() =>
                 setAppState((prev) => ({ ...prev, waterMl: prev.waterMl + 250 }))
               }
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[38px] rounded-xl border text-xs font-extrabold"
+              className="vt-btn vt-h-38 vt-box-xl vt-text-xs vt-font-extrabold"
             >
               +250ml
             </button>
@@ -4836,14 +4801,14 @@ function NutritionView({
                 setAppState((prev) => ({ ...prev, waterMl: prev.waterMl + 500 }))
               }
               style={{ backgroundColor: colors.accent, color: colors.accentText }}
-              className="min-h-[38px] rounded-xl text-xs font-extrabold"
+              className="vt-btn vt-h-38 vt-rounded-xl vt-text-xs vt-font-extrabold"
             >
               +500ml
             </button>
             <button
               onClick={() => setAppState((prev) => ({ ...prev, waterMl: 0 }))}
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[38px] rounded-xl border text-xs font-bold"
+              className="vt-btn vt-h-38 vt-box-xl vt-text-xs vt-font-bold"
             >
               Reset
             </button>
@@ -4852,7 +4817,7 @@ function NutritionView({
       </div>
 
       {/* Sub-Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto">
+      <div className="vt-flex vt-items-center vt-gap-2 vt-overflow-x-auto">
         {[
           { id: 'daily', label: 'Today 7-Slot Checklist' },
           { id: 'rotation', label: '7-Day Rotation & Grocery List' },
@@ -4868,7 +4833,7 @@ function NutritionView({
                 color: active ? colors.accentText : colors.text,
                 borderColor: active ? colors.accentBorder : colors.border
               }}
-              className="min-h-[42px] px-3.5 rounded-xl border text-xs font-extrabold uppercase whitespace-nowrap"
+              className="vt-btn vt-h-42 vt-px-3-5 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-nowrap"
             >
               {tab.label}
             </button>
@@ -4877,8 +4842,8 @@ function NutritionView({
       </div>
 
       {subView === 'daily' && (
-        <div className="space-y-4">
-          <div className="space-y-3">
+        <div className="vt-stack-4">
+          <div className="vt-stack-3">
             {MEAL_SLOTS.map((slot) => {
               const allowedOptions = slot.options.filter((o) =>
                 o.tracks.includes(appState.profile.dietTrack || 'non-veg')
@@ -4898,18 +4863,18 @@ function NutritionView({
                     backgroundColor: isDone ? colors.accentSurface : colors.card,
                     borderColor: isDone ? colors.accentBorder : colors.border
                   }}
-                  className="p-4 sm:p-5 rounded-2xl border space-y-3 transition-colors"
+                  className="vt-card vt-p-card-md vt-stack-3 vt-transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
+                  <div className="vt-between-start vt-gap-3">
+                    <div className="vt-stack-1 vt-flex-1">
+                      <div className="vt-row-wrap vt-gap-2">
                         <span
                           style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                          className="text-[11px] font-extrabold px-2 py-0.5 rounded border font-mono-num"
+                          className="vt-badge vt-border vt-text-11 vt-font-extrabold font-mono-num"
                         >
                           {slot.timeHint}
                         </span>
-                        <h3 className="font-display text-2xl font-black uppercase">
+                        <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
                           {slot.slotName}
                         </h3>
                         <span
@@ -4917,13 +4882,13 @@ function NutritionView({
                             backgroundColor: colors.accent,
                             color: colors.accentText
                           }}
-                          className="text-xs font-extrabold px-2 py-0.5 rounded font-mono-num"
+                          className="vt-badge vt-text-xs vt-font-extrabold font-mono-num"
                         >
                           {macros.kcal} kcal • {macros.protein}g P
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm font-semibold">{activeOpt.description}</p>
-                      <div className="text-[11px] font-mono-num" style={{ color: colors.muted }}>
+                      <p className="vt-text-resp-xs-sm vt-font-semibold">{activeOpt.description}</p>
+                      <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
                         Carbs: {macros.carbs}g • Fat: {macros.fat}g • Anchor: {activeOpt.proteinAnchor}
                       </div>
                     </div>
@@ -4936,18 +4901,18 @@ function NutritionView({
                         color: isDone ? colors.accentText : colors.muted,
                         borderColor: isDone ? colors.accentBorder : colors.border
                       }}
-                      className="min-h-[48px] min-w-[48px] rounded-xl border flex items-center justify-center shrink-0"
+                      className="vt-btn vt-sq-48 vt-box-xl vt-shrink-0"
                     >
-                      <Check className="w-6 h-6 stroke-[2.5]" />
+                      <Check className="vt-icon-6 vt-stroke-2-5" />
                     </button>
                   </div>
 
                   {allowedOptions.length > 1 && (
                     <div
-                      className="flex flex-wrap items-center gap-1.5 pt-2 border-t"
+                      className="vt-row-wrap vt-gap-1-5 vt-pt-2 vt-border-t"
                       style={{ borderColor: colors.border }}
                     >
-                      <span className="text-[11px] font-bold uppercase" style={{ color: colors.muted }}>
+                      <span className="vt-text-11 vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
                         Swap Option:
                       </span>
                       {allowedOptions.map((opt) => {
@@ -4961,7 +4926,7 @@ function NutritionView({
                               color: chosen ? colors.accentText : colors.text,
                               borderColor: chosen ? colors.accentBorder : colors.border
                             }}
-                            className="min-h-[34px] px-2.5 py-1 rounded-lg border text-xs font-extrabold"
+                            className="vt-btn vt-h-34 vt-px-2-5 vt-py-1 vt-rounded-lg vt-border vt-text-xs vt-font-extrabold"
                           >
                             {opt.label}
                           </button>
@@ -4977,14 +4942,14 @@ function NutritionView({
           {/* Appetite Helpers */}
           <div
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
-            className="p-4 sm:p-5 rounded-2xl border space-y-3"
+            className="vt-card vt-p-card-md vt-stack-3"
           >
-            <div className="flex items-center justify-between">
+            <div className="vt-between-center">
               <div>
-                <h3 className="font-display text-2xl font-black uppercase">
+                <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
                   One-Tap Appetite Helpers (+Calories)
                 </h3>
-                <p className="text-xs" style={{ color: colors.muted }}>
+                <p className="vt-text-xs" style={{ color: colors.muted }}>
                   Struggling to hit 2,900 kcal or need +300 kcal for a plateau? Tap to log low-volume whole foods.
                 </p>
               </div>
@@ -4992,28 +4957,28 @@ function NutritionView({
                 <button
                   onClick={handleClearHelpers}
                   style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                  className="min-h-[38px] px-3 rounded-xl border text-xs font-bold"
+                  className="vt-btn vt-h-38 vt-px-3 vt-box-xl vt-text-xs vt-font-bold"
                 >
                   Clear ({appState.loggedAppetiteHelpers.length})
                 </button>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+            <div className="vt-grid-helpers vt-gap-2">
               {APPETITE_HELPERS.map((helper) => (
                 <button
                   key={helper.id}
                   onClick={() => handleAddAppetiteHelper(helper)}
                   style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                  className="min-h-[48px] p-3 rounded-xl border text-left flex items-center justify-between gap-2"
+                  className="vt-btn vt-h-48 vt-p-3 vt-box-xl vt-text-left vt-between-center vt-gap-2"
                 >
                   <div>
-                    <div className="text-xs font-extrabold">{helper.label}</div>
-                    <div className="text-[11px] font-mono-num" style={{ color: colors.muted }}>
+                    <div className="vt-text-xs vt-font-extrabold">{helper.label}</div>
+                    <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
                       +{helper.kcal} kcal • +{helper.protein}g P
                     </div>
                   </div>
-                  <Plus className="w-4 h-4 shrink-0" />
+                  <Plus className="vt-icon-4 vt-shrink-0" />
                 </button>
               ))}
             </div>
@@ -5022,31 +4987,31 @@ function NutritionView({
       )}
 
       {subView === 'rotation' && (
-        <div className="space-y-4">
+        <div className="vt-stack-4">
           <div
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
-            className="p-4 sm:p-6 rounded-2xl border space-y-3"
+            className="vt-card vt-p-card vt-stack-3"
           >
-            <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
+            <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
               7-Day Non-Repeating Dinner Protein Rotation ({appState.profile.dietTrack})
             </h3>
-            <p className="text-xs" style={{ color: colors.muted }}>
+            <p className="vt-text-xs" style={{ color: colors.muted }}>
               Lunch and Dinner never use the same primary protein anchor on the same day.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2 pt-2">
+            <div className="vt-grid-rotation vt-gap-2 vt-pt-2">
               {weeklyMenu.map((d) => (
                 <div
                   key={d.day}
                   style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                  className="p-3 rounded-xl border space-y-1.5 text-xs"
+                  className="vt-p-3 vt-box-xl vt-stack-1-5 vt-text-xs"
                 >
                   <div
                     style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                    className="inline-block px-2 py-0.5 rounded font-extrabold uppercase"
+                    className="vt-badge vt-font-extrabold vt-uppercase vt-self-start"
                   >
                     {d.day}
                   </div>
-                  <div className="font-mono-num space-y-0.5 text-[11px]">
+                  <div className="font-mono-num vt-stack-0-5 vt-text-11">
                     <div>B: {d.slots.breakfast}</div>
                     <div>M: {d.slots.mid_morning}</div>
                     <div>L: {d.slots.lunch}</div>
@@ -5062,32 +5027,32 @@ function NutritionView({
 
           <div
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
-            className="p-4 sm:p-6 rounded-2xl border space-y-4"
+            className="vt-card vt-p-card vt-stack-4"
           >
-            <div className="flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
-              <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
+            <div className="vt-flex vt-items-center vt-gap-2">
+              <ShoppingBag className="vt-icon-5" style={{ color: isDark ? colors.accent : colors.text }} />
+              <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
                 Weekly Indian Grocery List (7 Days)
               </h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="vt-grid-sm-2 vt-gap-4">
               {Object.entries(groceryList).map(([category, items]) => (
                 <div
                   key={category}
                   style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                  className="p-4 rounded-xl border space-y-2"
+                  className="vt-p-4 vt-box-xl vt-stack-2"
                 >
                   <div
-                    className="text-xs font-extrabold uppercase tracking-wider"
+                    className="vt-text-xs vt-font-extrabold vt-uppercase vt-tracking-wider"
                     style={{ color: isDark ? colors.accent : colors.text }}
                   >
                     {category}
                   </div>
-                  <div className="space-y-1.5 text-xs">
+                  <div className="vt-stack-1-5 vt-text-xs">
                     {items.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between gap-2">
+                      <div key={item.id} className="vt-between-center vt-gap-2">
                         <span>{item.name}</span>
-                        <span className="font-extrabold font-mono-num shrink-0">{item.displayQty}</span>
+                        <span className="vt-font-extrabold font-mono-num vt-shrink-0">{item.displayQty}</span>
                       </div>
                     ))}
                   </div>
@@ -5101,26 +5066,26 @@ function NutritionView({
       {subView === 'foods' && (
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-6 rounded-2xl border space-y-3"
+          className="vt-card vt-p-card vt-stack-3"
         >
-          <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
+          <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
             IFCT 2017 / USDA Indian Whole-Food Database (29 Items)
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          <div className="vt-grid-md-2 vt-gap-2-5">
             {appState.foodDatabase.map((f) => (
               <div
                 key={f.id}
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="p-3 rounded-xl border flex items-center justify-between gap-2 text-xs"
+                className="vt-p-3 vt-box-xl vt-between-center vt-gap-2 vt-text-xs"
               >
                 <div>
-                  <div className="font-extrabold">{f.name}</div>
+                  <div className="vt-font-extrabold">{f.name}</div>
                   <div style={{ color: colors.muted }}>
                     Per {f.basis} {f.unit} ({f.category})
                   </div>
                 </div>
-                <div className="text-right font-mono-num shrink-0">
-                  <div className="font-extrabold">{f.kcal} kcal</div>
+                <div className="vt-text-right font-mono-num vt-shrink-0">
+                  <div className="vt-font-extrabold">{f.kcal} kcal</div>
                   <div style={{ color: colors.muted }}>
                     P:{f.protein}g • C:{f.carbs}g • F:{f.fat}g
                   </div>
@@ -5216,7 +5181,7 @@ function ProgressView({
     vTaperRatio || Number((measForm.shoulders / Math.max(1, measForm.waist)).toFixed(2));
 
   return (
-    <div className="space-y-5">
+    <div className="vt-stack-5">
       {/* Weekly Gain Rate Analyzer Banner */}
       <div
         style={{
@@ -5233,12 +5198,12 @@ function ProgressView({
               ? colors.accentBorder
               : colors.border
         }}
-        className="p-4 sm:p-6 rounded-2xl border-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        className="vt-card-b2 vt-p-card vt-resp-row-lg"
       >
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
+        <div className="vt-stack-1">
+          <div className="vt-flex vt-items-center vt-gap-2">
             <AlertTriangle
-              className="w-4 h-4"
+              className="vt-icon-4"
               style={{
                 color:
                   gainAnalysis.status === 'FAST_GAIN_WARNING'
@@ -5248,11 +5213,11 @@ function ProgressView({
                     : colors.text
               }}
             />
-            <span className="text-xs font-extrabold uppercase tracking-wider">
+            <span className="vt-text-xs vt-font-extrabold vt-uppercase vt-tracking-wider">
               {gainAnalysis.headline}
             </span>
           </div>
-          <p className="text-xs sm:text-sm" style={{ color: colors.muted }}>
+          <p className="vt-text-resp-xs-sm" style={{ color: colors.muted }}>
             {gainAnalysis.message}
           </p>
         </div>
@@ -5278,7 +5243,7 @@ function ProgressView({
               backgroundColor: colors.accent,
               color: colors.accentText
             }}
-            className="min-h-[44px] px-4 rounded-xl text-xs font-extrabold uppercase shrink-0"
+            className="vt-btn vt-h-44 vt-px-4 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase vt-shrink-0"
           >
             Apply {gainAnalysis.calorieAdjustment > 0 ? '+300' : '-200'} kcal
           </button>
@@ -5286,20 +5251,20 @@ function ProgressView({
       </div>
 
       {/* Weight Logger + Line Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="vt-grid-lg-3 vt-gap-4">
         <form
           onSubmit={handleAddWeightLog}
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-6 rounded-2xl border space-y-4"
+          className="vt-card vt-p-card vt-stack-4"
         >
-          <div className="flex items-center gap-2">
-            <Scale className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
-            <h3 className="font-display text-2xl font-black uppercase">
+          <div className="vt-flex vt-items-center vt-gap-2">
+            <Scale className="vt-icon-5" style={{ color: isDark ? colors.accent : colors.text }} />
+            <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
               Log Morning Weigh-In
             </h3>
           </div>
           <div>
-            <label className="block text-xs font-bold uppercase mb-1" style={{ color: colors.muted }}>
+            <label className="vt-block vt-text-xs vt-font-bold vt-uppercase vt-mb-1" style={{ color: colors.muted }}>
               Date
             </label>
             <input
@@ -5311,11 +5276,11 @@ function ProgressView({
                 borderColor: colors.border,
                 color: colors.text
               }}
-              className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-bold font-mono-num"
+              className="vt-input vt-h-44 vt-px-3 vt-text-sm vt-font-bold font-mono-num"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold uppercase mb-1" style={{ color: colors.muted }}>
+            <label className="vt-block vt-text-xs vt-font-bold vt-uppercase vt-mb-1" style={{ color: colors.muted }}>
               Morning Weight ({appState.unit})
             </label>
             <input
@@ -5330,13 +5295,13 @@ function ProgressView({
                 borderColor: colors.border,
                 color: colors.text
               }}
-              className="w-full min-h-[44px] px-3 rounded-xl border text-base font-extrabold font-mono-num"
+              className="vt-input vt-h-44 vt-px-3 vt-text-base vt-font-extrabold font-mono-num"
             />
           </div>
           <button
             type="submit"
             style={{ backgroundColor: colors.accent, color: colors.accentText }}
-            className="w-full min-h-[46px] rounded-xl font-extrabold text-xs uppercase tracking-wider"
+            className="vt-btn vt-w-full vt-h-46 vt-rounded-xl vt-font-extrabold vt-text-xs vt-uppercase vt-tracking-wider"
           >
             Save Weigh-In
           </button>
@@ -5345,24 +5310,24 @@ function ProgressView({
         {/* Weight Chart */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="lg:col-span-2 p-4 sm:p-6 rounded-2xl border flex flex-col justify-between"
+          className="vt-col-span-lg-2 vt-card vt-p-card vt-col-between"
         >
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div className="vt-between-center vt-flex-wrap vt-gap-2 vt-mb-3">
             <div>
-              <h3 className="font-display text-2xl font-black uppercase">
+              <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
                 Lean-Bulk Trajectory (Target Band: {formatWeight(appState.profile.goalWeightMinKg)}–
                 {formatWeight(appState.profile.goalWeightMaxKg)} {appState.unit})
               </h3>
             </div>
             <span
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="text-xs font-bold px-2.5 py-1 rounded-lg border font-mono-num"
+              className="vt-badge-lg vt-border vt-text-xs vt-font-bold font-mono-num"
             >
               {appState.weightLogs.length} logs
             </span>
           </div>
 
-          <div className="h-60 w-full">
+          <div className="vt-chart-h-60">
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 10, right: 16, left: -10, bottom: 0 }}>
@@ -5397,7 +5362,7 @@ function ProgressView({
             ) : (
               <div
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="h-full rounded-xl border flex items-center justify-center text-xs font-semibold p-4 text-center"
+                className="vt-h-full vt-box-xl vt-flex vt-items-center vt-justify-center vt-text-xs vt-font-semibold vt-p-4 vt-text-center"
               >
                 Log your first weekly weigh-in on the left to plot your 55 kg → 65–68 kg trajectory.
               </div>
@@ -5407,19 +5372,19 @@ function ProgressView({
       </div>
 
       {/* Body Measurements + V-Taper Gauge */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="vt-grid-lg-3 vt-gap-4">
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="lg:col-span-2 p-4 sm:p-6 rounded-2xl border space-y-4 flex flex-col justify-between"
+          className="vt-col-span-lg-2 vt-card vt-p-card vt-stack-4 vt-col-between"
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Ruler className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
+          <div className="vt-between-center vt-flex-wrap vt-gap-3">
+            <div className="vt-flex vt-items-center vt-gap-2">
+              <Ruler className="vt-icon-5" style={{ color: isDark ? colors.accent : colors.text }} />
               <div>
-                <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
+                <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
                   V-Taper Body Measurements (cm)
                 </h3>
-                <p className="text-xs" style={{ color: colors.muted }}>
+                <p className="vt-text-xs" style={{ color: colors.muted }}>
                   Auto-calculates Shoulder-to-Waist Ratio (Goal: 1.40–1.50x). Keep waist gain ≤ 4 cm across the bulk.
                 </p>
               </div>
@@ -5427,14 +5392,14 @@ function ProgressView({
 
             <div
               style={{ backgroundColor: colors.accent, color: colors.accentText }}
-              className="px-3.5 py-2 rounded-xl font-mono-num text-right"
+              className="vt-px-3-5 vt-py-2 vt-rounded-xl font-mono-num vt-text-right"
             >
-              <div className="text-[10px] font-extrabold uppercase">Current V-Taper Ratio</div>
-              <div className="font-display text-2xl font-black">{liveRatio}x</div>
+              <div className="vt-text-10 vt-font-extrabold vt-uppercase">Current V-Taper Ratio</div>
+              <div className="font-display vt-text-2xl vt-font-black">{liveRatio}x</div>
             </div>
           </div>
 
-          <form onSubmit={handleSaveMeasurements} className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 items-end">
+          <form onSubmit={handleSaveMeasurements} className="vt-grid-meas vt-gap-2-5 vt-items-end">
             {[
               { key: 'shoulders', label: 'Shoulders (cm)' },
               { key: 'chest', label: 'Chest (cm)' },
@@ -5443,7 +5408,7 @@ function ProgressView({
               { key: 'thighs', label: 'Thighs (cm)' }
             ].map((field) => (
               <div key={field.key}>
-                <label className="block text-[11px] font-bold uppercase mb-1" style={{ color: colors.muted }}>
+                <label className="vt-block vt-text-11 vt-font-bold vt-uppercase vt-mb-1" style={{ color: colors.muted }}>
                   {field.label}
                 </label>
                 <input
@@ -5459,14 +5424,14 @@ function ProgressView({
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-extrabold font-mono-num"
+                  className="vt-input vt-h-44 vt-px-3 vt-text-sm vt-font-extrabold font-mono-num"
                 />
               </div>
             ))}
             <button
               type="submit"
               style={{ backgroundColor: colors.accent, color: colors.accentText }}
-              className="col-span-2 sm:col-span-1 min-h-[44px] rounded-xl font-extrabold text-xs uppercase tracking-wider"
+              className="vt-btn vt-col-span-2-sm-1 vt-h-44 vt-rounded-xl vt-font-extrabold vt-text-xs vt-uppercase vt-tracking-wider"
             >
               Save Tape
             </button>
@@ -5496,50 +5461,50 @@ function StatsView({ colors, isDark, appState }) {
   const unitTests = useMemo(() => runBuiltInUnitTests(), []);
 
   return (
-    <div className="space-y-5">
+    <div className="vt-stack-5">
       {/* Top KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 tabular-nums">
+      <div className="vt-grid-kpi vt-gap-3 vt-tabular">
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 rounded-2xl border"
+          className="vt-card vt-p-4"
         >
-          <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
+          <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
             Workout Streak
           </div>
-          <div className="font-display text-3xl font-black mt-1">
+          <div className="font-display vt-text-3xl vt-font-black vt-mt-1">
             {appState.workoutStreak} Sessions
           </div>
         </div>
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 rounded-2xl border"
+          className="vt-card vt-p-4"
         >
-          <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
+          <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
             Prescribed Sets
           </div>
-          <div className="font-display text-3xl font-black mt-1">116 / wk</div>
+          <div className="font-display vt-text-3xl vt-font-black vt-mt-1">116 / wk</div>
         </div>
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 rounded-2xl border"
+          className="vt-card vt-p-4"
         >
-          <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
+          <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
             Logged Workouts
           </div>
-          <div className="font-display text-3xl font-black mt-1">
+          <div className="font-display vt-text-3xl vt-font-black vt-mt-1">
             {appState.workoutHistory.length}
           </div>
         </div>
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 rounded-2xl border"
+          className="vt-card vt-p-4"
         >
-          <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
+          <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
             Sunday Walk
           </div>
           <div
             style={{ color: isDark ? colors.accent : colors.text }}
-            className="font-display text-3xl font-black mt-1"
+            className="font-display vt-text-3xl vt-font-black vt-mt-1"
           >
             {appState.sundayWalkDone ? 'Done ✓' : 'Pending'}
           </div>
@@ -5547,23 +5512,23 @@ function StatsView({ colors, isDark, appState }) {
       </div>
 
       {/* Muscle Balance Radar + Weekly Sets Per Muscle Group */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="vt-grid-lg-3 vt-gap-4">
         <MuscleRadar colors={colors} isDark={isDark} />
 
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="lg:col-span-2 p-4 sm:p-6 rounded-2xl border space-y-4"
+          className="vt-col-span-lg-2 vt-card vt-p-card vt-stack-4"
         >
           <div>
-            <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
+            <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
               Weekly Hypertrophy Volume Per Muscle Group (Target 10–20 Sets)
             </h3>
-            <p className="text-xs" style={{ color: colors.muted }}>
+            <p className="vt-text-xs" style={{ color: colors.muted }}>
               Shows direct primary sets and effective sets including 0.5× secondary compound credit.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 tabular-nums">
+          <div className="vt-grid-sm-2 vt-gap-3 vt-tabular">
             {Object.entries(volumes.primary).map(([group, primSets]) => {
               const effSets = volumes.totalWithSecondary[group];
               const pct = Math.min(100, Math.round((primSets / 20) * 100));
@@ -5571,21 +5536,21 @@ function StatsView({ colors, isDark, appState }) {
                 <div
                   key={group}
                   style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                  className="p-3.5 rounded-xl border space-y-2"
+                  className="vt-p-3-5 vt-box-xl vt-stack-2"
                 >
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-extrabold uppercase">{group}</span>
-                    <span className="font-mono-num font-bold">
+                  <div className="vt-between-center vt-text-xs">
+                    <span className="vt-font-extrabold vt-uppercase">{group}</span>
+                    <span className="font-mono-num vt-font-bold">
                       {primSets} direct ({effSets} eff)
                     </span>
                   </div>
                   <div
                     style={{ backgroundColor: colors.card }}
-                    className="w-full h-2.5 rounded-full overflow-hidden"
+                    className="vt-progress-track-sm"
                   >
                     <div
                       style={{ width: `${pct}%`, backgroundColor: colors.accent }}
-                      className="h-full"
+                      className="vt-progress-fill"
                     />
                   </div>
                 </div>
@@ -5598,22 +5563,22 @@ function StatsView({ colors, isDark, appState }) {
       {/* Built-in Science & Logic Verification Suite */}
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-4 sm:p-6 rounded-2xl border space-y-3"
+        className="vt-card vt-p-card vt-stack-3"
       >
-        <h3 className="font-display text-2xl font-black uppercase">
-          Automated Science &amp; Overload Unit Tests ({unitTests.filter((t) => t.passed).length}/
+        <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+          Automated Science & Overload Unit Tests ({unitTests.filter((t) => t.passed).length}/
           {unitTests.length} Passing)
         </h3>
-        <div className="space-y-2">
+        <div className="vt-stack-2">
           {unitTests.map((t, idx) => (
             <div
               key={idx}
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+              className="vt-p-3 vt-box-xl vt-resp-row vt-text-xs"
             >
               <div>
-                <div className="font-extrabold">{t.name}</div>
-                <div className="font-mono-num text-[11px]" style={{ color: colors.muted }}>
+                <div className="vt-font-extrabold">{t.name}</div>
+                <div className="font-mono-num vt-text-11" style={{ color: colors.muted }}>
                   Actual: {t.actual}
                 </div>
               </div>
@@ -5622,7 +5587,7 @@ function StatsView({ colors, isDark, appState }) {
                   backgroundColor: t.passed ? colors.accent : colors.danger,
                   color: t.passed ? colors.accentText : '#FFFFFF'
                 }}
-                className="px-2.5 py-1 rounded-md font-extrabold uppercase text-[10px] self-start sm:self-center shrink-0"
+                className="vt-test-badge vt-font-extrabold vt-uppercase vt-text-10 vt-shrink-0"
               >
                 {t.passed ? 'PASS' : 'FAIL'}
               </span>
@@ -5693,46 +5658,46 @@ function SettingsView({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="vt-stack-5">
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-4 sm:p-6 rounded-2xl border space-y-4"
+        className="vt-card vt-p-card vt-stack-4"
       >
-        <h2 className="font-display text-3xl font-black uppercase">
-          Profile &amp; App Preferences
+        <h2 className="font-display vt-text-3xl vt-font-black vt-uppercase">
+          Profile & App Preferences
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="vt-grid-sm-2 vt-gap-3">
           <button
             onClick={() => {
               setOnboardingForm(appState.profile);
               setShowOnboarding(true);
             }}
             style={{ backgroundColor: colors.accent, color: colors.accentText }}
-            className="min-h-[48px] px-4 rounded-xl font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+            className="vt-btn vt-h-48 vt-px-4 vt-rounded-xl vt-font-extrabold vt-text-xs vt-uppercase vt-tracking-wider vt-gap-2"
           >
-            <Edit3 className="w-4 h-4" />
-            <span>Edit Profile &amp; Goals</span>
+            <Edit3 className="vt-icon-4" />
+            <span>Edit Profile & Goals</span>
           </button>
 
           <button
             onClick={handleDownloadSvgIcon}
             style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="min-h-[48px] px-4 rounded-xl border font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+            className="vt-btn vt-h-48 vt-px-4 vt-box-xl vt-font-extrabold vt-text-xs vt-uppercase vt-tracking-wider vt-gap-2"
           >
-            <Download className="w-4 h-4" />
+            <Download className="vt-icon-4" />
             <span>Download Brand icon.svg</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+        <div className="vt-grid-sm-2 vt-gap-3 vt-pt-2">
           <div
             style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="p-4 rounded-xl border flex items-center justify-between"
+            className="vt-p-4 vt-box-xl vt-between-center"
           >
             <div>
-              <div className="font-extrabold text-sm">Weight Unit</div>
-              <div className="text-xs" style={{ color: colors.muted }}>
+              <div className="vt-font-extrabold vt-text-sm">Weight Unit</div>
+              <div className="vt-text-xs" style={{ color: colors.muted }}>
                 Switch between kilograms (kg) and pounds (lb)
               </div>
             </div>
@@ -5744,7 +5709,7 @@ function SettingsView({
                 }))
               }
               style={{ backgroundColor: colors.accent, color: colors.accentText }}
-              className="min-h-[42px] px-4 rounded-xl font-extrabold text-xs uppercase"
+              className="vt-btn vt-h-42 vt-px-4 vt-rounded-xl vt-font-extrabold vt-text-xs vt-uppercase"
             >
               {appState.unit.toUpperCase()}
             </button>
@@ -5752,11 +5717,11 @@ function SettingsView({
 
           <div
             style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="p-4 rounded-xl border flex items-center justify-between"
+            className="vt-p-4 vt-box-xl vt-between-center"
           >
             <div>
-              <div className="font-extrabold text-sm">Color Theme</div>
-              <div className="text-xs" style={{ color: colors.muted }}>
+              <div className="vt-font-extrabold vt-text-sm">Color Theme</div>
+              <div className="vt-text-xs" style={{ color: colors.muted }}>
                 Solid flat dark or light mode (electric lime buttons)
               </div>
             </div>
@@ -5768,7 +5733,7 @@ function SettingsView({
                 }))
               }
               style={{ backgroundColor: colors.accent, color: colors.accentText }}
-              className="min-h-[42px] px-4 rounded-xl font-extrabold text-xs uppercase"
+              className="vt-btn vt-h-42 vt-px-4 vt-rounded-xl vt-font-extrabold vt-text-xs vt-uppercase"
             >
               {appState.theme.toUpperCase()}
             </button>
@@ -5779,41 +5744,41 @@ function SettingsView({
       {/* Backup & Reset */}
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-4 sm:p-6 rounded-2xl border space-y-4"
+        className="vt-card vt-p-card vt-stack-4"
       >
-        <h3 className="font-display text-2xl font-black uppercase">
-          Local Backup (JSON) &amp; Data Reset
+        <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+          Local Backup (JSON) & Data Reset
         </h3>
-        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5">
+        <div className="vt-backup-row">
           <button
             onClick={handleExportJson}
             style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="min-h-[46px] px-4 rounded-xl border text-xs font-extrabold uppercase flex items-center gap-2"
+            className="vt-btn vt-h-46 vt-px-4 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2"
           >
-            <Download className="w-4 h-4" />
+            <Download className="vt-icon-4" />
             <span>Export JSON Backup</span>
           </button>
 
           <label
             style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="min-h-[46px] px-4 rounded-xl border text-xs font-extrabold uppercase flex items-center gap-2 cursor-pointer"
+            className="vt-btn vt-h-46 vt-px-4 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2 vt-cursor-pointer"
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="vt-icon-4" />
             <span>Import JSON Backup</span>
-            <input type="file" accept=".json" onChange={handleImportJson} className="hidden" />
+            <input type="file" accept=".json" onChange={handleImportJson} className="vt-hidden" />
           </label>
 
           {!confirmReset ? (
             <button
               onClick={() => setConfirmReset(true)}
               style={{ backgroundColor: colors.danger, color: '#FFFFFF' }}
-              className="min-h-[46px] px-4 rounded-xl text-xs font-extrabold uppercase flex items-center gap-2 ml-auto"
+              className="vt-btn vt-h-46 vt-px-4 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2 vt-ml-auto"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="vt-icon-4" />
               <span>Reset All Data</span>
             </button>
           ) : (
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="vt-flex vt-items-center vt-gap-2 vt-ml-auto">
               <button
                 onClick={() => {
                   const fresh = getFreshInitialState(appState.theme);
@@ -5823,14 +5788,14 @@ function SettingsView({
                   showToast('All data reset to clean defaults.');
                 }}
                 style={{ backgroundColor: colors.danger, color: '#FFFFFF' }}
-                className="min-h-[46px] px-4 rounded-xl text-xs font-extrabold uppercase"
+                className="vt-btn vt-h-46 vt-px-4 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase"
               >
                 Confirm Wipe
               </button>
               <button
                 onClick={() => setConfirmReset(false)}
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[46px] px-3 rounded-xl border text-xs font-bold"
+                className="vt-btn vt-h-46 vt-px-3 vt-box-xl vt-text-xs vt-font-bold"
               >
                 Cancel
               </button>
