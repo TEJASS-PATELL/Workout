@@ -15,13 +15,13 @@ import {
   Droplets,
   AlertTriangle,
   ArrowUpRight,
+  ArrowDownRight,
   Info,
   Sun,
   Moon,
   Download,
   Upload,
   Trash2,
-  User,
   Clock,
   ChevronRight,
   CheckCircle2,
@@ -33,7 +33,11 @@ import {
   X,
   Footprints,
   Zap,
-  RotateCcw
+  RotateCcw,
+  Plus,
+  ShoppingBag,
+  RefreshCw,
+  BedDouble
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -48,44 +52,131 @@ import {
 } from 'recharts';
 
 // ============================================================================
-// EXACT WORKOUT & MEAL PLAN DATA (src/data/plan.ts equivalent)
+// SECTION 3: SCIENCE RULES (src/lib/science.ts equivalent)
+// Each constant is documented with its peer-reviewed exercise/nutrition rationale.
 // ============================================================================
 
-const WORKOUT_PLAN = [
+export const SCIENCE_RULES = {
+  // Volume: Meta-analyses (Schoenfeld et al.) show a graded dose-response up to at least
+  // 10 weekly sets per muscle; 12–20 sets is the sweet spot for hypertrophy when hit 2x/week.
+  // Lower-priority groups (calves, abs) can sit at 6–12 direct sets.
+  VOLUME_MIN_SETS: 10,
+  VOLUME_MAX_SETS: 20,
+  VOLUME_MINOR_MIN_SETS: 6,
+  VOLUME_MINOR_MAX_SETS: 12,
+  SECONDARY_MUSCLE_CREDIT: 0.5,
+
+  // Effort (RIR): Most working sets finish 1–3 reps in reserve (compounds ~2 RIR, isolations 0–2 RIR)
+  // to maximize motor unit recruitment without excessive central nervous system fatigue.
+  // Beginners often underestimate effort, so 1 safe isolation set per session may go to 0 RIR / failure.
+  COMPOUND_TARGET_RIR: '2 RIR',
+  ISOLATION_TARGET_RIR: '0–2 RIR (last set optional failure calibration)',
+
+  // Ramp-in: Weeks 1–2 use 2 working sets per exercise at 3–4 RIR to prioritize motor learning
+  // and prevent debilitating delayed-onset muscle soreness (DOMS) in beginners.
+  RAMP_IN_SETS: 2,
+  RAMP_IN_RIR: '3–4 RIR',
+  DELOAD_FREQUENCY_WEEKS: 6,
+
+  // Rest intervals: Longer inter-set rests (120–150s on compounds, 75–90s on isolations)
+  // preserve volume load across sets; RCTs in trained men show 2–3 min beats 1 min for hypertrophy.
+  REST_COMPOUND_HEAVY_SEC: 150,
+  REST_COMPOUND_STD_SEC: 120,
+  REST_ISOLATION_STRETCH_SEC: 90,
+  REST_ISOLATION_STD_SEC: 75,
+
+  // Energy (Mifflin–St Jeor for 22y male, 173 cm, 55 kg):
+  // BMR = (10 * 55) + (6.25 * 173) - (5 * 22) + 5 = 1,526.25 kcal/day.
+  // TDEE (6 days/wk training, activity multiplier 1.55–1.725) ≈ 2,350–2,650 kcal/day.
+  // 2,900 kcal provides a controlled +10–20% lean-bulk surplus.
+  BMR_KCAL: 1526,
+  TDEE_MIN_KCAL: 2350,
+  TDEE_MAX_KCAL: 2650,
+  TARGET_KCAL: 2900,
+  MIN_ACCEPTABLE_KCAL: 2600,
+  ADVISORY_CARBS_G: 370,
+  ADVISORY_FAT_G: 95,
+
+  // Protein: Muscle protein synthesis plateaus around ~1.6 g/kg/day (upper 95% CI ~2.2 g/kg).
+  // Target 130 g/day (~2.4 g/kg at 55 kg, ~1.9 g/kg at 68 kg) with a 110 g floor to account
+  // for lower digestibility/leucine density in Indian plant-heavy diets.
+  // Spread across >= 4 feedings of >= 22–30 g (~0.4 g/kg/meal).
+  TARGET_PROTEIN_G: 130,
+  FLOOR_PROTEIN_G: 110,
+  MIN_PROTEIN_FEEDINGS: 4,
+  MIN_PROTEIN_PER_FEEDING_G: 22,
+
+  // Rate of gain: Standard lean bulk is 0.25–0.5% body weight/week; underweight beginners (BMI ~18.4)
+  // can safely gain up to ~1% BW/week early. Always ignore the first 14 days (intracellular glycogen + water).
+  GAIN_IGNORE_INITIAL_DAYS: 14,
+  GAIN_MIN_PCT_BW: 0.0025,
+  GAIN_MAX_PCT_BW: 0.01,
+  GAIN_UPPER_HARD_CAP_KG: 0.7,
+  GAIN_LOWER_FLOOR_KG: 0.2,
+
+  // Recovery: 7–9 h sleep (target >= 7.5 h), 3.5 L hydration, Sunday 20–30 min easy walk.
+  TARGET_WATER_ML: 3500,
+  TARGET_SLEEP_HOURS: 7.5
+};
+
+export const DEFAULT_STEP_INCREMENTS = {
+  'B2.5': { label: '+2.5 kg (Barbell)', deltaKg: 2.5, mode: 'add' },
+  B5: { label: '+5.0 kg (Barbell / Sled)', deltaKg: 5.0, mode: 'add' },
+  DB: { label: '+2.0 kg (Next Dumbbell Pair)', deltaKg: 2.0, mode: 'add' },
+  PIN: { label: '+2.5 kg (1 Stack Pin)', deltaKg: 2.5, mode: 'add' },
+  S1: { label: '+1.0 kg (Micro-load / Cable)', deltaKg: 1.0, mode: 'add' },
+  ASSIST: { label: '-5.0 kg Assistance (Harder)', deltaKg: -5.0, mode: 'assist' },
+  BW: { label: 'Reps first, then +2.5 kg', deltaKg: 2.5, mode: 'bodyweight' }
+};
+
+// ============================================================================
+// SECTION 4: FINAL TRAINING DATA (src/data/plan.ts equivalent)
+// Exact 6-Day PPL V-Taper Split (116 Primary Weekly Sets)
+// ============================================================================
+
+export const WORKOUT_PLAN = [
   {
     dayIndex: 1,
     shortDay: 'Mon',
     dayName: 'Monday',
     title: 'Push A',
-    subtitle: 'Chest, Front/Side Delts & Triceps',
+    subtitle: 'Chest, Shoulders & Triceps (18 Sets)',
     isRest: false,
     estimatedMinutes: 70,
     exercises: [
       {
         id: 'mon-1',
-        name: 'Flat Bench Press',
+        name: 'Flat Barbell Bench Press',
         sets: 3,
         repMin: 6,
         repMax: 8,
         repLabel: '6-8',
-        type: 'Compound',
+        type: 'compound',
+        restSec: 150,
         targetMuscle: 'Chest',
-        muscleCategory: 'Chest',
-        isLowerBody: false,
-        cue: 'Retract shoulder blades, arch slightly, touch lower chest.'
+        primaryGroup: 'Chest',
+        secondaryGroups: ['Front delts', 'Triceps'],
+        step: 'B2.5',
+        cue: 'Shoulder blades pinned back and down, feet planted, touch the lower chest, press up and slightly back.',
+        alternatives: ['Machine Chest Press', 'Flat DB Press'],
+        flags: {}
       },
       {
         id: 'mon-2',
-        name: 'Incline DB Press',
+        name: 'Incline DB Press (30° bench)',
         sets: 3,
         repMin: 8,
         repMax: 10,
         repLabel: '8-10',
-        type: 'Compound',
-        targetMuscle: 'Upper Chest',
-        muscleCategory: 'Chest',
-        isLowerBody: false,
-        cue: '30-degree bench angle, lower dumbbells with elbows at 45 degrees.'
+        type: 'compound',
+        restSec: 120,
+        targetMuscle: 'Upper chest',
+        primaryGroup: 'Chest',
+        secondaryGroups: ['Front delts', 'Triceps'],
+        step: 'DB',
+        cue: 'Elbows about 45° from the torso, deep stretch at the bottom, press without clanging the dumbbells.',
+        alternatives: ['Incline Machine Press'],
+        flags: {}
       },
       {
         id: 'mon-3',
@@ -94,50 +185,66 @@ const WORKOUT_PLAN = [
         repMin: 8,
         repMax: 10,
         repLabel: '8-10',
-        type: 'Compound',
-        targetMuscle: 'Front/Side Delts',
-        muscleCategory: 'Shoulders',
-        isLowerBody: false,
-        cue: 'Keep core braced and back flat against the pad; press overhead without clanking.'
+        type: 'compound',
+        restSec: 120,
+        targetMuscle: 'Front delts',
+        primaryGroup: 'Front delts',
+        secondaryGroups: ['Side delts', 'Triceps'],
+        step: 'DB',
+        cue: 'Back flat on the pad, ribs down, press up and slightly inward, stop just short of lockout.',
+        alternatives: ['Machine Shoulder Press'],
+        flags: {}
       },
       {
         id: 'mon-4',
-        name: 'Lateral Raise',
+        name: 'DB Lateral Raise',
         sets: 4,
         repMin: 12,
         repMax: 15,
         repLabel: '12-15',
-        type: 'Isolation',
-        targetMuscle: 'Side Delts',
-        muscleCategory: 'Shoulders',
-        isLowerBody: false,
-        cue: 'Lead with elbows slightly bent, raise to shoulder height, control the descent.'
+        type: 'isolation',
+        restSec: 75,
+        targetMuscle: 'Side delts',
+        primaryGroup: 'Side delts',
+        secondaryGroups: [],
+        step: 'S1',
+        cue: 'Slight forward lean, lead with the elbows, raise to shoulder height, lower over 2 s, no swinging.',
+        alternatives: ['Cable Lateral Raise', 'Machine Lateral Raise'],
+        flags: {}
       },
       {
         id: 'mon-5',
-        name: 'Triceps Rope Pushdown',
+        name: 'Overhead Triceps Extension (cable rope or DB)',
         sets: 3,
         repMin: 10,
         repMax: 12,
         repLabel: '10-12',
-        type: 'Isolation',
-        targetMuscle: 'Triceps',
-        muscleCategory: 'Triceps',
-        isLowerBody: false,
-        cue: 'Pin elbows to your sides and spread the rope apart at the bottom.'
+        type: 'isolation',
+        restSec: 90,
+        targetMuscle: 'Triceps long head',
+        primaryGroup: 'Triceps',
+        secondaryGroups: [],
+        step: 'PIN',
+        cue: 'Elbows beside the ears, lower until the triceps stretch hard behind the head, then extend fully.',
+        alternatives: ['EZ Skull Crusher'],
+        flags: { updatedInV2: true }
       },
       {
         id: 'mon-6',
-        name: 'Overhead Triceps Extension',
+        name: 'Triceps Rope Pushdown',
         sets: 2,
-        repMin: 10,
-        repMax: 12,
-        repLabel: '10-12',
-        type: 'Isolation',
-        targetMuscle: 'Triceps (Long Head)',
-        muscleCategory: 'Triceps',
-        isLowerBody: false,
-        cue: 'Keep upper arms vertical by your ears to maximize long-head stretch.'
+        repMin: 12,
+        repMax: 15,
+        repLabel: '12-15',
+        type: 'isolation',
+        restSec: 75,
+        targetMuscle: 'Triceps',
+        primaryGroup: 'Triceps',
+        secondaryGroups: [],
+        step: 'PIN',
+        cue: 'Elbows pinned to the ribs, spread the rope at the bottom, control the return.',
+        alternatives: [],
+        flags: { updatedInV2: true }
       }
     ]
   },
@@ -146,22 +253,26 @@ const WORKOUT_PLAN = [
     shortDay: 'Tue',
     dayName: 'Tuesday',
     title: 'Pull A',
-    subtitle: 'Lat Width, Mid-Back, Rear Delts & Biceps',
+    subtitle: 'Lat Width, Back, Rear Delts & Biceps (18 Sets)',
     isRest: false,
     estimatedMinutes: 70,
     exercises: [
       {
         id: 'tue-1',
-        name: 'Lat Pulldown wide grip',
+        name: 'Lat Pulldown (wide grip)',
         sets: 4,
         repMin: 8,
         repMax: 10,
         repLabel: '8-10',
-        type: 'Compound',
-        targetMuscle: 'Lats (Width)',
-        muscleCategory: 'Back / Lats',
-        isLowerBody: false,
-        cue: 'Drive elbows down toward your hips, slight lean back, chest tall.'
+        type: 'compound',
+        restSec: 120,
+        targetMuscle: 'Lats/Back',
+        primaryGroup: 'Lats/Back',
+        secondaryGroups: ['Biceps', 'Rear delts'],
+        step: 'PIN',
+        cue: 'Slight lean back, chest tall, drive the elbows down toward the back pockets, full stretch overhead.',
+        alternatives: ['Neutral-grip Pulldown'],
+        flags: {}
       },
       {
         id: 'tue-2',
@@ -170,11 +281,15 @@ const WORKOUT_PLAN = [
         repMin: 6,
         repMax: 10,
         repLabel: '6-10',
-        type: 'Compound',
-        targetMuscle: 'Lats (Width)',
-        muscleCategory: 'Back / Lats',
-        isLowerBody: false,
-        cue: 'Full dead hang at bottom, pull chin over bar by depressing scapulae first.'
+        type: 'compound',
+        restSec: 120,
+        targetMuscle: 'Lats/Back',
+        primaryGroup: 'Lats/Back',
+        secondaryGroups: ['Biceps'],
+        step: 'ASSIST',
+        cue: 'Start from a dead hang, set the shoulder blades down first, chin over the bar.',
+        alternatives: ['Lat Pulldown'],
+        flags: { assisted: true }
       },
       {
         id: 'tue-3',
@@ -183,11 +298,15 @@ const WORKOUT_PLAN = [
         repMin: 8,
         repMax: 10,
         repLabel: '8-10',
-        type: 'Compound',
-        targetMuscle: 'Mid-Back / Lats',
-        muscleCategory: 'Back / Lats',
-        isLowerBody: false,
-        cue: 'Sit tall, pull handle to lower ribs, squeeze shoulder blades for 1 second.'
+        type: 'compound',
+        restSec: 120,
+        targetMuscle: 'Lats/Back',
+        primaryGroup: 'Lats/Back',
+        secondaryGroups: ['Biceps', 'Rear delts'],
+        step: 'PIN',
+        cue: 'Sit tall, pull the handle to the lower ribs, 1 s squeeze, let the shoulder blades stretch forward.',
+        alternatives: ['Chest-Supported Row'],
+        flags: {}
       },
       {
         id: 'tue-4',
@@ -196,11 +315,15 @@ const WORKOUT_PLAN = [
         repMin: 12,
         repMax: 15,
         repLabel: '12-15',
-        type: 'Isolation',
-        targetMuscle: 'Rear Delts / Traps',
-        muscleCategory: 'Shoulders',
-        isLowerBody: false,
-        cue: 'Pull rope toward forehead while externally rotating thumbs backward.'
+        type: 'isolation',
+        restSec: 75,
+        targetMuscle: 'Rear delts',
+        primaryGroup: 'Rear delts',
+        secondaryGroups: [],
+        step: 'PIN',
+        cue: 'Rope to the forehead, thumbs back, elbows high.',
+        alternatives: ['Reverse Pec Deck'],
+        flags: {}
       },
       {
         id: 'tue-5',
@@ -209,11 +332,15 @@ const WORKOUT_PLAN = [
         repMin: 8,
         repMax: 10,
         repLabel: '8-10',
-        type: 'Isolation',
+        type: 'isolation',
+        restSec: 75,
         targetMuscle: 'Biceps',
-        muscleCategory: 'Biceps',
-        isLowerBody: false,
-        cue: 'Keep elbows tucked at ribs, curl without swinging your torso.'
+        primaryGroup: 'Biceps',
+        secondaryGroups: [],
+        step: 'B2.5',
+        cue: 'Elbows fixed at the ribs, no torso swing, full stretch at the bottom.',
+        alternatives: ['DB Curl'],
+        flags: {}
       },
       {
         id: 'tue-6',
@@ -222,11 +349,15 @@ const WORKOUT_PLAN = [
         repMin: 10,
         repMax: 12,
         repLabel: '10-12',
-        type: 'Isolation',
-        targetMuscle: 'Brachialis / Forearms',
-        muscleCategory: 'Biceps',
-        isLowerBody: false,
-        cue: 'Neutral palms-facing grip, controlled eccentric for arm thickness.'
+        type: 'isolation',
+        restSec: 75,
+        targetMuscle: 'Biceps (brachialis)',
+        primaryGroup: 'Biceps',
+        secondaryGroups: [],
+        step: 'DB',
+        cue: 'Neutral grip, slow 2 s lowering.',
+        alternatives: [],
+        flags: {}
       }
     ]
   },
@@ -235,7 +366,7 @@ const WORKOUT_PLAN = [
     shortDay: 'Wed',
     dayName: 'Wednesday',
     title: 'Legs A',
-    subtitle: 'Quads, Hamstrings, Calves & Core',
+    subtitle: 'Quads, Hamstrings, Calves & Abs (20 Sets)',
     isRest: false,
     estimatedMinutes: 70,
     exercises: [
@@ -246,11 +377,15 @@ const WORKOUT_PLAN = [
         repMin: 8,
         repMax: 10,
         repLabel: '8-10',
-        type: 'Compound',
+        type: 'compound',
+        restSec: 150,
         targetMuscle: 'Quads',
-        muscleCategory: 'Quads',
-        isLowerBody: true,
-        cue: 'Feet shoulder-width, lower sled until knees hit 90 degrees without lower back rounding.'
+        primaryGroup: 'Quads',
+        secondaryGroups: ['Glutes'],
+        step: 'B5',
+        cue: 'Feet shoulder-width mid-platform, lower to about 90° at the knee with the lower back staying on the pad, never lock out.',
+        alternatives: ['Hack Squat'],
+        flags: {}
       },
       {
         id: 'wed-2',
@@ -259,11 +394,15 @@ const WORKOUT_PLAN = [
         repMin: 8,
         repMax: 10,
         repLabel: '8-10',
-        type: 'Compound',
+        type: 'compound',
+        restSec: 150,
         targetMuscle: 'Hamstrings',
-        muscleCategory: 'Hamstrings',
-        isLowerBody: true,
-        cue: 'Push hips straight back with soft knees until deep hamstring stretch, bar close to shins.'
+        primaryGroup: 'Hamstrings',
+        secondaryGroups: ['Glutes'],
+        step: 'B5',
+        cue: 'Soft knees, hips back, bar slides down the thighs, stop at a deep hamstring stretch with a flat back.',
+        alternatives: ['DB RDL'],
+        flags: {}
       },
       {
         id: 'wed-3',
@@ -272,24 +411,32 @@ const WORKOUT_PLAN = [
         repMin: 12,
         repMax: 15,
         repLabel: '12-15',
-        type: 'Isolation',
+        type: 'isolation',
+        restSec: 90,
         targetMuscle: 'Quads',
-        muscleCategory: 'Quads',
-        isLowerBody: true,
-        cue: 'Pause 1 second at top contraction, control the lowering phase.'
+        primaryGroup: 'Quads',
+        secondaryGroups: [],
+        step: 'PIN',
+        cue: 'Pause 1 s at the top, lower over 2–3 s, knee aligned with the machine pivot.',
+        alternatives: [],
+        flags: {}
       },
       {
         id: 'wed-4',
-        name: 'Leg Curl',
+        name: 'Seated Leg Curl',
         sets: 3,
         repMin: 10,
         repMax: 12,
         repLabel: '10-12',
-        type: 'Isolation',
+        type: 'isolation',
+        restSec: 90,
         targetMuscle: 'Hamstrings',
-        muscleCategory: 'Hamstrings',
-        isLowerBody: true,
-        cue: 'Keep hips pressed into the pad throughout the entire curl.'
+        primaryGroup: 'Hamstrings',
+        secondaryGroups: [],
+        step: 'PIN',
+        cue: 'Hips pinned, lean slightly forward, full stretch at the start, curl the heels under the seat.',
+        alternatives: ['Lying Leg Curl'],
+        flags: { updatedInV2: true }
       },
       {
         id: 'wed-5',
@@ -298,11 +445,15 @@ const WORKOUT_PLAN = [
         repMin: 12,
         repMax: 15,
         repLabel: '12-15',
-        type: 'Isolation',
+        type: 'isolation',
+        restSec: 75,
         targetMuscle: 'Calves',
-        muscleCategory: 'Calves',
-        isLowerBody: true,
-        cue: 'Full stretch at the bottom for 1 second, press high onto big toes.'
+        primaryGroup: 'Calves',
+        secondaryGroups: [],
+        step: 'B5',
+        cue: '1–2 s stretch at the bottom, rise high on the big toe, no bouncing.',
+        alternatives: ['Leg-Press Calf Raise'],
+        flags: {}
       },
       {
         id: 'wed-6',
@@ -311,11 +462,15 @@ const WORKOUT_PLAN = [
         repMin: 10,
         repMax: 15,
         repLabel: '10-15',
-        type: 'Isolation',
-        targetMuscle: 'Abs / Core',
-        muscleCategory: 'Abs / Core',
-        isLowerBody: false,
-        cue: 'Curl pelvis upward toward ribs rather than just swinging legs.'
+        type: 'isolation',
+        restSec: 75,
+        targetMuscle: 'Abs',
+        primaryGroup: 'Abs',
+        secondaryGroups: [],
+        step: 'BW',
+        cue: 'Curl the pelvis up toward the ribs rather than swinging the legs; start with knee raises if needed.',
+        alternatives: ["Captain's-Chair Knee Raise"],
+        flags: { bodyweight: true }
       }
     ]
   },
@@ -324,35 +479,43 @@ const WORKOUT_PLAN = [
     shortDay: 'Thu',
     dayName: 'Thursday',
     title: 'Push B',
-    subtitle: 'Overhead Power, Side Delts, Chest & Triceps',
+    subtitle: 'Overhead Strength, Side Delts, Chest & Triceps (20 Sets)',
     isRest: false,
     estimatedMinutes: 70,
     exercises: [
       {
         id: 'thu-1',
-        name: 'Overhead Press',
+        name: 'Standing Overhead Press (barbell)',
         sets: 4,
         repMin: 6,
         repMax: 8,
         repLabel: '6-8',
-        type: 'Compound',
-        targetMuscle: 'Shoulders / Upper Chest',
-        muscleCategory: 'Shoulders',
-        isLowerBody: false,
-        cue: 'Squeeze glutes and abs tight, press bar vertically in a straight line.'
+        type: 'compound',
+        restSec: 150,
+        targetMuscle: 'Front delts',
+        primaryGroup: 'Front delts',
+        secondaryGroups: ['Side delts', 'Triceps'],
+        step: 'B2.5',
+        cue: 'Glutes and abs tight, bar path vertical, head through at the top, no leaning back.',
+        alternatives: ['Seated DB Press', 'Machine Press'],
+        flags: {}
       },
       {
         id: 'thu-2',
-        name: 'Machine/DB Chest Press',
+        name: 'Machine or DB Chest Press',
         sets: 3,
         repMin: 8,
         repMax: 10,
         repLabel: '8-10',
-        type: 'Compound',
+        type: 'compound',
+        restSec: 120,
         targetMuscle: 'Chest',
-        muscleCategory: 'Chest',
-        isLowerBody: false,
-        cue: 'Drive through palms with shoulders pinned back into the seat.'
+        primaryGroup: 'Chest',
+        secondaryGroups: ['Front delts', 'Triceps'],
+        step: 'PIN',
+        cue: 'Shoulders pinned back into the seat, drive through the palms, control the stretch.',
+        alternatives: [],
+        flags: {}
       },
       {
         id: 'thu-3',
@@ -361,50 +524,81 @@ const WORKOUT_PLAN = [
         repMin: 15,
         repMax: 20,
         repLabel: '15-20',
-        type: 'Isolation',
-        targetMuscle: 'Side Delts',
-        muscleCategory: 'Shoulders',
-        isLowerBody: false,
-        cue: 'Set pulley at wrist height, sweep arm out in a wide arc for constant tension.'
+        type: 'isolation',
+        restSec: 75,
+        targetMuscle: 'Side delts',
+        primaryGroup: 'Side delts',
+        secondaryGroups: [],
+        step: 'S1',
+        cue: 'Pulley low, sweep the arm out and up with a slight lean away, constant tension.',
+        alternatives: ['DB Lateral Raise', 'Machine Lateral Raise'],
+        flags: {}
       },
       {
         id: 'thu-4',
-        name: 'Pec Deck/Cable Fly',
+        name: 'Pec Deck or Cable Fly',
         sets: 3,
         repMin: 12,
         repMax: 15,
         repLabel: '12-15',
-        type: 'Isolation',
+        type: 'isolation',
+        restSec: 75,
         targetMuscle: 'Chest',
-        muscleCategory: 'Chest',
-        isLowerBody: false,
-        cue: 'Hug a wide tree trunk with soft elbows, squeeze inner chest at center.'
+        primaryGroup: 'Chest',
+        secondaryGroups: [],
+        step: 'PIN',
+        cue: 'Soft elbows, hug a wide tree, deep controlled stretch, squeeze at the centre.',
+        alternatives: [],
+        flags: {}
       },
       {
         id: 'thu-5',
-        name: 'Assisted Dips or Skull Crusher',
+        name: 'Assisted Dips (chest-leaning) OR EZ Skull Crusher',
         sets: 3,
         repMin: 8,
         repMax: 12,
         repLabel: '8-12',
-        type: 'Compound',
-        targetMuscle: 'Triceps / Lower Chest',
-        muscleCategory: 'Triceps',
-        isLowerBody: false,
-        cue: 'Keep elbows tucked and lower under full control until deep stretch.'
+        type: 'compound',
+        restSec: 120,
+        targetMuscle: 'Triceps',
+        primaryGroup: 'Triceps',
+        secondaryGroups: ['Chest'],
+        step: 'ASSIST',
+        cue: 'Elbows tucked, lower under control to a deep stretch.',
+        alternatives: [],
+        flags: {
+          variants: [
+            {
+              id: 'dips',
+              name: 'Assisted Dips (chest-leaning)',
+              step: 'ASSIST',
+              assisted: true
+            },
+            {
+              id: 'skull',
+              name: 'EZ Skull Crusher',
+              step: 'B2.5',
+              assisted: false
+            }
+          ]
+        }
       },
       {
         id: 'thu-6',
-        name: 'Rear Delt Fly',
+        name: 'Rear Delt Fly (DB or cable)',
         sets: 3,
         repMin: 15,
         repMax: 15,
         repLabel: '15',
-        type: 'Isolation',
-        targetMuscle: 'Rear Delts',
-        muscleCategory: 'Shoulders',
-        isLowerBody: false,
-        cue: 'Push hands outward and back with pinkies slightly turned out.'
+        type: 'isolation',
+        restSec: 75,
+        targetMuscle: 'Rear delts',
+        primaryGroup: 'Rear delts',
+        secondaryGroups: [],
+        step: 'S1',
+        cue: 'Hinge forward, push the hands out and back, no shrugging.',
+        alternatives: [],
+        flags: {}
       }
     ]
   },
@@ -413,48 +607,60 @@ const WORKOUT_PLAN = [
     shortDay: 'Fri',
     dayName: 'Friday',
     title: 'Pull B',
-    subtitle: 'Lat Thickness, V-Taper Sweep & Biceps Peak',
+    subtitle: 'Lat Thickness, V-Taper Sweep, Rear Delts & Biceps (18 Sets)',
     isRest: false,
     estimatedMinutes: 70,
     exercises: [
       {
         id: 'fri-1',
-        name: 'Chest-Supported/One-arm DB Row',
+        name: 'Chest-Supported Row or One-Arm DB Row',
         sets: 4,
         repMin: 8,
         repMax: 10,
         repLabel: '8-10',
-        type: 'Compound',
-        targetMuscle: 'Lats / Mid-Back',
-        muscleCategory: 'Back / Lats',
-        isLowerBody: false,
-        cue: 'Row dumbbell in an arc toward your hip pocket to isolate the lat.'
+        type: 'compound',
+        restSec: 120,
+        targetMuscle: 'Lats/Back',
+        primaryGroup: 'Lats/Back',
+        secondaryGroups: ['Biceps', 'Rear delts'],
+        step: 'DB',
+        cue: 'Row in an arc toward the hip pocket, let the shoulder blade stretch at the bottom.',
+        alternatives: [],
+        flags: {}
       },
       {
         id: 'fri-2',
-        name: 'Neutral-grip Pulldown',
+        name: 'Neutral-Grip Pulldown',
         sets: 3,
         repMin: 10,
         repMax: 12,
         repLabel: '10-12',
-        type: 'Compound',
-        targetMuscle: 'Lats',
-        muscleCategory: 'Back / Lats',
-        isLowerBody: false,
-        cue: 'Keep elbows tucked forward and drive down to upper chest.'
+        type: 'compound',
+        restSec: 120,
+        targetMuscle: 'Lats/Back',
+        primaryGroup: 'Lats/Back',
+        secondaryGroups: ['Biceps'],
+        step: 'PIN',
+        cue: 'Elbows forward and tucked, drive down to the upper chest.',
+        alternatives: [],
+        flags: {}
       },
       {
         id: 'fri-3',
-        name: 'Straight-arm Pulldown',
+        name: 'Straight-Arm Pulldown',
         sets: 3,
         repMin: 12,
         repMax: 15,
         repLabel: '12-15',
-        type: 'Isolation',
-        targetMuscle: 'Lats',
-        muscleCategory: 'Back / Lats',
-        isLowerBody: false,
-        cue: 'Arms nearly straight, sweep bar down to thighs using lats only.'
+        type: 'isolation',
+        restSec: 75,
+        targetMuscle: 'Lats/Back',
+        primaryGroup: 'Lats/Back',
+        secondaryGroups: [],
+        step: 'PIN',
+        cue: 'Arms nearly straight, sweep the bar to the thighs using the lats only.',
+        alternatives: [],
+        flags: {}
       },
       {
         id: 'fri-4',
@@ -463,11 +669,15 @@ const WORKOUT_PLAN = [
         repMin: 15,
         repMax: 15,
         repLabel: '15',
-        type: 'Isolation',
-        targetMuscle: 'Rear Delts',
-        muscleCategory: 'Shoulders',
-        isLowerBody: false,
-        cue: 'Chest against pad, sweep arms straight back without shrugging traps.'
+        type: 'isolation',
+        restSec: 75,
+        targetMuscle: 'Rear delts',
+        primaryGroup: 'Rear delts',
+        secondaryGroups: [],
+        step: 'PIN',
+        cue: 'Chest on the pad, sweep the arms back without shrugging.',
+        alternatives: [],
+        flags: {}
       },
       {
         id: 'fri-5',
@@ -476,11 +686,15 @@ const WORKOUT_PLAN = [
         repMin: 10,
         repMax: 12,
         repLabel: '10-12',
-        type: 'Isolation',
-        targetMuscle: 'Biceps (Long Head)',
-        muscleCategory: 'Biceps',
-        isLowerBody: false,
-        cue: 'Let arms hang straight behind torso for maximum stretch before curling.'
+        type: 'isolation',
+        restSec: 75,
+        targetMuscle: 'Biceps (long head)',
+        primaryGroup: 'Biceps',
+        secondaryGroups: [],
+        step: 'DB',
+        cue: 'Bench at 45–60°, let the arms hang behind the torso for a full stretch before each curl.',
+        alternatives: [],
+        flags: {}
       },
       {
         id: 'fri-6',
@@ -489,11 +703,15 @@ const WORKOUT_PLAN = [
         repMin: 12,
         repMax: 12,
         repLabel: '12',
-        type: 'Isolation',
+        type: 'isolation',
+        restSec: 75,
         targetMuscle: 'Biceps',
-        muscleCategory: 'Biceps',
-        isLowerBody: false,
-        cue: 'Constant cable tension, squeeze hard at the top.'
+        primaryGroup: 'Biceps',
+        secondaryGroups: [],
+        step: 'PIN',
+        cue: 'Constant tension, squeeze at the top.',
+        alternatives: [],
+        flags: {}
       }
     ]
   },
@@ -502,7 +720,7 @@ const WORKOUT_PLAN = [
     shortDay: 'Sat',
     dayName: 'Saturday',
     title: 'Legs B',
-    subtitle: 'Unilateral Legs, Glutes, Bonus Side Delts & Abs',
+    subtitle: 'Glutes, Quads, Hamstrings, Calves, Side Delts & Abs (22 Sets)',
     isRest: false,
     estimatedMinutes: 70,
     exercises: [
@@ -512,12 +730,16 @@ const WORKOUT_PLAN = [
         sets: 3,
         repMin: 8,
         repMax: 10,
-        repLabel: '8-10',
-        type: 'Compound',
-        targetMuscle: 'Quads / Glutes',
-        muscleCategory: 'Quads',
-        isLowerBody: true,
-        cue: 'Rear foot on bench, lean torso slightly forward, drop back knee straight down.'
+        repLabel: '8-10 per leg',
+        type: 'compound',
+        restSec: 120,
+        targetMuscle: 'Quads',
+        primaryGroup: 'Quads',
+        secondaryGroups: ['Glutes'],
+        step: 'DB',
+        cue: 'Rear foot on the bench, slight forward lean, lower the back knee straight down.',
+        alternatives: ['Smith Split Squat'],
+        flags: { unilateral: true }
       },
       {
         id: 'sat-2',
@@ -526,24 +748,32 @@ const WORKOUT_PLAN = [
         repMin: 10,
         repMax: 10,
         repLabel: '10',
-        type: 'Compound',
+        type: 'compound',
+        restSec: 120,
         targetMuscle: 'Glutes',
-        muscleCategory: 'Glutes',
-        isLowerBody: true,
-        cue: 'Chin tucked, drive through heels to full hip lockout, squeeze glutes.'
+        primaryGroup: 'Glutes',
+        secondaryGroups: [],
+        step: 'B5',
+        cue: 'Chin tucked, drive through the heels to full hip lockout, squeeze for 1 s.',
+        alternatives: [],
+        flags: {}
       },
       {
         id: 'sat-3',
-        name: 'Hack/Smith Squat',
+        name: 'Hack or Smith Squat',
         sets: 3,
         repMin: 10,
         repMax: 12,
         repLabel: '10-12',
-        type: 'Compound',
+        type: 'compound',
+        restSec: 120,
         targetMuscle: 'Quads',
-        muscleCategory: 'Quads',
-        isLowerBody: true,
-        cue: 'Back flat on sled, descend below parallel with knees tracking over toes.'
+        primaryGroup: 'Quads',
+        secondaryGroups: ['Glutes'],
+        step: 'B5',
+        cue: 'Back flat on the pad, go below parallel with the knees tracking over the toes.',
+        alternatives: [],
+        flags: {}
       },
       {
         id: 'sat-4',
@@ -552,11 +782,15 @@ const WORKOUT_PLAN = [
         repMin: 10,
         repMax: 12,
         repLabel: '10-12',
-        type: 'Isolation',
+        type: 'isolation',
+        restSec: 90,
         targetMuscle: 'Hamstrings',
-        muscleCategory: 'Hamstrings',
-        isLowerBody: true,
-        cue: 'Lock thigh pad snug over knees and curl heels all the way under seat.'
+        primaryGroup: 'Hamstrings',
+        secondaryGroups: [],
+        step: 'PIN',
+        cue: 'Thigh pad snug, curl the heels all the way under the seat.',
+        alternatives: [],
+        flags: {}
       },
       {
         id: 'sat-5',
@@ -565,24 +799,32 @@ const WORKOUT_PLAN = [
         repMin: 15,
         repMax: 15,
         repLabel: '15',
-        type: 'Isolation',
-        targetMuscle: 'Calves (Soleus)',
-        muscleCategory: 'Calves',
-        isLowerBody: true,
-        cue: 'Full pause at bottom stretch and top peak contraction.'
+        type: 'isolation',
+        restSec: 75,
+        targetMuscle: 'Calves (soleus)',
+        primaryGroup: 'Calves',
+        secondaryGroups: [],
+        step: 'B5',
+        cue: 'Full pause at the bottom stretch and at the top.',
+        alternatives: [],
+        flags: {}
       },
       {
         id: 'sat-6',
-        name: 'Lateral Raise',
+        name: 'Lateral Raise (DB or cable)',
         sets: 3,
         repMin: 15,
         repMax: 20,
         repLabel: '15-20',
-        type: 'Isolation',
-        targetMuscle: 'Side Delts',
-        muscleCategory: 'Shoulders',
-        isLowerBody: false,
-        cue: 'Bonus V-taper volume: strict form, zero momentum, pinky-neutral.'
+        type: 'isolation',
+        restSec: 75,
+        targetMuscle: 'Side delts',
+        primaryGroup: 'Side delts',
+        secondaryGroups: [],
+        step: 'S1',
+        cue: 'Bonus V-taper volume: strict form, zero momentum.',
+        alternatives: [],
+        flags: {}
       },
       {
         id: 'sat-7',
@@ -591,11 +833,15 @@ const WORKOUT_PLAN = [
         repMin: 12,
         repMax: 15,
         repLabel: '12-15',
-        type: 'Isolation',
-        targetMuscle: 'Abs / Core',
-        muscleCategory: 'Abs / Core',
-        isLowerBody: false,
-        cue: 'Hips stationary, flex spine downward bringing elbows toward knees.'
+        type: 'isolation',
+        restSec: 75,
+        targetMuscle: 'Abs',
+        primaryGroup: 'Abs',
+        secondaryGroups: [],
+        step: 'PIN',
+        cue: 'Hips still, flex the spine bringing the elbows toward the knees.',
+        alternatives: [],
+        flags: {}
       }
     ]
   },
@@ -604,142 +850,662 @@ const WORKOUT_PLAN = [
     shortDay: 'Sun',
     dayName: 'Sunday',
     title: 'Rest & Recovery',
-    subtitle: 'Rest, 20-30 min walk',
+    subtitle: '20–30 min easy walk, light mobility, no lifting',
     isRest: true,
     estimatedMinutes: 30,
     exercises: []
   }
 ];
 
-const INITIAL_MEAL_TEMPLATES = [
+export const EXPECTED_WEEKLY_PRIMARY_SETS = {
+  Chest: 12,
+  'Front delts': 7,
+  'Side delts': 11,
+  'Rear delts': 9,
+  'Lats/Back': 20,
+  Biceps: 10,
+  Triceps: 8,
+  Quads: 13,
+  Hamstrings: 9,
+  Glutes: 3,
+  Calves: 8,
+  Abs: 6
+};
+
+// ============================================================================
+// SECTION 5: FINAL NUTRITION DATA (src/data/foods.ts & src/data/meals.ts)
+// Whole-Food Indian Database (IFCT 2017 / USDA) — Zero Supplements
+// ============================================================================
+
+export const INITIAL_FOOD_DATABASE = [
+  { id: 'whole_egg', name: 'Whole egg (1 egg ≈ 50 g)', basis: 1, unit: 'egg', category: 'Protein', kcal: 72, protein: 6.3, carbs: 0.4, fat: 4.8 },
+  { id: 'chicken_breast_raw', name: 'Chicken breast, raw, skinless', basis: 100, unit: 'g', category: 'Protein', kcal: 120, protein: 22.5, carbs: 0, fat: 2.6 },
+  { id: 'paneer', name: 'Paneer, full-fat', basis: 100, unit: 'g', category: 'Dairy', kcal: 280, protein: 18.5, carbs: 3, fat: 21 },
+  { id: 'soya_chunks_dry', name: 'Soya chunks, dry', basis: 100, unit: 'g', category: 'Protein', kcal: 345, protein: 52, carbs: 33, fat: 0.5 },
+  { id: 'moong_dal_dry', name: 'Moong dal, dry', basis: 100, unit: 'g', category: 'Protein', kcal: 347, protein: 24, carbs: 59, fat: 1.2 },
+  { id: 'toor_dal_dry', name: 'Toor dal, dry', basis: 100, unit: 'g', category: 'Protein', kcal: 335, protein: 22, carbs: 57, fat: 1.5 },
+  { id: 'rajma_dry', name: 'Rajma, dry', basis: 100, unit: 'g', category: 'Protein', kcal: 333, protein: 22, carbs: 60, fat: 1 },
+  { id: 'kabuli_chana_dry', name: 'Kabuli chana, dry', basis: 100, unit: 'g', category: 'Protein', kcal: 364, protein: 19, carbs: 61, fat: 6 },
+  { id: 'roasted_chana', name: 'Roasted chana', basis: 100, unit: 'g', category: 'Protein', kcal: 370, protein: 19, carbs: 58, fat: 5 },
+  { id: 'sattu', name: 'Sattu (roasted chana flour)', basis: 100, unit: 'g', category: 'Protein', kcal: 405, protein: 20, carbs: 60, fat: 6 },
+  { id: 'peanuts', name: 'Peanuts', basis: 100, unit: 'g', category: 'Pantry', kcal: 567, protein: 24, carbs: 16, fat: 49 },
+  { id: 'peanut_butter', name: 'Peanut butter', basis: 100, unit: 'g', category: 'Pantry', kcal: 588, protein: 25, carbs: 20, fat: 50 },
+  { id: 'almonds', name: 'Almonds', basis: 100, unit: 'g', category: 'Pantry', kcal: 579, protein: 21, carbs: 22, fat: 50 },
+  { id: 'whole_milk', name: 'Whole milk', basis: 100, unit: 'ml', category: 'Dairy', kcal: 61, protein: 3.2, carbs: 4.8, fat: 3.3 },
+  { id: 'curd', name: 'Curd / dahi (whole milk)', basis: 100, unit: 'g', category: 'Dairy', kcal: 61, protein: 3.5, carbs: 4.7, fat: 3.3 },
+  { id: 'atta_dry', name: 'Whole-wheat atta, dry', basis: 100, unit: 'g', category: 'Carbs', kcal: 346, protein: 11.8, carbs: 71, fat: 1.5 },
+  { id: 'roti', name: 'Whole-wheat roti (1 roti = 30 g atta)', basis: 1, unit: 'roti', category: 'Carbs', kcal: 104, protein: 3.5, carbs: 21.3, fat: 0.5 },
+  { id: 'rice_cooked', name: 'Rice, cooked', basis: 100, unit: 'g', category: 'Carbs', kcal: 130, protein: 2.7, carbs: 28, fat: 0.3 },
+  { id: 'poha_dry', name: 'Poha, dry', basis: 100, unit: 'g', category: 'Carbs', kcal: 346, protein: 6.6, carbs: 77, fat: 1.2 },
+  { id: 'rolled_oats', name: 'Rolled oats', basis: 100, unit: 'g', category: 'Carbs', kcal: 389, protein: 16.9, carbs: 66, fat: 6.9 },
+  { id: 'bread_slice', name: 'Whole-wheat bread (1 slice, 30 g)', basis: 1, unit: 'slice', category: 'Carbs', kcal: 75, protein: 3.5, carbs: 13, fat: 1 },
+  { id: 'banana', name: 'Banana (1 medium, 118 g)', basis: 1, unit: 'banana', category: 'Carbs', kcal: 105, protein: 1.3, carbs: 27, fat: 0.4 },
+  { id: 'dates', name: 'Dates', basis: 100, unit: 'g', category: 'Carbs', kcal: 277, protein: 1.8, carbs: 75, fat: 0.2 },
+  { id: 'jaggery', name: 'Jaggery', basis: 100, unit: 'g', category: 'Pantry', kcal: 383, protein: 0.4, carbs: 98, fat: 0.1 },
+  { id: 'ghee', name: 'Ghee', basis: 100, unit: 'g', category: 'Pantry', kcal: 900, protein: 0, carbs: 0, fat: 100 },
+  { id: 'cooking_oil', name: 'Cooking oil', basis: 100, unit: 'g', category: 'Pantry', kcal: 900, protein: 0, carbs: 0, fat: 100 },
+  { id: 'potato_boiled', name: 'Potato, boiled', basis: 100, unit: 'g', category: 'Carbs', kcal: 87, protein: 1.9, carbs: 20, fat: 0.1 },
+  { id: 'mixed_sabzi', name: 'Mixed sabzi, cooked with ~5% oil', basis: 100, unit: 'g', category: 'Carbs', kcal: 85, protein: 2, carbs: 8, fat: 5 },
+  { id: 'gravy_base', name: 'Onion–tomato gravy base', basis: 100, unit: 'g', category: 'Pantry', kcal: 45, protein: 1.2, carbs: 7, fat: 1.5 }
+];
+
+export const MEAL_SLOTS = [
   {
-    id: 'meal-1',
-    name: 'Breakfast',
-    timeHint: '08:00 AM',
-    kcal: 650,
-    protein: 28,
-    items: '3 eggs or paneer bhurji, 2 roti, milk',
-    completed: false
+    slotId: 'breakfast',
+    slotName: 'Breakfast',
+    timeHint: '08:00',
+    options: [
+      {
+        id: 'B1',
+        code: 'B1',
+        label: 'B1 (Egg Bhurji / Omelette)',
+        description: '2 whole eggs as bhurji or omelette in 5 g oil + 3 roti + 250 ml milk',
+        tracks: ['non-veg', 'eggetarian'],
+        proteinAnchor: 'egg',
+        expected: { kcal: 654, protein: 31, carbs: 77, fat: 24 },
+        ingredients: [
+          { foodId: 'whole_egg', amount: 2 },
+          { foodId: 'cooking_oil', amount: 5 },
+          { foodId: 'roti', amount: 3 },
+          { foodId: 'whole_milk', amount: 250 }
+        ]
+      },
+      {
+        id: 'B2',
+        code: 'B2',
+        label: 'B2 (Veg Paneer Bhurji)',
+        description: '80 g paneer bhurji in 5 g oil + 2 roti + 250 ml milk',
+        tracks: ['non-veg', 'eggetarian', 'veg'],
+        proteinAnchor: 'paneer',
+        expected: { kcal: 630, protein: 30, carbs: 57, fat: 31 },
+        ingredients: [
+          { foodId: 'paneer', amount: 80 },
+          { foodId: 'cooking_oil', amount: 5 },
+          { foodId: 'roti', amount: 2 },
+          { foodId: 'whole_milk', amount: 250 }
+        ]
+      }
+    ]
   },
   {
-    id: 'meal-2',
-    name: 'Mid-morning',
-    timeHint: '11:00 AM',
-    kcal: 350,
-    protein: 14,
-    items: 'banana shake with peanut butter',
-    completed: false
+    slotId: 'mid_morning',
+    slotName: 'Mid-morning',
+    timeHint: '11:00',
+    options: [
+      {
+        id: 'M1',
+        code: 'M1',
+        label: 'M1 (Banana PB Milk Shake)',
+        description: '1 banana + 300 ml milk + 16 g peanut butter shake',
+        tracks: ['non-veg', 'eggetarian', 'veg'],
+        proteinAnchor: 'dairy',
+        expected: { kcal: 382, protein: 15, carbs: 45, fat: 18 },
+        ingredients: [
+          { foodId: 'banana', amount: 1 },
+          { foodId: 'whole_milk', amount: 300 },
+          { foodId: 'peanut_butter', amount: 16 }
+        ]
+      },
+      {
+        id: 'M2',
+        code: 'M2',
+        label: 'M2 (Sattu–Milk No-Blender Drink)',
+        description: '40 g sattu + 250 ml milk + 10 g jaggery',
+        tracks: ['non-veg', 'eggetarian', 'veg'],
+        proteinAnchor: 'sattu',
+        expected: { kcal: 353, protein: 16, carbs: 46, fat: 11 },
+        ingredients: [
+          { foodId: 'sattu', amount: 40 },
+          { foodId: 'whole_milk', amount: 250 },
+          { foodId: 'jaggery', amount: 10 }
+        ]
+      }
+    ]
   },
   {
-    id: 'meal-3',
-    name: 'Lunch',
-    timeHint: '01:30 PM',
-    kcal: 750,
-    protein: 35,
-    items: 'rice/roti, dal, chicken/paneer, sabzi, curd',
-    completed: false
+    slotId: 'lunch',
+    slotName: 'Lunch',
+    timeHint: '13:30',
+    options: [
+      {
+        id: 'L1',
+        code: 'L1',
+        label: 'L1 (Chicken Curry Thali)',
+        description: '100 g raw chicken breast curry in 8 g oil + 200 g cooked rice + dal (35 g dry moong + 5 g ghee) + 100 g curd',
+        tracks: ['non-veg'],
+        proteinAnchor: 'chicken',
+        expected: { kcal: 680, protein: 40, carbs: 81, fat: 20 },
+        ingredients: [
+          { foodId: 'chicken_breast_raw', amount: 100 },
+          { foodId: 'cooking_oil', amount: 8 },
+          { foodId: 'rice_cooked', amount: 200 },
+          { foodId: 'moong_dal_dry', amount: 35 },
+          { foodId: 'ghee', amount: 5 },
+          { foodId: 'curd', amount: 100 }
+        ]
+      },
+      {
+        id: 'L2',
+        code: 'L2',
+        label: 'L2 (Veg Soya Chunks & Dal Thali)',
+        description: '40 g dry soya chunks curry in 8 g oil + 200 g cooked rice + dal (35 g dry moong + 5 g ghee) + 100 g curd',
+        tracks: ['non-veg', 'eggetarian', 'veg'],
+        proteinAnchor: 'soya',
+        expected: { kcal: 698, protein: 38, carbs: 95, fat: 18 },
+        ingredients: [
+          { foodId: 'soya_chunks_dry', amount: 40 },
+          { foodId: 'cooking_oil', amount: 8 },
+          { foodId: 'rice_cooked', amount: 200 },
+          { foodId: 'moong_dal_dry', amount: 35 },
+          { foodId: 'ghee', amount: 5 },
+          { foodId: 'curd', amount: 100 }
+        ]
+      }
+    ]
   },
   {
-    id: 'meal-4',
-    name: 'Pre-workout',
-    timeHint: '05:00 PM',
-    kcal: 250,
-    protein: 8,
-    items: 'Pre-workout carbs (banana + oats / toast)',
-    completed: false
+    slotId: 'pre_workout',
+    slotName: 'Pre-workout',
+    timeHint: '17:00',
+    options: [
+      {
+        id: 'P1',
+        code: 'P1',
+        label: 'P1 (Bread + Banana)',
+        description: '2 slices whole-wheat bread + 1 banana (60–90 min pre-gym)',
+        tracks: ['non-veg', 'eggetarian', 'veg'],
+        proteinAnchor: 'carbs',
+        expected: { kcal: 255, protein: 8, carbs: 53, fat: 2 },
+        ingredients: [
+          { foodId: 'bread_slice', amount: 2 },
+          { foodId: 'banana', amount: 1 }
+        ]
+      },
+      {
+        id: 'P2',
+        code: 'P2',
+        label: 'P2 (Banana + Dates + Almonds)',
+        description: '1 banana + 30 g dates + 6 g almonds',
+        tracks: ['non-veg', 'eggetarian', 'veg'],
+        proteinAnchor: 'carbs',
+        expected: { kcal: 223, protein: 3, carbs: 51, fat: 3.5 },
+        ingredients: [
+          { foodId: 'banana', amount: 1 },
+          { foodId: 'dates', amount: 30 },
+          { foodId: 'almonds', amount: 6 }
+        ]
+      }
+    ]
   },
   {
-    id: 'meal-5',
-    name: 'Post-workout',
-    timeHint: '07:00 PM',
-    kcal: 200,
-    protein: 25,
-    items: 'whey or soya chunks',
-    completed: false
+    slotId: 'post_workout',
+    slotName: 'Post-workout',
+    timeHint: '19:00',
+    options: [
+      {
+        id: 'X1',
+        code: 'X1',
+        label: 'X1 (3 Boiled Eggs)',
+        description: '3 whole boiled eggs with pinch of salt & pepper',
+        tracks: ['non-veg', 'eggetarian'],
+        proteinAnchor: 'egg',
+        expected: { kcal: 216, protein: 19, carbs: 1, fat: 14 },
+        ingredients: [{ foodId: 'whole_egg', amount: 3 }]
+      },
+      {
+        id: 'X2',
+        code: 'X2',
+        label: 'X2 (Chicken Tikka + Roti)',
+        description: '100 g raw chicken breast grilled or tikka with 3 g oil + 1 roti',
+        tracks: ['non-veg'],
+        proteinAnchor: 'chicken',
+        expected: { kcal: 251, protein: 26, carbs: 21, fat: 6 },
+        ingredients: [
+          { foodId: 'chicken_breast_raw', amount: 100 },
+          { foodId: 'cooking_oil', amount: 3 },
+          { foodId: 'roti', amount: 1 }
+        ]
+      },
+      {
+        id: 'X3',
+        code: 'X3',
+        label: 'X3 (Veg Soya Chaat + Banana)',
+        description: '35 g dry soya chunks boiled and tossed with onion, lemon and 5 g oil + 1 banana',
+        tracks: ['non-veg', 'eggetarian', 'veg'],
+        proteinAnchor: 'soya',
+        expected: { kcal: 271, protein: 19.5, carbs: 39, fat: 5.6 },
+        ingredients: [
+          { foodId: 'soya_chunks_dry', amount: 35 },
+          { foodId: 'cooking_oil', amount: 5 },
+          { foodId: 'banana', amount: 1 }
+        ]
+      }
+    ]
   },
   {
-    id: 'meal-6',
-    name: 'Dinner',
-    timeHint: '08:30 PM',
-    kcal: 600,
-    protein: 22,
-    items: 'Rice/roti, chicken/paneer/dal, sabzi',
-    completed: false
+    slotId: 'dinner',
+    slotName: 'Dinner',
+    timeHint: '20:30',
+    options: [
+      {
+        id: 'D1',
+        code: 'D1',
+        label: 'D1 (Chicken Curry + Roti + Rice)',
+        description: '100 g raw chicken breast curry in 7 g oil + 2 roti + 100 g sabzi + 100 g cooked rice',
+        tracks: ['non-veg'],
+        proteinAnchor: 'chicken',
+        expected: { kcal: 606, protein: 34, carbs: 79, fat: 16 },
+        ingredients: [
+          { foodId: 'chicken_breast_raw', amount: 100 },
+          { foodId: 'cooking_oil', amount: 7 },
+          { foodId: 'roti', amount: 2 },
+          { foodId: 'mixed_sabzi', amount: 100 },
+          { foodId: 'rice_cooked', amount: 100 }
+        ]
+      },
+      {
+        id: 'D2',
+        code: 'D2',
+        label: 'D2 (Egg Curry + Roti + Curd)',
+        description: '3 eggs in 8 g oil + 50 g gravy base + 2 roti + 150 g curd',
+        tracks: ['non-veg', 'eggetarian'],
+        proteinAnchor: 'egg',
+        expected: { kcal: 610, protein: 32, carbs: 54, fat: 29 },
+        ingredients: [
+          { foodId: 'whole_egg', amount: 3 },
+          { foodId: 'cooking_oil', amount: 8 },
+          { foodId: 'gravy_base', amount: 50 },
+          { foodId: 'roti', amount: 2 },
+          { foodId: 'curd', amount: 150 }
+        ]
+      },
+      {
+        id: 'D3',
+        code: 'D3',
+        label: 'D3 (Paneer Masala + Roti + Curd)',
+        description: '80 g paneer in 5 g oil + 50 g gravy base + 2 roti + 150 g curd',
+        tracks: ['non-veg', 'eggetarian', 'veg'],
+        proteinAnchor: 'paneer',
+        expected: { kcal: 591, protein: 28, carbs: 56, fat: 29 },
+        ingredients: [
+          { foodId: 'paneer', amount: 80 },
+          { foodId: 'cooking_oil', amount: 5 },
+          { foodId: 'gravy_base', amount: 50 },
+          { foodId: 'roti', amount: 2 },
+          { foodId: 'curd', amount: 150 }
+        ]
+      },
+      {
+        id: 'D4',
+        code: 'D4',
+        label: 'D4 (Soya Chunks Curry + Roti + Rice)',
+        description: '50 g dry soya chunks curry in 8 g oil + 50 g gravy base + 2 roti + 100 g cooked rice',
+        tracks: ['non-veg', 'eggetarian', 'veg'],
+        proteinAnchor: 'soya',
+        expected: { kcal: 605, protein: 36, carbs: 91, fat: 10 },
+        ingredients: [
+          { foodId: 'soya_chunks_dry', amount: 50 },
+          { foodId: 'cooking_oil', amount: 8 },
+          { foodId: 'gravy_base', amount: 50 },
+          { foodId: 'roti', amount: 2 },
+          { foodId: 'rice_cooked', amount: 100 }
+        ]
+      }
+    ]
   },
   {
-    id: 'meal-7',
-    name: 'Bedtime',
-    timeHint: '10:30 PM',
-    kcal: 150,
-    protein: 8,
-    items: 'milk + almonds',
-    completed: false
+    slotId: 'bedtime',
+    slotName: 'Bedtime',
+    timeHint: '22:30',
+    options: [
+      {
+        id: 'S1',
+        code: 'S1',
+        label: 'S1 (Warm Milk + Almonds)',
+        description: '200 ml milk + 6 almonds (7 g)',
+        tracks: ['non-veg', 'eggetarian', 'veg'],
+        proteinAnchor: 'dairy',
+        expected: { kcal: 163, protein: 8, carbs: 11, fat: 10 },
+        ingredients: [
+          { foodId: 'whole_milk', amount: 200 },
+          { foodId: 'almonds', amount: 7 }
+        ]
+      },
+      {
+        id: 'S2',
+        code: 'S2',
+        label: 'S2 (Curd + Peanut Butter Bowl)',
+        description: '150 g curd + 10 g peanut butter',
+        tracks: ['non-veg', 'eggetarian', 'veg'],
+        proteinAnchor: 'dairy',
+        expected: { kcal: 150, protein: 8, carbs: 9, fat: 10 },
+        ingredients: [
+          { foodId: 'curd', amount: 150 },
+          { foodId: 'peanut_butter', amount: 10 }
+        ]
+      }
+    ]
   }
 ];
 
-// ============================================================================
-// CLEAN ZERO-FAKE-DATA INITIAL CONSTANTS (DEFAULT NAME: 'XYZ')
-// ============================================================================
-
-const INITIAL_LAST_SESSION_LOGS = {};
-const INITIAL_WEIGHT_LOGS = [];
-const INITIAL_MEASUREMENTS = [];
-const INITIAL_WORKOUT_HISTORY = [];
-const INITIAL_EXERCISE_HISTORY = {};
-
-const DEFAULT_PROFILE = {
-  name: 'XYZ',
-  age: 22,
-  heightCm: 173,
-  startWeightKg: 55,
-  currentWeightKg: 55,
-  goalWeightMinKg: 65,
-  goalWeightMaxKg: 68,
-  targetCalories: 2900,
-  targetProteinG: 130,
-  targetWaterMl: 3500
-};
-
-const VTAPER_SVG_RAW = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
-  <rect width="512" height="512" rx="112" fill="#0A0A0B" />
-  <rect x="16" y="16" width="480" height="480" rx="96" stroke="#27272A" stroke-width="14" />
-  <rect x="76" y="116" width="360" height="20" rx="6" fill="#27272A" />
-  <rect x="92" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
-  <rect x="396" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
-  <path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="#CCFF00" />
-  <polygon points="208,156 304,156 256,284" fill="#27272A" />
-  <rect x="212" y="444" width="88" height="12" rx="6" fill="#27272A" />
-</svg>`;
+export const APPETITE_HELPERS = [
+  { id: 'ah-ghee', label: '1 tsp ghee on dal/roti', kcal: 45, protein: 0, carbs: 0, fat: 5 },
+  { id: 'ah-pb', label: '1 tbsp peanut butter', kcal: 94, protein: 4, carbs: 3.2, fat: 8 },
+  { id: 'ah-peanuts', label: '30 g roasted peanuts', kcal: 170, protein: 7, carbs: 4.8, fat: 14.7 },
+  { id: 'ah-sattu', label: '30 g sattu in water/milk', kcal: 122, protein: 6, carbs: 18, fat: 1.8 },
+  { id: 'ah-banana', label: '1 medium banana', kcal: 105, protein: 1.3, carbs: 27, fat: 0.4 },
+  { id: 'ah-milk', label: '250 ml extra milk', kcal: 152, protein: 8, carbs: 12, fat: 8.3 }
+];
 
 // ============================================================================
-// CORE BUSINESS LOGIC (PURE FUNCTIONS WITH UNIT TEST COVERAGE)
+// NUTRITION & TRAINING COMPUTATION HELPERS (WITH UNIT TEST COVERAGE)
 // ============================================================================
 
-export function calculateProgressiveOverload(exercise, previousSets) {
-  if (!exercise || !Array.isArray(previousSets) || previousSets.length < exercise.sets) {
+export function computeMealOptionMacros(option, foodDb = INITIAL_FOOD_DATABASE) {
+  if (!option || !Array.isArray(option.ingredients)) {
+    return { kcal: 0, protein: 0, carbs: 0, fat: 0 };
+  }
+  let kcal = 0;
+  let protein = 0;
+  let carbs = 0;
+  let fat = 0;
+
+  option.ingredients.forEach((item) => {
+    const food = foodDb.find((f) => f.id === item.foodId);
+    if (!food) return;
+    const ratio = Number(item.amount || 0) / Number(food.basis || 100);
+    kcal += food.kcal * ratio;
+    protein += food.protein * ratio;
+    carbs += food.carbs * ratio;
+    fat += food.fat * ratio;
+  });
+
+  return {
+    kcal: Math.round(kcal),
+    protein: Number(protein.toFixed(1)),
+    carbs: Number(carbs.toFixed(1)),
+    fat: Number(fat.toFixed(1))
+  };
+}
+
+export function getDefaultSelectedMealsForTrack(dietTrack = 'non-veg') {
+  if (dietTrack === 'veg') {
+    return {
+      breakfast: 'B2',
+      mid_morning: 'M1',
+      lunch: 'L2',
+      pre_workout: 'P1',
+      post_workout: 'X3',
+      dinner: 'D3',
+      bedtime: 'S1'
+    };
+  }
+  if (dietTrack === 'eggetarian') {
+    return {
+      breakfast: 'B1',
+      mid_morning: 'M1',
+      lunch: 'L2',
+      pre_workout: 'P1',
+      post_workout: 'X1',
+      dinner: 'D2',
+      bedtime: 'S1'
+    };
+  }
+  return {
+    breakfast: 'B1',
+    mid_morning: 'M1',
+    lunch: 'L1',
+    pre_workout: 'P1',
+    post_workout: 'X1',
+    dinner: 'D1',
+    bedtime: 'S1'
+  };
+}
+
+export function generateWeeklyMenuRotation(dietTrack = 'non-veg') {
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const getAllowed = (slotId) => {
+    const slot = MEAL_SLOTS.find((s) => s.slotId === slotId);
+    return (slot?.options || []).filter((opt) => opt.tracks.includes(dietTrack));
+  };
+
+  const bOpts = getAllowed('breakfast');
+  const mOpts = getAllowed('mid_morning');
+  const lOpts = getAllowed('lunch');
+  const pOpts = getAllowed('pre_workout');
+  const xOpts = getAllowed('post_workout');
+  const dOpts = getAllowed('dinner');
+  const sOpts = getAllowed('bedtime');
+
+  let prevDinnerAnchor = '';
+  let consecutiveDinnerAnchorCount = 0;
+
+  return dayNames.map((day, idx) => {
+    const b = bOpts[idx % bOpts.length];
+    const m = mOpts[idx % mOpts.length];
+    const l = lOpts[idx % lOpts.length];
+    const p = pOpts[idx % pOpts.length];
+    const x = xOpts[idx % xOpts.length];
+    const s = sOpts[idx % sOpts.length];
+
+    // Pick Dinner option so proteinAnchor !== lunch.proteinAnchor AND not >2 in a row
+    let candidates = dOpts.filter((opt) => opt.proteinAnchor !== l.proteinAnchor);
+    if (candidates.length === 0) candidates = dOpts;
+
+    let chosenDinner = candidates[idx % candidates.length];
+    if (chosenDinner.proteinAnchor === prevDinnerAnchor && consecutiveDinnerAnchorCount >= 1) {
+      const alt = candidates.find((c) => c.proteinAnchor !== prevDinnerAnchor);
+      if (alt) chosenDinner = alt;
+    }
+
+    if (chosenDinner.proteinAnchor === prevDinnerAnchor) {
+      consecutiveDinnerAnchorCount += 1;
+    } else {
+      prevDinnerAnchor = chosenDinner.proteinAnchor;
+      consecutiveDinnerAnchorCount = 1;
+    }
+
+    return {
+      day,
+      slots: {
+        breakfast: b.id,
+        mid_morning: m.id,
+        lunch: l.id,
+        pre_workout: p.id,
+        post_workout: x.id,
+        dinner: chosenDinner.id,
+        bedtime: s.id
+      }
+    };
+  });
+}
+
+export function generateWeeklyGroceryList(weeklyMenu, foodDb = INITIAL_FOOD_DATABASE) {
+  const totalsByFoodId = {};
+  const optionLookup = {};
+  MEAL_SLOTS.forEach((slot) => {
+    slot.options.forEach((opt) => {
+      optionLookup[opt.id] = opt;
+    });
+  });
+
+  weeklyMenu.forEach((dayEntry) => {
+    Object.values(dayEntry.slots).forEach((optId) => {
+      const opt = optionLookup[optId];
+      if (!opt) return;
+      opt.ingredients.forEach((ing) => {
+        totalsByFoodId[ing.foodId] = (totalsByFoodId[ing.foodId] || 0) + Number(ing.amount || 0);
+      });
+    });
+  });
+
+  const grouped = { Protein: [], Carbs: [], Dairy: [], Pantry: [] };
+  Object.entries(totalsByFoodId).forEach(([foodId, rawTotal]) => {
+    const food = foodDb.find((f) => f.id === foodId);
+    if (!food) return;
+    let displayQty = '';
+    if (food.id === 'whole_egg') {
+      const dozens = (rawTotal / 12).toFixed(1);
+      displayQty = `${rawTotal} eggs (${dozens} dozen)`;
+    } else if (food.id === 'roti') {
+      const attaGrams = rawTotal * 30;
+      displayQty = `${rawTotal} rotis (~${(attaGrams / 1000).toFixed(2)} kg dry atta)`;
+    } else if (food.unit === 'g') {
+      displayQty =
+        rawTotal >= 1000 ? `${(rawTotal / 1000).toFixed(2)} kg` : `${Math.round(rawTotal)} g`;
+    } else if (food.unit === 'ml') {
+      displayQty =
+        rawTotal >= 1000 ? `${(rawTotal / 1000).toFixed(2)} L` : `${Math.round(rawTotal)} ml`;
+    } else {
+      displayQty = `${rawTotal} ${food.unit}s`;
+    }
+
+    const cat = grouped[food.category] ? food.category : 'Pantry';
+    grouped[cat].push({
+      id: food.id,
+      name: food.name,
+      rawTotal,
+      displayQty
+    });
+  });
+
+  return grouped;
+}
+
+export function computeWeeklyMuscleVolumes() {
+  const primary = {};
+  const totalWithSecondary = {};
+
+  Object.keys(EXPECTED_WEEKLY_PRIMARY_SETS).forEach((k) => {
+    primary[k] = 0;
+    totalWithSecondary[k] = 0;
+  });
+
+  WORKOUT_PLAN.forEach((day) => {
+    day.exercises.forEach((ex) => {
+      const g = ex.primaryGroup;
+      primary[g] = (primary[g] || 0) + ex.sets;
+      totalWithSecondary[g] = (totalWithSecondary[g] || 0) + ex.sets;
+
+      (ex.secondaryGroups || []).forEach((sec) => {
+        totalWithSecondary[sec] =
+          (totalWithSecondary[sec] || 0) + ex.sets * SCIENCE_RULES.SECONDARY_MUSCLE_CREDIT;
+      });
+    });
+  });
+
+  return { primary, totalWithSecondary };
+}
+
+export function calculateProgressiveOverload(
+  exercise,
+  previousSets,
+  customSteps = {},
+  activeVariantId = null
+) {
+  const prescribedSets = exercise?.sets || 3;
+  if (!exercise || !Array.isArray(previousSets) || previousSets.length < prescribedSets) {
     return {
       shouldIncrease: false,
       incrementKg: 0,
       lastWeightKg: 0,
       suggestedWeightKg: 0,
-      reason: 'Log all prescribed sets first'
+      mode: 'add',
+      reason: `Complete all ${prescribedSets} working sets first`
     };
   }
 
-  const relevantSets = previousSets.slice(0, exercise.sets);
+  // Resolve active step code (accounting for Thu Push B variant choice if applicable)
+  let stepCode = exercise.step || 'B2.5';
+  let isAssisted = Boolean(exercise.flags?.assisted);
+  const isBodyweight = Boolean(exercise.flags?.bodyweight);
+
+  if (exercise.flags?.variants && activeVariantId) {
+    const v = exercise.flags.variants.find((item) => item.id === activeVariantId);
+    if (v) {
+      stepCode = v.step;
+      isAssisted = Boolean(v.assisted);
+    }
+  }
+
+  const stepDef = DEFAULT_STEP_INCREMENTS[stepCode] || DEFAULT_STEP_INCREMENTS['B2.5'];
+  const customDelta =
+    customSteps[exercise.id] !== undefined ? Number(customSteps[exercise.id]) : stepDef.deltaKg;
+
+  const relevantSets = previousSets.slice(0, prescribedSets);
+  const baseWeight = Number(relevantSets[0]?.weight || 0);
+
+  if (isBodyweight) {
+    const allHitMax = relevantSets.every((s) => Number(s.reps) >= exercise.repMax);
+    if (allHitMax) {
+      const nextWeight = Number((baseWeight + Math.abs(customDelta)).toFixed(2));
+      return {
+        shouldIncrease: true,
+        incrementKg: Math.abs(customDelta),
+        lastWeightKg: baseWeight,
+        suggestedWeightKg: nextWeight,
+        mode: 'bodyweight',
+        reason: `All ${prescribedSets} sets hit ${exercise.repMax} reps — add +${Math.abs(
+          customDelta
+        )} kg or harder variation`
+      };
+    }
+    return {
+      shouldIncrease: false,
+      incrementKg: 0,
+      lastWeightKg: baseWeight,
+      suggestedWeightKg: baseWeight,
+      mode: 'bodyweight',
+      reason: `Progress reps to ${exercise.repMax} across all ${prescribedSets} sets before adding weight`
+    };
+  }
+
   const allHitMax = relevantSets.every(
     (s) => Number(s.reps) >= exercise.repMax && Number(s.weight) > 0
   );
-  const baseWeight = Number(relevantSets[0]?.weight || 0);
 
   if (allHitMax) {
-    const incrementKg = exercise.isLowerBody ? 5.0 : 2.5;
+    if (isAssisted || stepDef.mode === 'assist') {
+      const reduction = Math.abs(customDelta) || 5.0;
+      const suggestedWeightKg = Math.max(0, Number((baseWeight - reduction).toFixed(2)));
+      return {
+        shouldIncrease: true,
+        incrementKg: -reduction,
+        lastWeightKg: baseWeight,
+        suggestedWeightKg,
+        mode: 'assist',
+        reason: `All ${prescribedSets} sets hit ${exercise.repMax}+ reps — reduce assistance by ${reduction} kg`
+      };
+    }
+
+    const incrementKg = Math.abs(customDelta);
     return {
       shouldIncrease: true,
       incrementKg,
       lastWeightKg: baseWeight,
       suggestedWeightKg: Number((baseWeight + incrementKg).toFixed(2)),
-      reason: `All ${exercise.sets} sets hit ${exercise.repMax}+ reps last session`
+      mode: 'add',
+      reason: `All ${prescribedSets} sets hit ${exercise.repMax}+ reps last session (${stepCode})`
     };
   }
 
@@ -748,13 +1514,18 @@ export function calculateProgressiveOverload(exercise, previousSets) {
     incrementKg: 0,
     lastWeightKg: baseWeight,
     suggestedWeightKg: baseWeight,
-    reason: `Hit ${exercise.repMax} reps across all ${exercise.sets} sets to unlock +${
-      exercise.isLowerBody ? 5 : 2.5
-    } kg`
+    mode: isAssisted ? 'assist' : 'add',
+    reason: isAssisted
+      ? `Hit ${exercise.repMax} reps on all ${prescribedSets} sets to reduce assistance by ${Math.abs(
+          customDelta
+        )} kg`
+      : `Hit ${exercise.repMax} reps across all ${prescribedSets} sets to unlock +${Math.abs(
+          customDelta
+        )} kg`
   };
 }
 
-export function analyzeWeeklyGainRate(weightLogs) {
+export function analyzeWeeklyGainRate(weightLogs, ignoreInitial14Days = true) {
   if (!Array.isArray(weightLogs) || weightLogs.length < 2) {
     return {
       status: 'INSUFFICIENT_DATA',
@@ -763,13 +1534,19 @@ export function analyzeWeeklyGainRate(weightLogs) {
       consecutiveLowWeeks: 0,
       calorieAdjustment: 0,
       headline: 'Log at least 2 weekly weigh-ins',
-      message: 'Weigh yourself once a week every morning after waking up to track your lean-bulk rate.'
+      message:
+        'Weigh yourself once a week on the same morning (after waking, post-void) to track your true lean-bulk velocity.'
     };
   }
 
   const sorted = [...weightLogs].sort((a, b) => new Date(a.date) - new Date(b.date));
-  const weeklyDeltas = [];
+  const firstDateMs = new Date(sorted[0].date).getTime();
+  const lastDateMs = new Date(sorted[sorted.length - 1].date).getTime();
+  const totalSpanDays = (lastDateMs - firstDateMs) / (1000 * 60 * 60 * 24);
 
+  // Science Rule: Ignore initial 14 days when total span is <= 14 days AND more than 2 logs aren't past day 14
+  // However, if logs are weekly check-ins spaced >= 7 days apart, compute weekly deltas and flag if still inside first 14 days
+  const weeklyDeltas = [];
   for (let i = 1; i < sorted.length; i++) {
     const prev = sorted[i - 1];
     const curr = sorted[i];
@@ -789,26 +1566,48 @@ export function analyzeWeeklyGainRate(weightLogs) {
 
   let consecutiveLowWeeks = 0;
   for (let i = weeklyDeltas.length - 1; i >= 0; i--) {
-    if (weeklyDeltas[i] < 0.2) {
+    if (weeklyDeltas[i] < SCIENCE_RULES.GAIN_LOWER_FLOOR_KG) {
       consecutiveLowWeeks++;
     } else {
       break;
     }
   }
 
-  if (latestWeeklyGainKg > 0.7 || avgWeeklyGainKg > 0.7) {
+  if (
+    ignoreInitial14Days &&
+    totalSpanDays < SCIENCE_RULES.GAIN_IGNORE_INITIAL_DAYS &&
+    sorted.length <= 2 &&
+    latestWeeklyGainKg <= SCIENCE_RULES.GAIN_UPPER_HARD_CAP_KG
+  ) {
+    return {
+      status: 'EARLY_GLYCOGEN_PHASE',
+      latestWeeklyGainKg,
+      avgWeeklyGainKg,
+      consecutiveLowWeeks,
+      calorieAdjustment: 0,
+      headline: 'Days 1–14: Initial Glycogen & Water Phase',
+      message: `Current rate is +${latestWeeklyGainKg.toFixed(
+        2
+      )} kg/wk. Science rule: early weight shifts in the first 14 days reflect muscle glycogen and water supercompensation. Keep calories steady at 2,900 kcal.`
+    };
+  }
+
+  if (
+    latestWeeklyGainKg > SCIENCE_RULES.GAIN_UPPER_HARD_CAP_KG ||
+    avgWeeklyGainKg > SCIENCE_RULES.GAIN_UPPER_HARD_CAP_KG
+  ) {
     return {
       status: 'FAST_GAIN_WARNING',
       latestWeeklyGainKg,
       avgWeeklyGainKg,
       consecutiveLowWeeks,
       calorieAdjustment: -200,
-      headline: 'Warning: Gaining Above 0.7 kg/week (Fat Gain Risk)',
+      headline: 'Warning: Gaining Above 0.7 kg/week (Waist Fat Risk)',
       message: `Current rate is +${latestWeeklyGainKg.toFixed(
         2
       )} kg/wk (recent avg +${avgWeeklyGainKg.toFixed(
         2
-      )} kg/wk). Exceeding 0.7 kg/wk adds unnecessary waist fat and blurs your V-taper. Reduce daily intake by ~200 kcal.`
+      )} kg/wk). Exceeding 0.7 kg/wk adds unnecessary visceral/waist fat and blurs your V-taper. Trim ~200 kcal/day.`
     };
   }
 
@@ -820,9 +1619,9 @@ export function analyzeWeeklyGainRate(weightLogs) {
       consecutiveLowWeeks,
       calorieAdjustment: 300,
       headline: 'Plateau Detected (<0.2 kg/wk for 2+ Weeks): Add +300 kcal',
-      message: `You gained under 0.2 kg/wk for ${consecutiveLowWeeks} consecutive weeks (latest: +${latestWeeklyGainKg.toFixed(
+      message: `Gained under 0.2 kg/wk for ${consecutiveLowWeeks} consecutive weeks (latest: +${latestWeeklyGainKg.toFixed(
         2
-      )} kg/wk). Increase daily target by +300 kcal to restart lean tissue growth.`
+      )} kg/wk). Add +300 kcal/day using a one-tap Appetite Helper.`
     };
   }
 
@@ -832,102 +1631,196 @@ export function analyzeWeeklyGainRate(weightLogs) {
     avgWeeklyGainKg,
     consecutiveLowWeeks,
     calorieAdjustment: 0,
-    headline: 'Optimal Lean-Bulk Velocity (0.2 – 0.7 kg/week)',
+    headline: 'Optimal Lean-Bulk Velocity (0.20 – 0.55 kg/week)',
     message: `Gaining +${latestWeeklyGainKg.toFixed(
       2
-    )} kg/wk (avg +${avgWeeklyGainKg.toFixed(
+    )} kg/wk (7-day rolling avg +${avgWeeklyGainKg.toFixed(
       2
-    )} kg/wk). Keep hitting ${DEFAULT_PROFILE.targetCalories} kcal and ${DEFAULT_PROFILE.targetProteinG}g protein daily while progressing lifts.`
+    )} kg/wk). Right inside the 0.25–1.0% BW/week beginner lean-mass zone.`
   };
 }
 
-function runBuiltInUnitTests() {
+export function runBuiltInUnitTests() {
   const results = [];
 
-  const benchEx = WORKOUT_PLAN[0].exercises[0];
-  const t1 = calculateProgressiveOverload(benchEx, [
-    { weight: 50, reps: 8 },
-    { weight: 50, reps: 8 },
-    { weight: 50, reps: 9 }
-  ]);
+  // Test 1: Weekly primary sets per muscle group & 116 total sets
+  const { primary } = computeWeeklyMuscleVolumes();
+  const totalSets = Object.values(primary).reduce((a, b) => a + b, 0);
+  const allMatchExpected = Object.entries(EXPECTED_WEEKLY_PRIMARY_SETS).every(
+    ([group, exp]) => primary[group] === exp
+  );
   results.push({
-    name: 'Upper Body Overload (+2.5 kg when all sets hit top rep range)',
-    passed: t1.shouldIncrease === true && t1.incrementKg === 2.5 && t1.suggestedWeightKg === 52.5,
-    expected: 'shouldIncrease: true, +2.5 kg -> 52.5 kg',
-    actual: `shouldIncrease: ${t1.shouldIncrease}, +${t1.incrementKg} kg -> ${t1.suggestedWeightKg} kg`
+    name: 'Weekly Primary Sets Match Exact Spec (Total = 116 Sets)',
+    passed: allMatchExpected && totalSets === 116,
+    expected: '116 sets (Lats/Back 20, Quads 13, Chest 12, Side delts 11...)',
+    actual: `${totalSets} sets (Lats/Back ${primary['Lats/Back']}, Quads ${primary.Quads}, Chest ${primary.Chest}, Side delts ${primary['Side delts']})`
   });
 
-  const legPressEx = WORKOUT_PLAN[2].exercises[0];
-  const t2 = calculateProgressiveOverload(legPressEx, [
-    { weight: 100, reps: 10 },
-    { weight: 100, reps: 10 },
-    { weight: 100, reps: 10 },
-    { weight: 100, reps: 10 }
+  // Test 2: Assisted Pull-up progressive overload REDUCES assistance weight
+  const assistPullup = WORKOUT_PLAN[1].exercises[1];
+  const tAssist = calculateProgressiveOverload(assistPullup, [
+    { weight: 25, reps: 10 },
+    { weight: 25, reps: 10 },
+    { weight: 25, reps: 10 }
   ]);
   results.push({
-    name: 'Lower Body Overload (+5.0 kg when all sets hit top rep range)',
-    passed: t2.shouldIncrease === true && t2.incrementKg === 5.0 && t2.suggestedWeightKg === 105,
-    expected: 'shouldIncrease: true, +5 kg -> 105 kg',
-    actual: `shouldIncrease: ${t2.shouldIncrease}, +${t2.incrementKg} kg -> ${t2.suggestedWeightKg} kg`
+    name: 'Assisted Lift Overload Reduces Assistance (-5 kg -> 20 kg)',
+    passed:
+      tAssist.shouldIncrease === true &&
+      tAssist.incrementKg === -5 &&
+      tAssist.suggestedWeightKg === 20,
+    expected: 'shouldIncrease: true, -5 kg -> 20 kg assistance',
+    actual: `shouldIncrease: ${tAssist.shouldIncrease}, ${tAssist.incrementKg} kg -> ${tAssist.suggestedWeightKg} kg`
   });
 
-  const t3 = calculateProgressiveOverload(benchEx, [
-    { weight: 50, reps: 8 },
-    { weight: 50, reps: 8 },
-    { weight: 50, reps: 7 }
-  ]);
+  // Test 3: All 17 Meal Options Within ±5% of Expected Macros from Food Database
+  let allMealsWithin5Pct = true;
+  let maxDeviationPct = 0;
+  MEAL_SLOTS.forEach((slot) => {
+    slot.options.forEach((opt) => {
+      const calc = computeMealOptionMacros(opt, INITIAL_FOOD_DATABASE);
+      const diffPct = Math.abs(calc.kcal - opt.expected.kcal) / opt.expected.kcal;
+      if (diffPct > maxDeviationPct) maxDeviationPct = diffPct;
+      if (diffPct > 0.05) allMealsWithin5Pct = false;
+    });
+  });
   results.push({
-    name: 'Hold Weight When Any Set Misses Top of Rep Range',
-    passed: t3.shouldIncrease === false && t3.incrementKg === 0,
-    expected: 'shouldIncrease: false, +0 kg',
-    actual: `shouldIncrease: ${t3.shouldIncrease}, +${t3.incrementKg} kg`
+    name: 'All 17 Meal Options Computed from Food DB Within ±5%',
+    passed: allMealsWithin5Pct,
+    expected: 'Max deviation <= 5.0% across B1..S2',
+    actual: `Max deviation ${(maxDeviationPct * 100).toFixed(2)}% across 17 options`
   });
 
-  const t4 = analyzeWeeklyGainRate([
-    { date: '2026-11-01', weightKg: 56.0 },
-    { date: '2026-11-08', weightKg: 56.95 }
-  ]);
+  // Test 4: Expected Full Non-Veg Day & Vegetarian Day Totals
+  const findOpt = (code) => {
+    for (const s of MEAL_SLOTS) {
+      const found = s.options.find((o) => o.code === code);
+      if (found) return computeMealOptionMacros(found, INITIAL_FOOD_DATABASE);
+    }
+    return { kcal: 0, protein: 0, carbs: 0, fat: 0 };
+  };
+  const nonVegCodes = ['B1', 'M1', 'L1', 'P1', 'X1', 'D1', 'S1'];
+  const nonVegTotals = nonVegCodes.reduce(
+    (acc, c) => {
+      const m = findOpt(c);
+      return {
+        kcal: acc.kcal + m.kcal,
+        protein: acc.protein + m.protein
+      };
+    },
+    { kcal: 0, protein: 0 }
+  );
+  const vegCodes = ['B2', 'M1', 'L2', 'P1', 'X3', 'D3', 'S1'];
+  const vegTotals = vegCodes.reduce(
+    (acc, c) => {
+      const m = findOpt(c);
+      return {
+        kcal: acc.kcal + m.kcal,
+        protein: acc.protein + m.protein
+      };
+    },
+    { kcal: 0, protein: 0 }
+  );
+  const nonVegPass =
+    Math.abs(nonVegTotals.kcal - 2955) <= 25 && Math.round(nonVegTotals.protein) >= 150;
+  const vegPass = Math.abs(vegTotals.kcal - 2990) <= 25 && Math.round(vegTotals.protein) >= 144;
   results.push({
-    name: 'Weekly Gain > 0.7 kg/wk Triggers Excess Fat Warning',
-    passed: t4.status === 'FAST_GAIN_WARNING' && t4.latestWeeklyGainKg === 0.95,
-    expected: 'FAST_GAIN_WARNING (+0.95 kg/wk)',
-    actual: `${t4.status} (+${t4.latestWeeklyGainKg} kg/wk)`
+    name: 'Full-Day Non-Veg (~2,955 kcal / 155g P) & Veg (~2,990 kcal / 146g P)',
+    passed: nonVegPass && vegPass,
+    expected: 'Non-Veg ~2955 kcal/155g P | Veg ~2990 kcal/146g P',
+    actual: `Non-Veg ${nonVegTotals.kcal} kcal/${Math.round(
+      nonVegTotals.protein
+    )}g P | Veg ${vegTotals.kcal} kcal/${Math.round(vegTotals.protein)}g P`
   });
 
-  const t5 = analyzeWeeklyGainRate([
-    { date: '2026-11-01', weightKg: 56.0 },
-    { date: '2026-11-08', weightKg: 56.1 },
-    { date: '2026-11-15', weightKg: 56.2 }
-  ]);
+  // Test 5: Weekly Gain Rate > 0.7 kg/wk Warning & < 0.2 kg/wk Plateau (+300 kcal)
+  const tFast = analyzeWeeklyGainRate(
+    [
+      { date: '2026-10-01', weightKg: 55.0 },
+      { date: '2026-10-20', weightKg: 55.6 },
+      { date: '2026-10-27', weightKg: 56.55 }
+    ],
+    false
+  );
+  const tSlow = analyzeWeeklyGainRate(
+    [
+      { date: '2026-10-01', weightKg: 56.0 },
+      { date: '2026-10-08', weightKg: 56.1 },
+      { date: '2026-10-15', weightKg: 56.2 }
+    ],
+    false
+  );
   results.push({
-    name: 'Gain < 0.2 kg/wk for 2 Consecutive Weeks Suggests +300 kcal',
-    passed: t5.status === 'PLATEAU_SUGGESTION' && t5.calorieAdjustment === 300,
-    expected: 'PLATEAU_SUGGESTION (+300 kcal)',
-    actual: `${t5.status} (+${t5.calorieAdjustment} kcal)`
+    name: 'Gain Rate Rules (>0.7 kg/wk Warn & <0.2 kg/wk for 2 Wks -> +300 kcal)',
+    passed:
+      tFast.status === 'FAST_GAIN_WARNING' &&
+      tSlow.status === 'PLATEAU_SUGGESTION' &&
+      tSlow.calorieAdjustment === 300,
+    expected: 'FAST_GAIN_WARNING & PLATEAU_SUGGESTION (+300 kcal)',
+    actual: `${tFast.status} & ${tSlow.status} (+${tSlow.calorieAdjustment} kcal)`
   });
 
   return results;
 }
 
 // ============================================================================
-// LOCAL STORAGE KEY & INITIAL APP STATE BUILDER
+// INITIAL CONSTANTS & LOCAL STORAGE STATE BUILDER (ZERO SUPPLEMENTS)
 // ============================================================================
 
-const STORAGE_KEY = 'vtaper_tracker_state_v3';
+const INITIAL_LAST_SESSION_LOGS = {};
+const INITIAL_WEIGHT_LOGS = [];
+const INITIAL_MEASUREMENTS = [];
+const INITIAL_WORKOUT_HISTORY = [];
+const INITIAL_EXERCISE_HISTORY = {};
 
-function buildInitialActiveDrafts(lastLogs) {
+const DEFAULT_PROFILE = {
+  age: 22,
+  heightCm: 173,
+  startWeightKg: 55,
+  currentWeightKg: 55,
+  goalWeightMinKg: 65,
+  goalWeightMaxKg: 68,
+  dietTrack: 'non-veg',
+  targetCalories: 2900,
+  targetProteinG: 130,
+  targetCarbsG: 370,
+  targetFatG: 95,
+  targetWaterMl: 3500,
+  targetSleepHours: 7.5
+};
+
+const VTAPER_SVG_RAW = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <rect width="512" height="512" rx="112" fill="#0A0A0B" />
+  <rect x="16" y="16" width="480" height="480" rx="96" stroke="#27272A" stroke-width="14" />
+  <rect x="76" y="116" width="360" height="20" rx="6" fill="#27272A" />
+  <rect x="92" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
+  <rect x="396" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
+  <path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="#CCFF00" />
+  <polygon points="208,156 304,156 256,284" fill="#27272A" />
+  <rect x="212" y="444" width="88" height="12" rx="6" fill="#27272A" />
+</svg>`;
+
+const STORAGE_KEY = 'vtaper_tracker_state_v4';
+
+function buildInitialActiveDrafts(lastLogs, rampInEnabled = true, customSteps = {}, variantChoices = {}) {
   const drafts = {};
   WORKOUT_PLAN.forEach((day) => {
     day.exercises.forEach((ex) => {
+      const targetSets = rampInEnabled ? Math.min(SCIENCE_RULES.RAMP_IN_SETS, ex.sets) : ex.sets;
       const prev = lastLogs[ex.id] || [];
-      const overload = calculateProgressiveOverload(ex, prev);
+      const activeVar = variantChoices[ex.id] || ex.flags?.variants?.[0]?.id || null;
+      const overload = calculateProgressiveOverload(ex, prev, customSteps, activeVar);
       drafts[ex.id] = Array.from({ length: ex.sets }, (_, idx) => {
-        const prevSet = prev[idx] || prev[prev.length - 1] || { weight: 0, reps: ex.repMin };
+        const prevSet = prev[idx] || prev[prev.length - 1] || {
+          weight: ex.flags?.assisted ? 25 : 0,
+          reps: ex.repMin
+        };
         return {
           setNumber: idx + 1,
           weight: overload.shouldIncrease ? overload.suggestedWeightKg : prevSet.weight,
           reps: overload.shouldIncrease ? ex.repMin : prevSet.reps,
-          completed: false
+          completed: false,
+          hiddenInRampIn: idx >= targetSets
         };
       });
     });
@@ -936,18 +1829,25 @@ function buildInitialActiveDrafts(lastLogs) {
 }
 
 function getFreshInitialState(theme = 'dark') {
+  const defaultTrack = DEFAULT_PROFILE.dietTrack;
   return {
     onboarded: false,
     theme,
     unit: 'kg',
+    rampInEnabled: true,
     profile: DEFAULT_PROFILE,
+    customSteps: {},
+    variantChoices: { 'thu-5': 'dips' },
+    swappedAlternatives: {},
     lastSessionLogs: INITIAL_LAST_SESSION_LOGS,
-    activeDrafts: buildInitialActiveDrafts(INITIAL_LAST_SESSION_LOGS),
-    meals: INITIAL_MEAL_TEMPLATES.map((m) => ({ ...m, completed: false })),
+    activeDrafts: buildInitialActiveDrafts(INITIAL_LAST_SESSION_LOGS, true, {}, { 'thu-5': 'dips' }),
+    foodDatabase: INITIAL_FOOD_DATABASE,
+    selectedMealOptions: getDefaultSelectedMealsForTrack(defaultTrack),
+    completedMealSlots: {},
+    loggedAppetiteHelpers: [],
     waterMl: 0,
-    creatineTaken: false,
-    creatineStreak: 0,
-    creatineDates: [],
+    sleepHours: 7.5,
+    sundayWalkDone: false,
     workoutStreak: 0,
     weightLogs: INITIAL_WEIGHT_LOGS,
     measurements: INITIAL_MEASUREMENTS,
@@ -992,7 +1892,7 @@ export default function App() {
       link.id = fontId;
       link.rel = 'stylesheet';
       link.href =
-        'https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap';
+        'https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=JetBrains+Mono:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap';
       document.head.appendChild(link);
     }
   }, []);
@@ -1002,15 +1902,23 @@ export default function App() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
+        const { name: _legacyName, ...savedProfile } = parsed.profile || {};
+        const mergedProfile = { ...DEFAULT_PROFILE, ...savedProfile };
         return {
           ...getFreshInitialState(),
           ...parsed,
-          profile: { ...DEFAULT_PROFILE, ...(parsed.profile || {}) },
+          profile: mergedProfile,
+          foodDatabase: parsed.foodDatabase?.length ? parsed.foodDatabase : INITIAL_FOOD_DATABASE,
+          selectedMealOptions:
+            parsed.selectedMealOptions || getDefaultSelectedMealsForTrack(mergedProfile.dietTrack),
           activeDrafts:
             parsed.activeDrafts ||
-            buildInitialActiveDrafts(parsed.lastSessionLogs || INITIAL_LAST_SESSION_LOGS),
-          exerciseHistory: parsed.exerciseHistory || INITIAL_EXERCISE_HISTORY,
-          creatineDates: parsed.creatineDates || []
+            buildInitialActiveDrafts(
+              parsed.lastSessionLogs || INITIAL_LAST_SESSION_LOGS,
+              parsed.rampInEnabled ?? true,
+              parsed.customSteps || {},
+              parsed.variantChoices || { 'thu-5': 'dips' }
+            )
         };
       }
     } catch (e) {
@@ -1023,7 +1931,7 @@ export default function App() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
     } catch (e) {
-      // Ignore quota errors
+      // Ignore storage quota errors
     }
   }, [appState]);
 
@@ -1049,7 +1957,7 @@ export default function App() {
     remainingSec: 0,
     totalSec: 120,
     exerciseName: '',
-    exerciseType: 'Compound'
+    exerciseType: 'compound'
   });
 
   const [workoutSummary, setWorkoutSummary] = useState(null);
@@ -1074,7 +1982,7 @@ export default function App() {
     if (!restTimer.active || restTimer.paused) return;
     if (restTimer.remainingSec <= 0) {
       setRestTimer((prev) => ({ ...prev, active: false }));
-      showToast('Rest complete — crush your next set!');
+      showToast('Rest complete — hit your next working set with 1–2 RIR!');
       return;
     }
     const interval = setInterval(() => {
@@ -1088,7 +1996,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [restTimer.active, restTimer.paused, restTimer.remainingSec, showToast]);
 
-  // Solid Flat Theme Tokens (No Gradients Anywhere, Electric Lime Accent in Both Modes)
+  // Section 2: Design Lock Color Tokens (Zero Gradients)
   const isDark = appState.theme === 'dark';
   const colors = useMemo(
     () =>
@@ -1161,8 +2069,18 @@ export default function App() {
   );
 
   // ============================================================================
-  // HANDLERS FOR TODAY TAB (WORKOUT & SETS)
+  // HANDLERS FOR TODAY TAB (WORKOUT, SETS, VARIANTS & RAMP-IN)
   // ============================================================================
+
+  const getEffectiveSetCount = useCallback(
+    (exercise) => {
+      if (appState.rampInEnabled) {
+        return Math.min(SCIENCE_RULES.RAMP_IN_SETS, exercise.sets);
+      }
+      return exercise.sets;
+    },
+    [appState.rampInEnabled]
+  );
 
   const handleSetInputChange = (exerciseId, setIndex, field, rawValue) => {
     const numericVal = rawValue === '' ? '' : Math.max(0, Number(rawValue));
@@ -1209,7 +2127,7 @@ export default function App() {
     });
 
     if (willComplete) {
-      const restSeconds = exercise.type === 'Compound' ? 120 : 75;
+      const restSeconds = exercise.restSec || (exercise.type === 'compound' ? 120 : 75);
       setRestTimer({
         active: true,
         paused: false,
@@ -1237,18 +2155,19 @@ export default function App() {
       };
     });
     showToast(
-      `Applied ${formatWeight(suggestedWeightKg)} ${appState.unit} to all sets of ${exercise.name}`
+      `Applied ${formatWeight(suggestedWeightKg)} ${appState.unit} across sets of ${exercise.name}`
     );
   };
 
   const handleFinishWorkout = () => {
     if (activeDayPlan.isRest) return;
 
-    const anyCompleted = activeDayPlan.exercises.some((ex) =>
-      (appState.activeDrafts[ex.id] || []).some((s) => s.completed)
-    );
+    const anyCompleted = activeDayPlan.exercises.some((ex) => {
+      const limit = getEffectiveSetCount(ex);
+      return (appState.activeDrafts[ex.id] || []).slice(0, limit).some((s) => s.completed);
+    });
     if (!anyCompleted) {
-      showToast('Check off at least 1 completed set before finishing your workout.');
+      showToast('Check off at least 1 completed working set before finishing your workout.');
       return;
     }
 
@@ -1260,49 +2179,87 @@ export default function App() {
     const todayStr = new Date().toLocaleDateString('en-CA');
 
     activeDayPlan.exercises.forEach((ex) => {
-      const draftSets = appState.activeDrafts[ex.id] || [];
+      const limit = getEffectiveSetCount(ex);
+      const draftSets = (appState.activeDrafts[ex.id] || []).slice(0, limit);
       const completedSets = draftSets.filter((s) => s.completed);
 
       if (completedSets.length === 0) return;
-      const effectiveSets = completedSets;
+
+      const activeVar = appState.variantChoices?.[ex.id];
+      const isAssisted =
+        Boolean(ex.flags?.assisted) ||
+        Boolean(ex.flags?.variants?.find((v) => v.id === activeVar)?.assisted);
 
       let exVolume = 0;
-      let bestWeight = 0;
-      let bestRepsAtMax = 0;
+      let bestWeight = isAssisted ? Infinity : 0;
+      let bestRepsAtBest = 0;
 
-      effectiveSets.forEach((s) => {
+      completedSets.forEach((s) => {
         const w = Number(s.weight || 0);
         const r = Number(s.reps || 0);
-        exVolume += w * r;
-        if (w > bestWeight || (w === bestWeight && r > bestRepsAtMax)) {
-          bestWeight = w;
-          bestRepsAtMax = r;
+        const unilateralMultiplier = ex.flags?.unilateral ? 2 : 1;
+        exVolume += w * r * unilateralMultiplier;
+
+        if (isAssisted) {
+          if (w < bestWeight || (w === bestWeight && r > bestRepsAtBest)) {
+            bestWeight = w;
+            bestRepsAtBest = r;
+          }
+        } else {
+          if (w > bestWeight || (w === bestWeight && r > bestRepsAtBest)) {
+            bestWeight = w;
+            bestRepsAtBest = r;
+          }
         }
       });
 
-      setsCompleted += effectiveSets.length;
+      setsCompleted += completedSets.length;
       totalVolumeKg += Math.round(exVolume);
 
       const prevSets = appState.lastSessionLogs[ex.id] || [];
-      const prevBestWeight = prevSets.reduce((max, s) => Math.max(max, Number(s.weight || 0)), 0);
-      const prevBestRepsAtMax = prevSets
-        .filter((s) => Number(s.weight || 0) === prevBestWeight)
-        .reduce((max, s) => Math.max(max, Number(s.reps || 0)), 0);
-
-      if (
-        prevSets.length > 0 &&
-        bestWeight > 0 &&
-        (bestWeight > prevBestWeight ||
-          (bestWeight === prevBestWeight && bestRepsAtMax > prevBestRepsAtMax))
-      ) {
-        prsAchieved.push({
-          exerciseName: ex.name,
-          weightKg: bestWeight,
-          reps: bestRepsAtMax
-        });
+      if (prevSets.length > 0) {
+        if (isAssisted) {
+          const prevMinAssist = prevSets.reduce(
+            (min, s) => Math.min(min, Number(s.weight || Infinity)),
+            Infinity
+          );
+          const prevRepsAtMin = prevSets
+            .filter((s) => Number(s.weight || 0) === prevMinAssist)
+            .reduce((max, s) => Math.max(max, Number(s.reps || 0)), 0);
+          if (
+            bestWeight < prevMinAssist ||
+            (bestWeight === prevMinAssist && bestRepsAtBest > prevRepsAtMin)
+          ) {
+            prsAchieved.push({
+              exerciseName: ex.name,
+              weightKg: bestWeight,
+              reps: bestRepsAtBest,
+              isAssisted: true
+            });
+          }
+        } else if (bestWeight > 0) {
+          const prevBestWeight = prevSets.reduce(
+            (max, s) => Math.max(max, Number(s.weight || 0)),
+            0
+          );
+          const prevBestReps = prevSets
+            .filter((s) => Number(s.weight || 0) === prevBestWeight)
+            .reduce((max, s) => Math.max(max, Number(s.reps || 0)), 0);
+          if (
+            bestWeight > prevBestWeight ||
+            (bestWeight === prevBestWeight && bestRepsAtBest > prevBestReps)
+          ) {
+            prsAchieved.push({
+              exerciseName: ex.name,
+              weightKg: bestWeight,
+              reps: bestRepsAtBest,
+              isAssisted: false
+            });
+          }
+        }
       }
 
-      updatedLastLogs[ex.id] = effectiveSets.map((s) => ({
+      updatedLastLogs[ex.id] = completedSets.map((s) => ({
         weight: Number(s.weight || 0),
         reps: Number(s.reps || 0)
       }));
@@ -1313,11 +2270,11 @@ export default function App() {
         {
           id: `${ex.id}-${Date.now()}`,
           date: todayStr,
-          topWeightKg: bestWeight,
-          bestReps: bestRepsAtMax,
+          topWeightKg: bestWeight === Infinity ? 0 : bestWeight,
+          bestReps: bestRepsAtBest,
           volumeKg: Math.round(exVolume),
-          setsCompleted: effectiveSets.length,
-          muscleCategory: ex.muscleCategory
+          setsCompleted: completedSets.length,
+          primaryGroup: ex.primaryGroup
         }
       ];
     });
@@ -1336,9 +2293,11 @@ export default function App() {
 
     const nextDrafts = { ...appState.activeDrafts };
     activeDayPlan.exercises.forEach((ex) => {
-      if (!(appState.activeDrafts[ex.id] || []).some((s) => s.completed)) return;
+      const limit = getEffectiveSetCount(ex);
+      if (!(appState.activeDrafts[ex.id] || []).slice(0, limit).some((s) => s.completed)) return;
       const saved = updatedLastLogs[ex.id];
-      const ov = calculateProgressiveOverload(ex, saved);
+      const activeVar = appState.variantChoices?.[ex.id] || null;
+      const ov = calculateProgressiveOverload(ex, saved, appState.customSteps || {}, activeVar);
       nextDrafts[ex.id] = Array.from({ length: ex.sets }, (_, i) => {
         const s = saved[i] || saved[saved.length - 1];
         return {
@@ -1372,31 +2331,77 @@ export default function App() {
     });
   };
 
-  const navItems = [
-    { id: 'today', label: 'Today', icon: Dumbbell },
-    { id: 'plan', label: 'Plan', icon: Calendar },
-    { id: 'nutrition', label: 'Nutrition', icon: Utensils },
-    { id: 'progress', label: 'Progress', icon: TrendingUp },
-    { id: 'stats', label: 'Stats', icon: BarChart3 },
-    { id: 'settings', label: 'Settings', icon: Settings }
-  ];
+  // ============================================================================
+  // COMPUTED NUTRITION TOTALS (FROM FOOD DATABASE + APPETITE HELPERS)
+  // ============================================================================
 
   const nutritionTotals = useMemo(() => {
-    const completedMeals = appState.meals.filter((m) => m.completed);
-    const consumedKcal = completedMeals.reduce((sum, m) => sum + Number(m.kcal || 0), 0);
-    const consumedProtein = completedMeals.reduce((sum, m) => sum + Number(m.protein || 0), 0);
-    return { consumedKcal, consumedProtein };
-  }, [appState.meals]);
+    let consumedKcal = 0;
+    let consumedProtein = 0;
+    let consumedCarbs = 0;
+    let consumedFat = 0;
+    let proteinFeedingsCount = 0;
+
+    let plannedKcal = 0;
+    let plannedProtein = 0;
+
+    MEAL_SLOTS.forEach((slot) => {
+      const selectedOptId = appState.selectedMealOptions?.[slot.slotId];
+      const opt =
+        slot.options.find((o) => o.id === selectedOptId) ||
+        slot.options.find((o) => o.tracks.includes(appState.profile.dietTrack)) ||
+        slot.options[0];
+      if (!opt) return;
+
+      const macros = computeMealOptionMacros(opt, appState.foodDatabase);
+      plannedKcal += macros.kcal;
+      plannedProtein += macros.protein;
+
+      if (appState.completedMealSlots?.[slot.slotId]) {
+        consumedKcal += macros.kcal;
+        consumedProtein += macros.protein;
+        consumedCarbs += macros.carbs;
+        consumedFat += macros.fat;
+        if (macros.protein >= 18) {
+          proteinFeedingsCount += 1;
+        }
+      }
+    });
+
+    (appState.loggedAppetiteHelpers || []).forEach((helperId) => {
+      const helper = APPETITE_HELPERS.find((h) => h.id === helperId);
+      if (helper) {
+        consumedKcal += helper.kcal;
+        consumedProtein += helper.protein;
+        consumedCarbs += helper.carbs;
+        consumedFat += helper.fat;
+      }
+    });
+
+    return {
+      consumedKcal: Math.round(consumedKcal),
+      consumedProtein: Math.round(consumedProtein),
+      consumedCarbs: Math.round(consumedCarbs),
+      consumedFat: Math.round(consumedFat),
+      plannedKcal: Math.round(plannedKcal),
+      plannedProtein: Math.round(plannedProtein),
+      proteinFeedingsCount
+    };
+  }, [
+    appState.selectedMealOptions,
+    appState.completedMealSlots,
+    appState.loggedAppetiteHelpers,
+    appState.foodDatabase,
+    appState.profile.dietTrack
+  ]);
 
   const gainAnalysis = useMemo(
-    () => analyzeWeeklyGainRate(appState.weightLogs),
+    () => analyzeWeeklyGainRate(appState.weightLogs, true),
     [appState.weightLogs]
   );
 
   const latestMeasurement = useMemo(() => {
-    if (!appState.measurements.length) {
-      return null;
-    }
+    if (!appState.measurements.length) return null;
     return appState.measurements[appState.measurements.length - 1];
   }, [appState.measurements]);
 
@@ -1414,8 +2419,26 @@ export default function App() {
     return appState.profile.startWeightKg || 55;
   }, [appState.weightLogs, appState.profile.startWeightKg]);
 
-  const kcalTarget = appState.profile.targetCalories || appState.profile.dailyKcalTarget || 2900;
-  const proteinTarget = appState.profile.targetProteinG || appState.profile.dailyProteinTarget || 130;
+  const kcalTarget = appState.profile.targetCalories || SCIENCE_RULES.TARGET_KCAL;
+  const proteinTarget = appState.profile.targetProteinG || SCIENCE_RULES.TARGET_PROTEIN_G;
+
+  const navItems = [
+    { id: 'today', label: 'Today', icon: Dumbbell },
+    { id: 'plan', label: 'Plan', icon: Calendar },
+    { id: 'nutrition', label: 'Nutrition', icon: Utensils },
+    { id: 'progress', label: 'Progress', icon: TrendingUp },
+    { id: 'stats', label: 'Stats', icon: BarChart3 },
+    { id: 'settings', label: 'Settings', icon: Settings }
+  ];
+
+  const handleDietTrackChange = (newTrack) => {
+    setAppState((prev) => ({
+      ...prev,
+      profile: { ...prev.profile, dietTrack: newTrack },
+      selectedMealOptions: getDefaultSelectedMealsForTrack(newTrack)
+    }));
+    showToast(`Switched diet track to ${newTrack.toUpperCase()} (100% whole foods)`);
+  };
 
   return (
     <div
@@ -1425,11 +2448,41 @@ export default function App() {
         fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, sans-serif",
         '--ring': isDark ? '#CCFF00' : '#84CC16'
       }}
-      className="min-h-screen w-full overflow-x-hidden flex flex-col md:flex-row selection:bg-[#CCFF00] selection:text-[#0A0A0B]"
+      className="min-h-screen w-full overflow-x-hidden antialiased flex flex-col md:flex-row selection:bg-[#CCFF00] selection:text-[#0A0A0B]"
     >
-      {/* Global CSS for Hiding Scrollbars & Number Spinners on Mobile/Desktop */}
+      {/* Global Typography & Zero-Scrollbar Rules */}
       <style>{`
+        html {
+          -webkit-text-size-adjust: 100%;
+          text-size-adjust: 100%;
+          scroll-behavior: smooth;
+        }
+        body {
+          margin: 0;
+          min-width: 320px;
+          overflow-x: hidden;
+          overscroll-behavior-y: contain;
+        }
+        button, input, select, textarea {
+          font: inherit;
+        }
+        button {
+          touch-action: manipulation;
+        }
+        main, section, article, .recharts-responsive-container {
+          min-width: 0;
+          max-width: 100%;
+        }
+        @media (max-width: 640px) {
+          input, select, textarea {
+            font-size: 16px !important;
+          }
+          .recharts-wrapper, .recharts-surface {
+            max-width: 100%;
+          }
+        }
         * {
+          box-sizing: border-box;
           scrollbar-width: none !important;
           -ms-overflow-style: none !important;
           -webkit-tap-highlight-color: transparent;
@@ -1446,6 +2499,21 @@ export default function App() {
         }
         input[type='number'] {
           -moz-appearance: textfield;
+          font-family: 'JetBrains Mono', 'Manrope', monospace;
+        }
+        .font-display {
+          font-family: 'Big Shoulders Display', sans-serif;
+          letter-spacing: 0.03em;
+        }
+        .font-mono-num {
+          font-family: 'JetBrains Mono', 'Manrope', monospace;
+          font-variant-numeric: tabular-nums;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          * {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+          }
         }
       `}</style>
 
@@ -1463,14 +2531,11 @@ export default function App() {
           <div className="flex items-center gap-3">
             <BrandLogo size={42} />
             <div>
-              <h1
-                style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                className="text-3xl font-extrabold uppercase tracking-wider leading-none"
-              >
+              <h1 className="font-display text-3xl font-black uppercase tracking-wider leading-none">
                 VTAPER
               </h1>
-              <p style={{ color: colors.muted }} className="text-xs mt-0.5 font-medium tabular-nums">
-                Lean Bulk • {appState.profile.startWeightKg} → {appState.profile.goalWeightMaxKg} kg
+              <p style={{ color: colors.muted }} className="text-xs mt-0.5 font-semibold tabular-nums">
+                Whole-Food Bulk • {appState.profile.startWeightKg}→{appState.profile.goalWeightMaxKg}kg
               </p>
             </div>
           </div>
@@ -1490,7 +2555,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* User Snapshot Card (Click to Edit Name / Profile) */}
+        {/* User Snapshot Card */}
         <div className="p-4">
           <div
             style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
@@ -1498,10 +2563,10 @@ export default function App() {
           >
             <div className="flex items-center justify-between mb-2">
               <span
-                className="text-xs font-semibold uppercase tracking-wider"
+                className="text-xs font-bold uppercase tracking-wider"
                 style={{ color: colors.muted }}
               >
-                Athlete Profile
+                {appState.profile.dietTrack} Track
               </span>
               <button
                 onClick={openProfileEditor}
@@ -1509,44 +2574,34 @@ export default function App() {
                   backgroundColor: colors.accent,
                   color: colors.accentText
                 }}
-                className="text-[11px] font-bold px-2 py-0.5 rounded-md uppercase flex items-center gap-1"
+                className="text-[11px] font-extrabold px-2 py-0.5 rounded-md uppercase flex items-center gap-1"
               >
                 <Edit3 className="w-3 h-3" />
-                <span>Edit Name</span>
+                <span>Edit Goals</span>
               </button>
             </div>
-            <button
-              onClick={openProfileEditor}
-              style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-2xl font-extrabold uppercase tracking-wide tabular-nums text-left w-full truncate hover:underline"
-            >
-              {appState.profile.name || 'XYZ'} • {appState.profile.age}y • {appState.profile.heightCm} cm
-            </button>
+            <div className="font-display text-2xl font-extrabold uppercase tracking-wide tabular-nums truncate">
+              {appState.profile.age} years • {appState.profile.heightCm} cm
+            </div>
             <div
               className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t tabular-nums"
               style={{ borderColor: colors.border }}
             >
               <div>
-                <div className="text-[11px]" style={{ color: colors.muted }}>
+                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
                   Current
                 </div>
-                <div
-                  style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-xl font-extrabold"
-                >
+                <div className="font-display text-xl font-extrabold">
                   {formatWeight(latestWeightKg)} {appState.unit}
                 </div>
               </div>
               <div>
-                <div className="text-[11px]" style={{ color: colors.muted }}>
-                  Target Band
+                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
+                  Goal Band
                 </div>
                 <div
-                  style={{
-                    fontFamily: "'Big Shoulders Display', sans-serif",
-                    color: isDark ? colors.accent : colors.text
-                  }}
-                  className="text-xl font-extrabold"
+                  style={{ color: isDark ? colors.accent : colors.text }}
+                  className="font-display text-xl font-extrabold"
                 >
                   {formatWeight(appState.profile.goalWeightMinKg)}–
                   {formatWeight(appState.profile.goalWeightMaxKg)} {appState.unit}
@@ -1570,7 +2625,7 @@ export default function App() {
                   color: isActive ? colors.accentText : colors.text,
                   borderColor: isActive ? colors.accentBorder : 'transparent'
                 }}
-                className="w-full min-h-[48px] px-4 rounded-xl border flex items-center gap-3 font-semibold text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                className="w-full min-h-[48px] px-4 rounded-xl border flex items-center gap-3 font-bold text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
               >
                 <Icon className="w-5 h-5 shrink-0" />
                 <span>{item.label}</span>
@@ -1580,7 +2635,7 @@ export default function App() {
                       backgroundColor: isActive ? '#0A0A0B' : colors.accent,
                       color: isActive ? '#CCFF00' : colors.accentText
                     }}
-                    className="ml-auto text-xs font-bold px-2 py-0.5 rounded-md tabular-nums"
+                    className="ml-auto text-xs font-extrabold px-2 py-0.5 rounded-md font-mono-num"
                   >
                     {formatTime(workoutElapsedSec)}
                   </span>
@@ -1597,13 +2652,13 @@ export default function App() {
         >
           <div className="flex items-center justify-between">
             <span style={{ color: colors.muted }}>Calories Today</span>
-            <span className="font-bold">
+            <span className="font-extrabold font-mono-num">
               {nutritionTotals.consumedKcal} / {kcalTarget} kcal
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span style={{ color: colors.muted }}>Protein Today</span>
-            <span className="font-bold">
+            <span style={{ color: colors.muted }}>Protein (Floor 110g)</span>
+            <span className="font-extrabold font-mono-num">
               {nutritionTotals.consumedProtein}g / {proteinTarget}g
             </span>
           </div>
@@ -1613,7 +2668,7 @@ export default function App() {
       {/* ==================================================================== */}
       {/* MAIN CONTENT AREA                                                    */}
       {/* ==================================================================== */}
-      <div className="flex-1 md:pl-64 lg:pl-72 flex flex-col min-h-screen w-full max-w-full pb-24 md:pb-10">
+      <div className="flex-1 min-w-0 md:pl-64 lg:pl-72 flex flex-col min-h-screen w-full max-w-full pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-10">
         {/* Mobile Top Bar */}
         <header
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -1622,39 +2677,16 @@ export default function App() {
           <div className="flex items-center gap-2.5 min-w-0">
             <BrandLogo size={36} />
             <div className="min-w-0">
-              <div
-                style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                className="text-2xl font-extrabold uppercase tracking-wider leading-none"
-              >
+              <div className="font-display text-2xl font-black uppercase tracking-wider leading-none">
                 VTAPER
               </div>
-              <button
-                onClick={openProfileEditor}
-                style={{ color: colors.muted }}
-                className="text-[11px] font-semibold tabular-nums flex items-center gap-1 truncate max-w-[160px] text-left"
-              >
-                <span className="truncate">{appState.profile.name || 'XYZ'}</span>
-                <span>•</span>
-                <span>
-                  {vTaperRatio
-                    ? `V ${vTaperRatio}`
-                    : `${formatWeight(latestWeightKg)} ${appState.unit}`}
-                </span>
-                <Edit3 className="w-3 h-3 shrink-0" />
-              </button>
+              <div style={{ color: colors.muted }} className="text-[11px] font-bold uppercase truncate">
+                {appState.profile.dietTrack} • {appState.profile.age}y • {appState.profile.heightCm} cm
+              </div>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={openProfileEditor}
-              aria-label="Edit Profile & Name"
-              style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[42px] px-2.5 rounded-xl border text-xs font-bold flex items-center gap-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
-            >
-              <User className="w-4 h-4" />
-              <span className="hidden xs:inline">Profile</span>
-            </button>
             <button
               onClick={() =>
                 setAppState((prev) => ({
@@ -1663,7 +2695,7 @@ export default function App() {
                 }))
               }
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[42px] min-w-[42px] px-2.5 rounded-xl border text-xs font-bold uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[44px] min-w-[44px] px-2.5 rounded-xl border text-xs font-extrabold uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
             >
               {appState.unit}
             </button>
@@ -1676,7 +2708,7 @@ export default function App() {
               }
               aria-label="Toggle Theme"
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[42px] min-w-[42px] rounded-xl border flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
@@ -1692,7 +2724,7 @@ export default function App() {
                 color: colors.accentText,
                 borderColor: colors.accentBorder
               }}
-              className="px-4 py-3 rounded-2xl border font-bold text-xs sm:text-sm flex items-center gap-2.5"
+              className="px-4 py-3 rounded-2xl border font-extrabold text-xs sm:text-sm flex items-center gap-2.5"
             >
               <CheckCircle2 className="w-5 h-5 shrink-0" />
               <span>{toast}</span>
@@ -1713,21 +2745,20 @@ export default function App() {
               <div
                 style={{
                   backgroundColor: colors.accent,
-                  color: colors.accentText,
-                  fontFamily: "'Big Shoulders Display', sans-serif"
+                  color: colors.accentText
                 }}
-                className="px-3 py-1 rounded-xl font-extrabold text-2xl sm:text-3xl tabular-nums tracking-wide shrink-0"
+                className="font-display px-3 py-1 rounded-xl font-black text-2xl sm:text-3xl tabular-nums tracking-wide shrink-0"
               >
                 {formatTime(restTimer.remainingSec)}
               </div>
               <div className="min-w-0">
                 <div
-                  className="text-[11px] font-bold uppercase tracking-wider tabular-nums"
+                  className="text-[11px] font-extrabold uppercase tracking-wider tabular-nums"
                   style={{ color: isDark ? colors.accent : colors.text }}
                 >
-                  Rest • {restTimer.exerciseType} ({restTimer.totalSec}s)
+                  Rest • {restTimer.exerciseType} ({restTimer.totalSec}s target)
                 </div>
-                <div className="text-xs sm:text-sm font-semibold truncate max-w-[150px] sm:max-w-xs">
+                <div className="text-xs sm:text-sm font-bold truncate max-w-[160px] sm:max-w-xs">
                   {restTimer.exerciseName}
                 </div>
               </div>
@@ -1742,7 +2773,7 @@ export default function App() {
                   }))
                 }
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[40px] px-2.5 rounded-xl border text-xs font-bold"
+                className="min-h-[44px] px-2.5 rounded-xl border text-xs font-extrabold"
               >
                 -15s
               </button>
@@ -1754,7 +2785,7 @@ export default function App() {
                   }))
                 }
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[40px] px-2.5 rounded-xl border text-xs font-bold"
+                className="min-h-[44px] px-2.5 rounded-xl border text-xs font-extrabold"
               >
                 +15s
               </button>
@@ -1764,7 +2795,7 @@ export default function App() {
                 }
                 aria-label={restTimer.paused ? 'Resume rest timer' : 'Pause rest timer'}
                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[40px] min-w-[40px] rounded-xl border flex items-center justify-center"
+                className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center"
               >
                 {restTimer.paused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
               </button>
@@ -1776,7 +2807,7 @@ export default function App() {
                   color: colors.accentText,
                   borderColor: colors.accentBorder
                 }}
-                className="min-h-[40px] px-3 rounded-xl border text-xs font-extrabold flex items-center gap-1"
+                className="min-h-[44px] px-3 rounded-xl border text-xs font-extrabold flex items-center gap-1"
               >
                 <SkipForward className="w-4 h-4" />
                 <span>Skip</span>
@@ -1792,6 +2823,7 @@ export default function App() {
               colors={colors}
               isDark={isDark}
               appState={appState}
+              setAppState={setAppState}
               selectedDayIndex={selectedDayIndex}
               setSelectedDayIndex={setSelectedDayIndex}
               currentWeekdayIndex={currentWeekdayIndex}
@@ -1802,11 +2834,13 @@ export default function App() {
               setWorkoutElapsedSec={setWorkoutElapsedSec}
               formatTime={formatTime}
               formatWeight={formatWeight}
+              getEffectiveSetCount={getEffectiveSetCount}
               handleSetInputChange={handleSetInputChange}
               handleToggleSetComplete={handleToggleSetComplete}
               handleApplyOverloadWeight={handleApplyOverloadWeight}
               handleFinishWorkout={handleFinishWorkout}
               setRestTimer={setRestTimer}
+              showToast={showToast}
             />
           )}
 
@@ -1814,6 +2848,7 @@ export default function App() {
             <PlanView
               colors={colors}
               isDark={isDark}
+              appState={appState}
               onSelectWorkoutDay={(dayIdx) => {
                 setSelectedDayIndex(dayIdx);
                 setActiveTab('today');
@@ -1829,6 +2864,7 @@ export default function App() {
               setAppState={setAppState}
               nutritionTotals={nutritionTotals}
               gainAnalysis={gainAnalysis}
+              handleDietTrackChange={handleDietTrackChange}
               showToast={showToast}
             />
           )}
@@ -1866,6 +2902,7 @@ export default function App() {
               setAppState={setAppState}
               setShowOnboarding={setShowOnboarding}
               setOnboardingForm={setOnboardingForm}
+              handleDietTrackChange={handleDietTrackChange}
               showToast={showToast}
             />
           )}
@@ -1873,12 +2910,12 @@ export default function App() {
       </div>
 
       {/* ==================================================================== */}
-      {/* MOBILE BOTTOM NAVIGATION BAR (44px+ Tap Targets, Safe Area)          */}
+      {/* MOBILE BOTTOM NAVIGATION BAR (44px+ Tap Targets)                     */}
       {/* ==================================================================== */}
       <nav
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
         aria-label="Mobile Navigation"
-        className="md:hidden fixed bottom-0 inset-x-0 border-t z-30 grid grid-cols-6 px-1.5 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]"
+        className="md:hidden fixed bottom-0 inset-x-0 border-t z-30 grid grid-cols-6 px-1.5 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
       >
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -1891,7 +2928,7 @@ export default function App() {
                 backgroundColor: isActive ? colors.accent : 'transparent',
                 color: isActive ? colors.accentText : colors.muted
               }}
-              className="min-h-[48px] rounded-xl flex flex-col items-center justify-center gap-0.5 font-bold text-[10px] sm:text-[11px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+              className="min-h-[48px] rounded-xl flex flex-col items-center justify-center gap-0.5 font-extrabold text-[10px] sm:text-[11px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
             >
               <Icon className="w-5 h-5" />
               <span className="truncate max-w-full px-0.5">{item.label}</span>
@@ -1901,16 +2938,16 @@ export default function App() {
       </nav>
 
       {/* ==================================================================== */}
-      {/* ONBOARDING & PROFILE EDITOR MODAL (SAVE YOUR OWN NAME)               */}
+      {/* ONBOARDING & PROFILE EDITOR MODAL (PROFILE & DIET TRACK)      */}
       {/* ==================================================================== */}
       {showOnboarding && (
         <div
           style={{ backgroundColor: 'rgba(10, 10, 11, 0.85)' }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain"
         >
           <div
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
-            className="w-full max-w-lg rounded-2xl border p-5 sm:p-6 space-y-5 my-auto"
+            className="w-full max-w-lg max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl border p-4 sm:p-6 space-y-4 sm:space-y-5 my-auto"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -1921,25 +2958,25 @@ export default function App() {
                   }}
                   className="inline-block text-xs font-extrabold uppercase px-2.5 py-1 rounded-md mb-2"
                 >
-                  V-Taper Protocol
+                  Whole-Food V-Taper Protocol
                 </span>
-                <h2
-                  style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-3xl sm:text-4xl font-extrabold uppercase tracking-wide"
-                >
+                <h2 className="font-display text-3xl sm:text-4xl font-black uppercase tracking-wide">
                   Athlete Profile Setup
                 </h2>
                 <p style={{ color: colors.muted }} className="text-xs sm:text-sm mt-1">
-                  Enter your name and customize your 55 kg → 65–68 kg lean-bulk & V-taper targets.
+                  22y • 173 cm • 55 kg → 65–68 kg goal. 100% Indian home-style food (zero supplements).
                 </p>
               </div>
               <button
                 onClick={() => {
-                  const cleanName = String(onboardingForm.name || '').trim() || 'XYZ';
+                  const chosenTrack = onboardingForm.dietTrack || 'non-veg';
                   setAppState((prev) => ({
                     ...prev,
                     onboarded: true,
-                    profile: { ...onboardingForm, name: cleanName },
+                    profile: { ...onboardingForm, dietTrack: chosenTrack },
+                    selectedMealOptions: prev.onboarded
+                      ? prev.selectedMealOptions
+                      : getDefaultSelectedMealsForTrack(chosenTrack),
                     weightLogs: prev.onboarded
                       ? prev.weightLogs
                       : [
@@ -1962,33 +2999,43 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 tabular-nums">
+              {/* Indian Diet Track Selector */}
               <div className="sm:col-span-2">
                 <label
                   className="block text-xs font-bold uppercase mb-1.5"
                   style={{ color: colors.muted }}
                 >
-                  Your Name
+                  Indian Home-Style Diet Track (No Supplements)
                 </label>
-                <input
-                  type="text"
-                  placeholder="Enter your name (e.g. XYZ)"
-                  value={onboardingForm.name}
-                  onFocus={(e) => {
-                    if (e.target.value === 'XYZ') {
-                      setOnboardingForm((prev) => ({ ...prev, name: '' }));
-                    }
-                  }}
-                  onChange={(e) =>
-                    setOnboardingForm((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                  style={{
-                    backgroundColor: colors.elevated,
-                    borderColor: colors.accentBorder,
-                    color: colors.text
-                  }}
-                  className="w-full min-h-[48px] px-3.5 rounded-xl border-2 text-base font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
-                />
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'non-veg', label: 'Non-Veg', sub: 'Eggs + Chicken + Dairy' },
+                    { id: 'eggetarian', label: 'Eggetarian', sub: 'Eggs + Dairy + Soya' },
+                    { id: 'veg', label: 'Vegetarian', sub: 'Dairy + Soya + Dal' }
+                  ].map((t) => {
+                    const active = (onboardingForm.dietTrack || 'non-veg') === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() =>
+                          setOnboardingForm((prev) => ({ ...prev, dietTrack: t.id }))
+                        }
+                        style={{
+                          backgroundColor: active ? colors.accent : colors.elevated,
+                          color: active ? colors.accentText : colors.text,
+                          borderColor: active ? colors.accentBorder : colors.border
+                        }}
+                        className="min-h-[54px] p-2 rounded-xl border text-left flex flex-col justify-center"
+                      >
+                        <div className="text-xs font-extrabold uppercase">{t.label}</div>
+                        <div className="text-[10px] opacity-80 leading-tight mt-0.5">{t.sub}</div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
               <div>
                 <label
                   className="block text-xs font-bold uppercase mb-1.5"
@@ -2008,7 +3055,7 @@ export default function App() {
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-semibold tabular-nums"
+                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-bold"
                 />
               </div>
               <div>
@@ -2033,7 +3080,7 @@ export default function App() {
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-semibold tabular-nums"
+                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-bold"
                 />
               </div>
               <div>
@@ -2060,7 +3107,7 @@ export default function App() {
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-semibold tabular-nums"
+                  className="w-full min-h-[44px] px-3.5 rounded-xl border text-sm font-bold"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -2087,7 +3134,7 @@ export default function App() {
                       borderColor: colors.border,
                       color: colors.text
                     }}
-                    className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-semibold tabular-nums"
+                    className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-bold"
                   />
                 </div>
                 <div>
@@ -2113,7 +3160,7 @@ export default function App() {
                       borderColor: colors.border,
                       color: colors.text
                     }}
-                    className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-semibold tabular-nums"
+                    className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-bold"
                   />
                 </div>
               </div>
@@ -2125,46 +3172,34 @@ export default function App() {
             >
               <div>
                 <div className="text-[10px] uppercase font-bold" style={{ color: colors.muted }}>
-                  Daily Intake
+                  Daily Surplus
                 </div>
-                <div
-                  style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-xl sm:text-2xl font-extrabold"
-                >
-                  2,900 kcal
-                </div>
+                <div className="font-display text-xl sm:text-2xl font-extrabold">2,900 kcal</div>
               </div>
               <div>
                 <div className="text-[10px] uppercase font-bold" style={{ color: colors.muted }}>
-                  Protein Goal
+                  Protein Target
                 </div>
-                <div
-                  style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-xl sm:text-2xl font-extrabold"
-                >
-                  130g / day
+                <div className="font-display text-xl sm:text-2xl font-extrabold">
+                  130g (110g floor)
                 </div>
               </div>
               <div>
                 <div className="text-[10px] uppercase font-bold" style={{ color: colors.muted }}>
                   V-Taper Goal
                 </div>
-                <div
-                  style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-xl sm:text-2xl font-extrabold"
-                >
-                  1.40–1.50x
-                </div>
+                <div className="font-display text-xl sm:text-2xl font-extrabold">1.40–1.50x</div>
               </div>
             </div>
 
             <button
               onClick={() => {
-                const cleanName = String(onboardingForm.name || '').trim() || 'XYZ';
+                const chosenTrack = onboardingForm.dietTrack || 'non-veg';
                 setAppState((prev) => ({
                   ...prev,
                   onboarded: true,
-                  profile: { ...onboardingForm, name: cleanName },
+                  profile: { ...onboardingForm, dietTrack: chosenTrack },
+                  selectedMealOptions: getDefaultSelectedMealsForTrack(chosenTrack),
                   weightLogs: prev.onboarded
                     ? prev.weightLogs
                     : [
@@ -2177,7 +3212,7 @@ export default function App() {
                       ]
                 }));
                 setShowOnboarding(false);
-                showToast(`Profile saved as "${cleanName}"!`);
+                showToast(`Profile saved (${chosenTrack.toUpperCase()})!`);
               }}
               style={{
                 backgroundColor: colors.accent,
@@ -2218,10 +3253,7 @@ export default function App() {
                 >
                   Session Complete
                 </div>
-                <h3
-                  style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-3xl font-extrabold uppercase"
-                >
+                <h3 className="font-display text-3xl font-black uppercase">
                   {workoutSummary.dayTitle}
                 </h3>
               </div>
@@ -2235,10 +3267,7 @@ export default function App() {
                 <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
                   Duration
                 </div>
-                <div
-                  style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-2xl font-extrabold mt-0.5"
-                >
+                <div className="font-display text-2xl font-extrabold mt-0.5">
                   {formatTime(workoutSummary.durationSec)}
                 </div>
               </div>
@@ -2249,10 +3278,7 @@ export default function App() {
                 <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
                   Volume
                 </div>
-                <div
-                  style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-2xl font-extrabold mt-0.5"
-                >
+                <div className="font-display text-2xl font-extrabold mt-0.5">
                   {formatWeight(workoutSummary.totalVolumeKg)} {appState.unit}
                 </div>
               </div>
@@ -2264,11 +3290,8 @@ export default function App() {
                   PRs Hit
                 </div>
                 <div
-                  style={{
-                    fontFamily: "'Big Shoulders Display', sans-serif",
-                    color: isDark ? colors.accent : colors.text
-                  }}
-                  className="text-2xl font-extrabold mt-0.5"
+                  style={{ color: isDark ? colors.accent : colors.text }}
+                  className="font-display text-2xl font-extrabold mt-0.5"
                 >
                   {workoutSummary.prsAchieved.length}
                 </div>
@@ -2294,6 +3317,7 @@ export default function App() {
                       }}
                       className="text-xs font-extrabold px-2 py-0.5 rounded-md shrink-0"
                     >
+                      {pr.isAssisted ? 'Assist ' : ''}
                       {formatWeight(pr.weightKg)} {appState.unit} × {pr.reps}
                     </span>
                   </div>
@@ -2327,6 +3351,7 @@ function TodayView({
   colors,
   isDark,
   appState,
+  setAppState,
   selectedDayIndex,
   setSelectedDayIndex,
   currentWeekdayIndex,
@@ -2337,11 +3362,13 @@ function TodayView({
   setWorkoutElapsedSec,
   formatTime,
   formatWeight,
+  getEffectiveSetCount,
   handleSetInputChange,
   handleToggleSetComplete,
   handleApplyOverloadWeight,
   handleFinishWorkout,
-  setRestTimer
+  setRestTimer,
+  showToast
 }) {
   const orderedDays = [1, 2, 3, 4, 5, 6, 0].map((idx) =>
     WORKOUT_PLAN.find((d) => d.dayIndex === idx)
@@ -2357,26 +3384,50 @@ function TodayView({
     let overloadReadyCount = 0;
 
     activeDayPlan.exercises.forEach((ex) => {
-      const sets = appState.activeDrafts[ex.id] || [];
+      const limit = getEffectiveSetCount(ex);
+      const sets = (appState.activeDrafts[ex.id] || []).slice(0, limit);
       const prev = appState.lastSessionLogs[ex.id] || [];
-      if (calculateProgressiveOverload(ex, prev).shouldIncrease) {
+      const activeVar = appState.variantChoices?.[ex.id] || null;
+      if (
+        calculateProgressiveOverload(ex, prev, appState.customSteps || {}, activeVar)
+          .shouldIncrease
+      ) {
         overloadReadyCount++;
       }
-      totalSets += ex.sets;
+      totalSets += limit;
       sets.forEach((s) => {
         if (s.completed) {
           completedSets++;
-          volumeKg += Number(s.weight || 0) * Number(s.reps || 0);
+          const mult = ex.flags?.unilateral ? 2 : 1;
+          volumeKg += Number(s.weight || 0) * Number(s.reps || 0) * mult;
         }
       });
     });
 
     return { completedSets, totalSets, volumeKg: Math.round(volumeKg), overloadReadyCount };
+  }, [
+    activeDayPlan,
+    appState.activeDrafts,
+    appState.lastSessionLogs,
+    appState.customSteps,
+    appState.variantChoices,
+    getEffectiveSetCount
+  ]);
+
+  // First compound working weight for Warm-up Protocol ramp calculation
+  const firstCompoundWorkingWeightKg = useMemo(() => {
+    if (activeDayPlan.isRest || !activeDayPlan.exercises.length) return 0;
+    const firstEx = activeDayPlan.exercises[0];
+    const draft = appState.activeDrafts[firstEx.id]?.[0]?.weight;
+    const prev = appState.lastSessionLogs[firstEx.id]?.[0]?.weight;
+    return Number(draft || prev || 40);
   }, [activeDayPlan, appState.activeDrafts, appState.lastSessionLogs]);
 
+  const roundToPlate = (kg) => Math.max(0, Math.round(kg / 2.5) * 2.5);
+
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* 7-Day Selector Bar — Fits All 7 Days on Mobile Without Scrollbar */}
+    <div className="space-y-4 sm:space-y-5">
+      {/* 7-Day Selector Bar */}
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
         className="p-2 sm:p-3 rounded-2xl border grid grid-cols-7 gap-1 sm:gap-1.5"
@@ -2407,7 +3458,7 @@ function TodayView({
                 )}
               </div>
               <span
-                className="text-[9px] sm:text-[11px] font-semibold truncate max-w-full"
+                className="text-[9px] sm:text-[11px] font-bold truncate max-w-full"
                 style={{ opacity: isSelected ? 0.95 : 0.75 }}
               >
                 {day.isRest ? 'Rest' : day.title}
@@ -2417,7 +3468,7 @@ function TodayView({
         })}
       </div>
 
-      {/* Bento Header Summary */}
+      {/* Bento Header Summary + Warm-up & Ramp-in Controls */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -2425,7 +3476,7 @@ function TodayView({
         >
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3.5">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span
                   style={{
                     backgroundColor: colors.accent,
@@ -2446,11 +3497,30 @@ function TodayView({
                   <Clock className="w-3.5 h-3.5" />
                   <span>~{activeDayPlan.estimatedMinutes} min</span>
                 </span>
+                {!activeDayPlan.isRest && (
+                  <button
+                    onClick={() =>
+                      setAppState((prev) => ({
+                        ...prev,
+                        rampInEnabled: !prev.rampInEnabled
+                      }))
+                    }
+                    style={{
+                      backgroundColor: appState.rampInEnabled
+                        ? colors.accentSurface
+                        : colors.elevated,
+                      borderColor: appState.rampInEnabled ? colors.accentBorder : colors.border,
+                      color: colors.text
+                    }}
+                    className="text-xs font-extrabold px-2.5 py-1 rounded-md border uppercase"
+                  >
+                    {appState.rampInEnabled
+                      ? 'Wk 1–2 Ramp-In: ON (2 sets @ 3–4 RIR)'
+                      : 'Full Volume: ON (1–3 RIR)'}
+                  </button>
+                )}
               </div>
-              <h2
-                style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                className="text-3xl sm:text-5xl font-extrabold uppercase tracking-wide mt-2 leading-tight"
-              >
+              <h2 className="font-display text-3xl sm:text-5xl font-black uppercase tracking-wide mt-2 leading-tight">
                 {activeDayPlan.title}: {activeDayPlan.subtitle}
               </h2>
             </div>
@@ -2464,7 +3534,7 @@ function TodayView({
                     borderColor: colors.border,
                     color: colors.text
                   }}
-                  className="flex-1 sm:flex-initial min-h-[46px] px-3.5 rounded-xl border font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 tabular-nums"
+                  className="flex-1 sm:flex-initial min-h-[46px] px-3.5 rounded-xl border font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 font-mono-num"
                 >
                   {workoutRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                   <span>
@@ -2512,82 +3582,83 @@ function TodayView({
               style={{ borderColor: colors.border }}
             >
               <div>
-                <div className="text-[11px] font-medium" style={{ color: colors.muted }}>
+                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
                   Sets Logged
                 </div>
-                <div
-                  style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-2xl sm:text-3xl font-extrabold"
-                >
+                <div className="font-display text-2xl sm:text-3xl font-extrabold">
                   {sessionProgress.completedSets} / {sessionProgress.totalSets}
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-medium" style={{ color: colors.muted }}>
+                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
                   Live Volume
                 </div>
-                <div
-                  style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                  className="text-2xl sm:text-3xl font-extrabold"
-                >
+                <div className="font-display text-2xl sm:text-3xl font-extrabold">
                   {formatWeight(sessionProgress.volumeKg)} {appState.unit}
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-medium" style={{ color: colors.muted }}>
-                  Overload Targets
+                <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
+                  Effort Target
                 </div>
                 <div
-                  style={{
-                    fontFamily: "'Big Shoulders Display', sans-serif",
-                    color: isDark ? colors.accent : colors.text
-                  }}
-                  className="text-2xl sm:text-3xl font-extrabold"
+                  style={{ color: isDark ? colors.accent : colors.text }}
+                  className="font-display text-2xl sm:text-3xl font-extrabold"
                 >
-                  {sessionProgress.overloadReadyCount} Ready
+                  {appState.rampInEnabled ? '3–4 RIR' : '1–3 RIR'}
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Rest Timer Quick Trigger Bento Card */}
+        {/* Section 4 Warm-Up Protocol Card */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
           className="p-4 sm:p-6 rounded-2xl border flex flex-col justify-between gap-3.5"
         >
           <div>
-            <div className="text-xs font-bold uppercase tracking-wider" style={{ color: colors.muted }}>
-              Auto Rest Timer Protocol
+            <div className="text-xs font-extrabold uppercase tracking-wider" style={{ color: colors.muted }}>
+              Warm-Up & Rest Protocol
             </div>
-            <h3
-              style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-2xl font-extrabold uppercase mt-1 tabular-nums"
-            >
-              120s Compounds • 75s Isolation
+            <h3 className="font-display text-2xl font-extrabold uppercase mt-1">
+              5 Min Cardio + 3 Compound Ramp Sets
             </h3>
-            <p className="text-xs mt-1" style={{ color: colors.muted }}>
-              Checking any set box automatically launches the exact rest countdown.
-            </p>
+            {!activeDayPlan.isRest && (
+              <div className="text-xs mt-1.5 space-y-1 tabular-nums" style={{ color: colors.muted }}>
+                <p>
+                  <strong style={{ color: colors.text }}>1st Compound Ramp:</strong>{' '}
+                  {formatWeight(roundToPlate(firstCompoundWorkingWeightKg * 0.5))}
+                  {appState.unit} × 8 →{' '}
+                  {formatWeight(roundToPlate(firstCompoundWorkingWeightKg * 0.7))}
+                  {appState.unit} × 5 →{' '}
+                  {formatWeight(roundToPlate(firstCompoundWorkingWeightKg * 0.85))}
+                  {appState.unit} × 3
+                </p>
+                <p>
+                  <strong style={{ color: colors.text }}>Isolations:</strong> 1 light feeler set only.
+                </p>
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 tabular-nums">
+          <div className="grid grid-cols-2 gap-2 tabular-nums">
             <button
               onClick={() =>
                 setRestTimer({
                   active: true,
                   paused: false,
-                  remainingSec: 120,
-                  totalSec: 120,
-                  exerciseName: 'Compound Lift Rest',
-                  exerciseType: 'Compound'
+                  remainingSec: 150,
+                  totalSec: 150,
+                  exerciseName: 'Heavy Compound Rest',
+                  exerciseType: 'compound'
                 })
               }
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[44px] px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5"
+              className="min-h-[44px] px-2.5 rounded-xl border text-xs font-extrabold flex items-center justify-center gap-1"
             >
-              <Clock className="w-4 h-4" />
-              <span>Start 120s</span>
+              <Clock className="w-3.5 h-3.5" />
+              <span>150s Heavy</span>
             </button>
             <button
               onClick={() =>
@@ -2597,14 +3668,14 @@ function TodayView({
                   remainingSec: 75,
                   totalSec: 75,
                   exerciseName: 'Isolation Lift Rest',
-                  exerciseType: 'Isolation'
+                  exerciseType: 'isolation'
                 })
               }
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[44px] px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5"
+              className="min-h-[44px] px-2.5 rounded-xl border text-xs font-extrabold flex items-center justify-center gap-1"
             >
-              <Zap className="w-4 h-4" />
-              <span>Start 75s</span>
+              <Zap className="w-3.5 h-3.5" />
+              <span>75s Iso</span>
             </button>
           </div>
         </div>
@@ -2622,23 +3693,60 @@ function TodayView({
           >
             <Footprints className="w-8 h-8" />
           </div>
-          <h3
-            style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-            className="text-3xl sm:text-4xl font-extrabold uppercase"
-          >
-            Sunday Active Recovery: 20–30 Min Walk
+          <h3 className="font-display text-3xl sm:text-4xl font-black uppercase">
+            Sunday Active Recovery: 20–30 Min Easy Walk
           </h3>
           <p style={{ color: colors.muted }} className="max-w-lg mx-auto text-xs sm:text-sm">
-            Muscles grow during recovery. Complete a low-intensity 20–30 minute outdoor walk, hit your 2,900 kcal and 130g protein target, take 5g creatine, and prep for Monday Push A.
+            Light mobility, no lifting. Keep nutrition identical to training days (2,900 kcal &amp; 130 g protein from whole Indian foods) and sleep ≥ 7.5 hours.
           </p>
+          <button
+            onClick={() => {
+              setAppState((prev) => ({ ...prev, sundayWalkDone: !prev.sundayWalkDone }));
+              showToast('Sunday 20–30 min walk status updated!');
+            }}
+            style={{
+              backgroundColor: appState.sundayWalkDone ? colors.accent : colors.elevated,
+              color: appState.sundayWalkDone ? colors.accentText : colors.text,
+              borderColor: appState.sundayWalkDone ? colors.accentBorder : colors.border
+            }}
+            className="min-h-[48px] px-6 rounded-xl border font-extrabold text-xs uppercase tracking-wider inline-flex items-center gap-2"
+          >
+            <Check className="w-4 h-4 stroke-[2.5]" />
+            <span>
+              {appState.sundayWalkDone
+                ? '20–30 Min Walk Completed ✓'
+                : 'Mark 20–30 Min Walk Complete'}
+            </span>
+          </button>
         </div>
       ) : (
         /* Exercise Cards List */
         <div className="space-y-3.5 sm:space-y-4">
           {activeDayPlan.exercises.map((exercise, exIdx) => {
-            const draftSets = appState.activeDrafts[exercise.id] || [];
+            const limit = getEffectiveSetCount(exercise);
+            const draftSets = (appState.activeDrafts[exercise.id] || []).slice(0, limit);
             const prevSets = appState.lastSessionLogs[exercise.id] || [];
-            const overload = calculateProgressiveOverload(exercise, prevSets);
+            const activeVariantId =
+              appState.variantChoices?.[exercise.id] ||
+              exercise.flags?.variants?.[0]?.id ||
+              null;
+            const activeVariantObj = exercise.flags?.variants?.find(
+              (v) => v.id === activeVariantId
+            );
+            const swappedName = appState.swappedAlternatives?.[exercise.id];
+            const displayName =
+              swappedName || (activeVariantObj ? activeVariantObj.name : exercise.name);
+            const activeStepCode = activeVariantObj ? activeVariantObj.step : exercise.step;
+            const isAssisted = Boolean(
+              activeVariantObj ? activeVariantObj.assisted : exercise.flags?.assisted
+            );
+
+            const overload = calculateProgressiveOverload(
+              exercise,
+              prevSets,
+              appState.customSteps || {},
+              activeVariantId
+            );
 
             return (
               <div
@@ -2652,15 +3760,20 @@ function TodayView({
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span
                         style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                        className="text-[11px] font-extrabold px-2 py-0.5 rounded-md border tabular-nums"
+                        className="text-[11px] font-extrabold px-2 py-0.5 rounded-md border font-mono-num"
                       >
                         #{exIdx + 1}
                       </span>
-                      <h3
-                        style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                        className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wide leading-tight"
-                      >
-                        {exercise.name}
+                      {exercise.flags?.updatedInV2 && (
+                        <span
+                          style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                          className="text-[10px] font-extrabold px-1.5 py-0.5 rounded uppercase"
+                        >
+                          ★ Stretch Priority
+                        </span>
+                      )}
+                      <h3 className="font-display text-2xl sm:text-3xl font-black uppercase tracking-wide leading-tight">
+                        {displayName}
                       </h3>
                     </div>
 
@@ -2671,56 +3784,145 @@ function TodayView({
                           borderColor: colors.border,
                           color: isDark ? colors.accent : colors.text
                         }}
-                        className="text-[11px] font-bold px-2 py-0.5 rounded-md border uppercase"
+                        className="text-[11px] font-extrabold px-2 py-0.5 rounded-md border uppercase"
                       >
                         {exercise.targetMuscle}
                       </span>
+                      {exercise.secondaryGroups?.length > 0 && (
+                        <span
+                          style={{
+                            backgroundColor: colors.elevated,
+                            borderColor: colors.border,
+                            color: colors.muted
+                          }}
+                          className="text-[11px] font-semibold px-2 py-0.5 rounded-md border"
+                        >
+                          sec: {exercise.secondaryGroups.join(', ')}
+                        </span>
+                      )}
                       <span
                         style={{
                           backgroundColor: colors.elevated,
                           borderColor: colors.border,
                           color: colors.muted
                         }}
-                        className="text-[11px] font-semibold px-2 py-0.5 rounded-md border tabular-nums"
+                        className="text-[11px] font-bold px-2 py-0.5 rounded-md border font-mono-num"
                       >
-                        {exercise.type} • {exercise.type === 'Compound' ? '120s' : '75s'}
+                        {exercise.type} • {exercise.restSec}s rest • Step {activeStepCode}
                       </span>
+                      {exercise.flags?.unilateral && (
+                        <span
+                          style={{
+                            backgroundColor: colors.accentSurface,
+                            borderColor: colors.accentBorder
+                          }}
+                          className="text-[11px] font-extrabold px-2 py-0.5 rounded-md border uppercase"
+                        >
+                          Unilateral (Per Leg)
+                        </span>
+                      )}
                     </div>
+
+                    {exercise.flags?.variants && (
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        <span className="text-[11px] font-bold uppercase" style={{ color: colors.muted }}>
+                          Variant:
+                        </span>
+                        {exercise.flags.variants.map((v) => {
+                          const isChosen = activeVariantId === v.id;
+                          return (
+                            <button
+                              key={v.id}
+                              type="button"
+                              onClick={() =>
+                                setAppState((prev) => ({
+                                  ...prev,
+                                  variantChoices: {
+                                    ...(prev.variantChoices || {}),
+                                    [exercise.id]: v.id
+                                  }
+                                }))
+                              }
+                              style={{
+                                backgroundColor: isChosen ? colors.accent : colors.elevated,
+                                color: isChosen ? colors.accentText : colors.text,
+                                borderColor: isChosen ? colors.accentBorder : colors.border
+                              }}
+                              className="min-h-[36px] px-2.5 py-1 rounded-lg border text-xs font-extrabold"
+                            >
+                              {v.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Equipment Busy Alternative Swapper */}
+                    {exercise.alternatives?.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        <span className="text-[11px] font-bold uppercase" style={{ color: colors.muted }}>
+                          Busy? Swap:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAppState((prev) => {
+                              const next = { ...(prev.swappedAlternatives || {}) };
+                              delete next[exercise.id];
+                              return { ...prev, swappedAlternatives: next };
+                            })
+                          }
+                          style={{
+                            backgroundColor: !swappedName ? colors.accentSurface : colors.elevated,
+                            borderColor: !swappedName ? colors.accentBorder : colors.border,
+                            color: colors.text
+                          }}
+                          className="min-h-[32px] px-2 py-0.5 rounded-lg border text-[11px] font-bold"
+                        >
+                          Default
+                        </button>
+                        {exercise.alternatives.map((alt) => {
+                          const isSwapped = swappedName === alt;
+                          return (
+                            <button
+                              key={alt}
+                              type="button"
+                              onClick={() =>
+                                setAppState((prev) => ({
+                                  ...prev,
+                                  swappedAlternatives: {
+                                    ...(prev.swappedAlternatives || {}),
+                                    [exercise.id]: alt
+                                  }
+                                }))
+                              }
+                              style={{
+                                backgroundColor: isSwapped ? colors.accent : colors.elevated,
+                                color: isSwapped ? colors.accentText : colors.text,
+                                borderColor: isSwapped ? colors.accentBorder : colors.border
+                              }}
+                              className="min-h-[32px] px-2 py-0.5 rounded-lg border text-[11px] font-bold"
+                            >
+                              {alt}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
 
                     {/* One-Line Form Cue */}
                     <p
                       style={{ color: colors.muted }}
-                      className="text-xs flex items-start gap-1.5 pt-1"
+                      className="text-xs sm:text-sm flex items-start gap-1.5 pt-1"
                     >
                       <Info
-                        className="w-3.5 h-3.5 shrink-0 mt-0.5"
+                        className="w-4 h-4 shrink-0 mt-0.5"
                         style={{ color: isDark ? colors.accent : colors.text }}
                       />
                       <span>
                         <strong style={{ color: colors.text }}>Cue:</strong> {exercise.cue}
                       </span>
                     </p>
-
-                    {/* Warm-up Sets Calculator on First Compound Lift */}
-                    {exIdx === 0 && prevSets.length > 0 && (
-                      <p className="text-xs tabular-nums pt-0.5" style={{ color: colors.muted }}>
-                        <strong style={{ color: colors.text }}>Warm-up:</strong>{' '}
-                        {[
-                          [0.5, 8],
-                          [0.7, 5],
-                          [0.85, 3]
-                        ]
-                          .map(
-                            ([p, r]) =>
-                              `${
-                                Math.round(
-                                  (Math.max(...prevSets.map((s) => s.weight)) * p) / 2.5
-                                ) * 2.5
-                              }kg × ${r}`
-                          )
-                          .join(' → ')}
-                      </p>
-                    )}
                   </div>
 
                   {/* Prescription Pill */}
@@ -2728,14 +3930,11 @@ function TodayView({
                     style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
                     className="px-3 py-1.5 rounded-xl border text-right tabular-nums shrink-0"
                   >
-                    <div className="text-[9px] font-bold uppercase" style={{ color: colors.muted }}>
+                    <div className="text-[10px] font-bold uppercase" style={{ color: colors.muted }}>
                       Sets × Reps
                     </div>
-                    <div
-                      style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                      className="text-xl sm:text-2xl font-extrabold"
-                    >
-                      {exercise.sets} × {exercise.repLabel}
+                    <div className="font-display text-xl sm:text-2xl font-extrabold">
+                      {limit} × {exercise.repLabel}
                     </div>
                   </div>
                 </div>
@@ -2743,42 +3942,54 @@ function TodayView({
                 {/* Last Session Numbers + Progressive Overload Banner */}
                 <div
                   style={{
-                    backgroundColor: overload.shouldIncrease
-                      ? colors.accentSurface
-                      : colors.elevated,
+                    backgroundColor: overload.shouldIncrease ? colors.accentSurface : colors.elevated,
                     borderColor: overload.shouldIncrease ? colors.accentBorder : colors.border
                   }}
-                  className="p-3 rounded-xl border flex flex-wrap items-center justify-between gap-2.5 tabular-nums"
+                  className="p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 tabular-nums"
                 >
-                  <div className="space-y-0.5 min-w-0">
+                  <div className="space-y-0.5">
                     <div className="text-xs font-bold uppercase tracking-wider flex flex-wrap items-center gap-1.5">
-                      <span>Last:</span>
-                      <span style={{ color: colors.muted }}>
+                      <span>Last Session:</span>
+                      <span style={{ color: colors.muted }} className="font-mono-num">
                         {prevSets.length > 0
                           ? prevSets
-                              .map((s) => `${formatWeight(s.weight)}${appState.unit}×${s.reps}`)
-                              .join(' | ')
-                          : 'First session — log starting weights'}
+                              .map(
+                                (s) =>
+                                  `${isAssisted ? 'Assist ' : ''}${formatWeight(s.weight)}${
+                                    appState.unit
+                                  } × ${s.reps}`
+                              )
+                              .join('  |  ')
+                          : 'First session — log your starting working weights'}
                       </span>
                     </div>
-                    <div className="text-[11px] font-semibold" style={{ color: colors.muted }}>
+                    <div className="text-xs font-semibold" style={{ color: colors.muted }}>
                       {overload.reason}
                     </div>
                   </div>
 
                   {overload.shouldIncrease && (
-                    <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="flex items-center justify-between sm:justify-end gap-2">
                       <span
                         style={{
                           backgroundColor: colors.accent,
                           color: colors.accentText
                         }}
-                        className="text-[11px] font-extrabold uppercase px-2.5 py-1.5 rounded-lg flex items-center gap-1"
+                        className="text-xs font-extrabold uppercase px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-mono-num"
                       >
-                        <ArrowUpRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                        {overload.mode === 'assist' ? (
+                          <ArrowDownRight className="w-4 h-4 stroke-[2.5]" />
+                        ) : (
+                          <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
+                        )}
                         <span>
-                          +{formatWeight(overload.incrementKg)} {appState.unit} (
-                          {formatWeight(overload.suggestedWeightKg)} {appState.unit})
+                          {overload.mode === 'assist'
+                            ? `${formatWeight(overload.incrementKg)} ${appState.unit} Assist → ${formatWeight(
+                                overload.suggestedWeightKg
+                              )} ${appState.unit}`
+                            : `+${formatWeight(overload.incrementKg)} ${appState.unit} → ${formatWeight(
+                                overload.suggestedWeightKg
+                              )} ${appState.unit}`}
                         </span>
                       </span>
                       <button
@@ -2790,7 +4001,7 @@ function TodayView({
                           borderColor: colors.accentBorder,
                           color: colors.text
                         }}
-                        className="min-h-[40px] px-3 rounded-xl border text-xs font-bold uppercase"
+                        className="min-h-[44px] px-3 rounded-xl border text-xs font-extrabold uppercase shrink-0"
                       >
                         Apply
                       </button>
@@ -2802,11 +4013,13 @@ function TodayView({
                 <div className="space-y-2 tabular-nums">
                   <div
                     style={{ color: colors.muted }}
-                    className="grid grid-cols-12 gap-2 px-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider"
+                    className="grid grid-cols-12 gap-1.5 sm:gap-2 px-2 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider"
                   >
                     <div className="col-span-2">Set</div>
-                    <div className="col-span-4 text-center">Weight ({appState.unit})</div>
-                    <div className="col-span-4 text-center">Reps ({exercise.repLabel})</div>
+                    <div className="col-span-4">
+                      {isAssisted ? `Assist (${appState.unit})` : `Weight (${appState.unit})`}
+                    </div>
+                    <div className="col-span-4">Reps ({exercise.repLabel})</div>
                     <div className="col-span-2 text-right">Done</div>
                   </div>
 
@@ -2816,22 +4029,20 @@ function TodayView({
                       <div
                         key={sIdx}
                         style={{
-                          backgroundColor: setRow.completed
-                            ? colors.accentSurface
-                            : colors.elevated,
+                          backgroundColor: setRow.completed ? colors.accentSurface : colors.elevated,
                           borderColor: setRow.completed ? colors.accentBorder : colors.border
                         }}
-                        className="grid grid-cols-12 gap-2 items-center p-1.5 sm:p-2 rounded-xl border transition-colors"
+                        className="grid grid-cols-12 gap-1.5 sm:gap-2 items-center p-2 rounded-xl border transition-colors"
                       >
-                        <div className="col-span-2 pl-1.5">
-                          <span
-                            style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                            className="text-lg sm:text-xl font-extrabold"
-                          >
+                        <div className="col-span-2 pl-1">
+                          <span className="font-display text-xl font-extrabold">
                             #{sIdx + 1}
                           </span>
                           {prevSet && (
-                            <div className="text-[9px] leading-tight" style={{ color: colors.muted }}>
+                            <div
+                              className="text-[10px] font-mono-num leading-tight"
+                              style={{ color: colors.muted }}
+                            >
                               {formatWeight(prevSet.weight)}×{prevSet.reps}
                             </div>
                           )}
@@ -2842,7 +4053,7 @@ function TodayView({
                             type="number"
                             inputMode="decimal"
                             step="0.5"
-                            aria-label={`${exercise.name} set ${sIdx + 1} weight`}
+                            aria-label={`${displayName} set ${sIdx + 1} weight`}
                             value={setRow.weight === '' ? '' : formatWeight(setRow.weight)}
                             onChange={(e) =>
                               handleSetInputChange(exercise.id, sIdx, 'weight', e.target.value)
@@ -2852,7 +4063,7 @@ function TodayView({
                               borderColor: colors.border,
                               color: colors.text
                             }}
-                            className="w-full min-h-[44px] px-2 rounded-xl border text-center font-bold text-base tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                            className="w-full min-h-[44px] px-2 rounded-xl border text-center font-extrabold text-base font-mono-num focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
                           />
                         </div>
 
@@ -2860,7 +4071,7 @@ function TodayView({
                           <input
                             type="number"
                             inputMode="numeric"
-                            aria-label={`${exercise.name} set ${sIdx + 1} reps`}
+                            aria-label={`${displayName} set ${sIdx + 1} reps`}
                             value={setRow.reps}
                             onChange={(e) =>
                               handleSetInputChange(exercise.id, sIdx, 'reps', e.target.value)
@@ -2870,20 +4081,20 @@ function TodayView({
                               borderColor: colors.border,
                               color: colors.text
                             }}
-                            className="w-full min-h-[44px] px-2 rounded-xl border text-center font-bold text-base tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
+                            className="w-full min-h-[44px] px-2 rounded-xl border text-center font-extrabold text-base font-mono-num focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
                           />
                         </div>
 
                         <div className="col-span-2 flex justify-end">
                           <button
                             onClick={() => handleToggleSetComplete(exercise, sIdx)}
-                            aria-label={`Mark ${exercise.name} set ${sIdx + 1} complete`}
+                            aria-label={`Mark ${displayName} set ${sIdx + 1} complete`}
                             style={{
                               backgroundColor: setRow.completed ? colors.accent : colors.card,
                               color: setRow.completed ? colors.accentText : colors.muted,
                               borderColor: setRow.completed ? colors.accentBorder : colors.border
                             }}
-                            className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center transition-colors"
+                            className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--ring)]"
                           >
                             <Check className="w-5 h-5 stroke-[2.5]" />
                           </button>
@@ -2905,21 +4116,23 @@ function TodayView({
 // 2. PLAN VIEW COMPONENT
 // ============================================================================
 
-function PlanView({ colors, isDark, onSelectWorkoutDay }) {
+function PlanView({ colors, isDark, appState, onSelectWorkoutDay }) {
   const [muscleFilter, setMuscleFilter] = useState('All');
 
   const muscleCategories = [
     'All',
-    'Shoulders',
-    'Back / Lats',
-    'Quads',
+    'Lats/Back',
+    'Side delts',
+    'Front delts',
+    'Rear delts',
     'Chest',
-    'Biceps',
+    'Quads',
     'Hamstrings',
+    'Glutes',
+    'Biceps',
     'Triceps',
     'Calves',
-    'Abs / Core',
-    'Glutes'
+    'Abs'
   ];
 
   const orderedDays = [1, 2, 3, 4, 5, 6, 0].map((idx) =>
@@ -2938,22 +4151,19 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
               style={{ backgroundColor: colors.accent, color: colors.accentText }}
               className="text-xs font-extrabold uppercase px-2.5 py-1 rounded-md"
             >
-              6-Day PPL V-Taper Split (116 Weekly Sets)
+              6-Day PPL V-Taper Split (116 Primary Sets)
             </span>
-            <h2
-              style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-3xl sm:text-4xl font-extrabold uppercase mt-2"
-            >
+            <h2 className="font-display text-3xl sm:text-4xl font-black uppercase mt-2">
               Weekly Hypertrophy Blueprint
             </h2>
             <p style={{ color: colors.muted }} className="text-xs sm:text-sm">
-              Prioritizes lateral delts (27 shoulder sets) and wide lats (20 back sets) while keeping waist tight (~70 min/session).
+              20 direct Lat/Back sets + 27 total Deltoid sets (11 Side, 7 Front, 9 Rear) engineered for maximum shoulder-to-waist ratio.
             </p>
           </div>
         </div>
 
-        {/* Muscle Filter Pills (Hidden Scrollbar) */}
-        <div className="flex items-center gap-2 overflow-x-auto pt-1">
+        {/* Muscle Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-1">
           {muscleCategories.map((cat) => {
             const active = muscleFilter === cat;
             return (
@@ -2965,7 +4175,7 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                   color: active ? colors.accentText : colors.text,
                   borderColor: active ? colors.accentBorder : colors.border
                 }}
-                className="min-h-[42px] px-3.5 rounded-xl border text-xs font-bold uppercase whitespace-nowrap shrink-0"
+                className="min-h-[40px] px-3 rounded-xl border text-xs font-extrabold uppercase whitespace-nowrap"
               >
                 {cat}
               </button>
@@ -2975,12 +4185,16 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
       </div>
 
       {/* Days Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 gap-4">
         {orderedDays.map((day) => {
           const filteredExercises =
             muscleFilter === 'All'
               ? day.exercises
-              : day.exercises.filter((ex) => ex.muscleCategory === muscleFilter);
+              : day.exercises.filter(
+                  (ex) =>
+                    ex.primaryGroup === muscleFilter ||
+                    (ex.secondaryGroups || []).includes(muscleFilter)
+                );
 
           if (muscleFilter !== 'All' && filteredExercises.length === 0 && !day.isRest) {
             return null;
@@ -2993,7 +4207,7 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
               className="p-4 sm:p-6 rounded-2xl border space-y-4"
             >
               <div
-                className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b"
+                className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b"
                 style={{ borderColor: colors.border }}
               >
                 <div className="flex items-center gap-2">
@@ -3003,10 +4217,7 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                   >
                     {day.shortDay}
                   </span>
-                  <h3
-                    style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                    className="text-2xl sm:text-3xl font-extrabold uppercase"
-                  >
+                  <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
                     {day.title} — {day.subtitle}
                   </h3>
                 </div>
@@ -3014,7 +4225,7 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                 <button
                   onClick={() => onSelectWorkoutDay(day.dayIndex)}
                   style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                  className="min-h-[42px] px-3.5 rounded-xl border text-xs font-bold uppercase flex items-center gap-1.5"
+                  className="min-h-[42px] px-3.5 rounded-xl border text-xs font-extrabold uppercase flex items-center gap-1"
                 >
                   <span>Open in Today</span>
                   <ChevronRight className="w-4 h-4" />
@@ -3031,7 +4242,7 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                     style={{ color: isDark ? colors.accent : colors.text }}
                   />
                   <div className="text-xs sm:text-sm">
-                    <strong>Rest, 20-30 min walk.</strong> Full nervous system recovery, light stretching, and meal prep for the upcoming week.
+                    <strong>Rest, 20–30 min easy walk.</strong> Active recovery, light mobility, and weekly grocery prep.
                   </div>
                 </div>
               ) : (
@@ -3040,34 +4251,33 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                     <div
                       key={ex.id}
                       style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                      className="p-3.5 sm:p-4 rounded-xl border flex flex-col justify-between gap-2"
+                      className="p-3.5 rounded-xl border flex flex-col justify-between gap-2"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <div className="font-bold text-sm sm:text-base">{ex.name}</div>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="font-extrabold text-sm sm:text-base">{ex.name}</div>
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1">
                             <span
                               style={{
                                 backgroundColor: colors.card,
                                 borderColor: colors.border,
                                 color: isDark ? colors.accent : colors.text
                               }}
-                              className="text-[11px] font-bold px-2 py-0.5 rounded border uppercase"
+                              className="text-[10px] font-extrabold px-2 py-0.5 rounded border uppercase"
                             >
-                              {ex.targetMuscle}
+                              {ex.primaryGroup}
                             </span>
-                            <span className="text-xs font-medium" style={{ color: colors.muted }}>
-                              {ex.type}
+                            <span className="text-[11px] font-semibold font-mono-num" style={{ color: colors.muted }}>
+                              {ex.type} • {ex.restSec}s • Step {ex.step}
                             </span>
                           </div>
                         </div>
                         <div
                           style={{
-                            fontFamily: "'Big Shoulders Display', sans-serif",
                             backgroundColor: colors.card,
                             borderColor: colors.border
                           }}
-                          className="px-2.5 py-1 rounded-lg border text-lg font-extrabold shrink-0 tabular-nums"
+                          className="font-display px-2.5 py-1 rounded-lg border text-lg font-extrabold shrink-0 tabular-nums"
                         >
                           {ex.sets} × {ex.repLabel}
                         </div>
@@ -3077,7 +4287,7 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                         className="text-xs pt-2 border-t"
                         style={{ color: colors.muted, borderColor: colors.border }}
                       >
-                        <strong style={{ color: colors.text }}>Form Cue:</strong> {ex.cue}
+                        <strong style={{ color: colors.text }}>Cue:</strong> {ex.cue}
                       </p>
                     </div>
                   ))}
@@ -3092,7 +4302,7 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
 }
 
 // ============================================================================
-// 3. NUTRITION VIEW COMPONENT
+// 3. NUTRITION VIEW COMPONENT (100% WHOLE-FOOD INDIAN SYSTEM)
 // ============================================================================
 
 function NutritionView({
@@ -3102,534 +4312,518 @@ function NutritionView({
   setAppState,
   nutritionTotals,
   gainAnalysis,
+  handleDietTrackChange,
   showToast
 }) {
-  const [editingMealId, setEditingMealId] = useState(null);
-  const [editMealForm, setEditMealForm] = useState({
-    name: '',
-    kcal: 0,
-    protein: 0,
-    items: ''
-  });
+  const [subView, setSubView] = useState('daily'); // 'daily' | 'rotation' | 'foods'
 
-  const kcalTarget = appState.profile.targetCalories || appState.profile.dailyKcalTarget || 2900;
-  const proteinTarget = appState.profile.targetProteinG || appState.profile.dailyProteinTarget || 130;
-  const waterTargetMl = appState.profile.targetWaterMl || appState.profile.waterTargetMl || 3500;
+  const kcalTarget = appState.profile.targetCalories || SCIENCE_RULES.TARGET_KCAL;
+  const proteinTarget = appState.profile.targetProteinG || SCIENCE_RULES.TARGET_PROTEIN_G;
+  const waterTarget = appState.profile.targetWaterMl || SCIENCE_RULES.TARGET_WATER_ML;
 
-  const kcalPct = Math.min(100, Math.round((nutritionTotals.consumedKcal / kcalTarget) * 100));
-  const proteinPct = Math.min(100, Math.round((nutritionTotals.consumedProtein / proteinTarget) * 100));
-  const waterPct = Math.min(100, Math.round((appState.waterMl / waterTargetMl) * 100));
+  const kcalPercent = Math.min(100, Math.round((nutritionTotals.consumedKcal / kcalTarget) * 100));
+  const proteinPercent = Math.min(
+    100,
+    Math.round((nutritionTotals.consumedProtein / proteinTarget) * 100)
+  );
+  const waterPercent = Math.min(100, Math.round((appState.waterMl / waterTarget) * 100));
 
-  const toggleMeal = (mealId) => {
+  const weeklyMenu = useMemo(
+    () => generateWeeklyMenuRotation(appState.profile.dietTrack || 'non-veg'),
+    [appState.profile.dietTrack]
+  );
+
+  const groceryList = useMemo(
+    () => generateWeeklyGroceryList(weeklyMenu, appState.foodDatabase),
+    [weeklyMenu, appState.foodDatabase]
+  );
+
+  const toggleMealSlotCompleted = (slotId) => {
     setAppState((prev) => ({
       ...prev,
-      meals: prev.meals.map((m) => (m.id === mealId ? { ...m, completed: !m.completed } : m))
+      completedMealSlots: {
+        ...(prev.completedMealSlots || {}),
+        [slotId]: !prev.completedMealSlots?.[slotId]
+      }
     }));
   };
 
-  const startEditMeal = (meal) => {
-    setEditingMealId(meal.id);
-    setEditMealForm({
-      name: meal.name,
-      kcal: meal.kcal,
-      protein: meal.protein,
-      items: meal.items
-    });
-  };
-
-  const saveEditMeal = (mealId) => {
+  const handleSelectSlotOption = (slotId, optionId) => {
     setAppState((prev) => ({
       ...prev,
-      meals: prev.meals.map((m) =>
-        m.id === mealId
-          ? {
-              ...m,
-              name: editMealForm.name,
-              kcal: Number(editMealForm.kcal || 0),
-              protein: Number(editMealForm.protein || 0),
-              items: editMealForm.items
-            }
-          : m
-      )
-    }));
-    setEditingMealId(null);
-    showToast('Meal updated!');
-  };
-
-  const addWater = (deltaMl) => {
-    setAppState((prev) => ({
-      ...prev,
-      waterMl: Math.max(0, Math.min(6000, prev.waterMl + deltaMl))
+      selectedMealOptions: {
+        ...(prev.selectedMealOptions || {}),
+        [slotId]: optionId
+      }
     }));
   };
 
-  const handleToggleCreatine = () => {
-    const todayStr = new Date().toLocaleDateString('en-CA');
-    setAppState((prev) => {
-      const nextTaken = !prev.creatineTaken;
-      const existingDates = prev.creatineDates || [];
-      const nextDates = nextTaken
-        ? Array.from(new Set([...existingDates, todayStr]))
-        : existingDates.filter((d) => d !== todayStr);
-      return {
-        ...prev,
-        creatineTaken: nextTaken,
-        creatineDates: nextDates,
-        creatineStreak: nextTaken ? prev.creatineStreak + 1 : Math.max(0, prev.creatineStreak - 1)
-      };
-    });
+  const handleAddAppetiteHelper = (helper) => {
+    setAppState((prev) => ({
+      ...prev,
+      loggedAppetiteHelpers: [...(prev.loggedAppetiteHelpers || []), helper.id]
+    }));
+    showToast(`Added ${helper.label} (+${helper.kcal} kcal)`);
   };
 
-  const renderProgressRing = (percent, label, mainText, subText) => {
-    const radius = 50;
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (percent / 100) * circumference;
-
-    return (
-      <div className="flex items-center gap-3.5 sm:gap-4 tabular-nums">
-        <div className="relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 flex items-center justify-center">
-          <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-            <circle
-              cx="60"
-              cy="60"
-              r={radius}
-              fill="none"
-              stroke={colors.elevated}
-              strokeWidth="12"
-            />
-            <circle
-              cx="60"
-              cy="60"
-              r={radius}
-              fill="none"
-              stroke={colors.accent}
-              strokeWidth="12"
-              strokeDasharray={circumference}
-              strokeDashoffset={offset}
-              strokeLinecap="butt"
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span
-              style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-2xl sm:text-3xl font-extrabold leading-none"
-            >
-              {percent}%
-            </span>
-            <span className="text-[10px] font-bold uppercase mt-0.5" style={{ color: colors.muted }}>
-              {label}
-            </span>
-          </div>
-        </div>
-        <div className="min-w-0">
-          <div className="text-xs font-bold uppercase tracking-wider" style={{ color: colors.muted }}>
-            {label} Target
-          </div>
-          <div
-            style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-            className="text-3xl sm:text-4xl font-extrabold uppercase mt-0.5 leading-none"
-          >
-            {mainText}
-          </div>
-          <div className="text-xs font-medium mt-1" style={{ color: colors.muted }}>
-            {subText}
-          </div>
-        </div>
-      </div>
-    );
+  const handleClearHelpers = () => {
+    setAppState((prev) => ({ ...prev, loggedAppetiteHelpers: [] }));
+    showToast('Cleared extra appetite helpers for today.');
   };
 
   return (
     <div className="space-y-5">
-      {/* Dynamic Gain-Rate Calorie Recommendation Banner */}
-      {gainAnalysis.calorieAdjustment !== 0 && (
-        <div
-          style={{
-            backgroundColor: colors.accentSurface,
-            borderColor: colors.accentBorder
-          }}
-          className="p-4 rounded-2xl border flex flex-wrap items-center justify-between gap-3"
-        >
-          <div className="flex items-center gap-3">
-            <Flame
-              className="w-6 h-6 shrink-0"
-              style={{ color: isDark ? colors.accent : colors.text }}
-            />
-            <div className="text-xs sm:text-sm">
-              <strong>{gainAnalysis.headline}:</strong> {gainAnalysis.message}
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              const newTarget = 2900 + gainAnalysis.calorieAdjustment;
-              setAppState((prev) => ({
-                ...prev,
-                profile: {
-                  ...prev.profile,
-                  targetCalories: newTarget
-                }
-              }));
-              showToast(`Daily target updated to ${newTarget} kcal!`);
-            }}
-            style={{
-              backgroundColor: colors.accent,
-              color: colors.accentText,
-              borderColor: colors.accentBorder
-            }}
-            className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase"
-          >
-            Apply {2900 + gainAnalysis.calorieAdjustment} kcal Target
-          </button>
-        </div>
-      )}
-
-      {/* Bento Top Row: Kcal Ring, Protein Ring, Hydration & Creatine */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-6 rounded-2xl border flex items-center"
-        >
-          {renderProgressRing(
-            kcalPct,
-            'Calories',
-            `${nutritionTotals.consumedKcal} / ${kcalTarget}`,
-            `${Math.max(0, kcalTarget - nutritionTotals.consumedKcal)} kcal remaining today`
-          )}
-        </div>
-
-        <div
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-6 rounded-2xl border flex items-center"
-        >
-          {renderProgressRing(
-            proteinPct,
-            'Protein',
-            `${nutritionTotals.consumedProtein}g / ${proteinTarget}g`,
-            `${Math.max(0, proteinTarget - nutritionTotals.consumedProtein)}g remaining (~2.3g/kg)`
-          )}
-        </div>
-
-        {/* Hydration (3.5L) + Creatine (5g) */}
-        <div
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-6 rounded-2xl border flex flex-col justify-between gap-4 tabular-nums"
-        >
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span
-                className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
-                style={{ color: colors.muted }}
-              >
-                <Droplets
-                  className="w-4 h-4"
-                  style={{ color: isDark ? colors.accent : colors.text }}
-                />
-                <span>Hydration (3.5 L)</span>
-              </span>
-              <span
-                style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                className="text-2xl font-extrabold"
-              >
-                {(appState.waterMl / 1000).toFixed(2)} / {(waterTargetMl / 1000).toFixed(2)} L
-              </span>
-            </div>
-
-            <div
-              style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="w-full h-3.5 rounded-lg border overflow-hidden"
-            >
-              <div
-                style={{
-                  width: `${waterPct}%`,
-                  backgroundColor: colors.accent
-                }}
-                className="h-full transition-all"
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 pt-1">
-              <button
-                onClick={() => addWater(-250)}
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[44px] rounded-xl border text-xs font-bold"
-              >
-                -250 ml
-              </button>
-              <button
-                onClick={() => addWater(250)}
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="min-h-[44px] rounded-xl border text-xs font-bold"
-              >
-                +250 ml
-              </button>
-              <button
-                onClick={() => addWater(500)}
-                style={{
-                  backgroundColor: colors.accent,
-                  color: colors.accentText,
-                  borderColor: colors.accentBorder
-                }}
-                className="min-h-[44px] rounded-xl border text-xs font-extrabold"
-              >
-                +500 ml
-              </button>
-            </div>
-          </div>
-
-          <div
-            style={{
-              backgroundColor: appState.creatineTaken ? colors.accentSurface : colors.elevated,
-              borderColor: appState.creatineTaken ? colors.accentBorder : colors.border
-            }}
-            className="p-3.5 rounded-xl border flex items-center justify-between"
-          >
-            <div>
-              <div className="text-sm font-bold">Creatine Monohydrate (5g)</div>
-              <div className="text-xs" style={{ color: colors.muted }}>
-                Daily saturation • Streak: {appState.creatineStreak} days
-              </div>
-            </div>
-            <button
-              onClick={handleToggleCreatine}
-              aria-label="Toggle 5g Creatine taken"
-              style={{
-                backgroundColor: appState.creatineTaken ? colors.accent : colors.card,
-                color: appState.creatineTaken ? colors.accentText : colors.muted,
-                borderColor: appState.creatineTaken ? colors.accentBorder : colors.border
-              }}
-              className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center"
-            >
-              <Check className="w-5 h-5 stroke-[2.5]" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Editable Meal Checklist */}
+      {/* Top Track Switcher & Sub-Navigation */}
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-4 sm:p-6 rounded-2xl border space-y-4"
+        className="p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
       >
-        <div className="flex flex-wrap items-center justify-between gap-2.5">
-          <div>
-            <h3
-              style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-2xl sm:text-3xl font-extrabold uppercase"
-            >
-              Daily Lean-Bulk Meal Checklist (2,950 kcal Template)
-            </h3>
-            <p className="text-xs" style={{ color: colors.muted }}>
-              Tap check as you eat each meal, or click Edit to customize calories, protein, or food items.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() =>
-                setAppState((prev) => ({
-                  ...prev,
-                  meals: prev.meals.map((m) => ({ ...m, completed: false }))
-                }))
-              }
-              style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[42px] px-3 rounded-xl border text-xs font-bold uppercase"
-            >
-              Reset Day
-            </button>
-            <button
-              onClick={() =>
-                setAppState((prev) => ({
-                  ...prev,
-                  meals: prev.meals.map((m) => ({ ...m, completed: true }))
-                }))
-              }
-              style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="min-h-[42px] px-3.5 rounded-xl border text-xs font-bold uppercase"
-            >
-              Check All
-            </button>
-          </div>
+        <div>
+          <span
+            style={{ backgroundColor: colors.accent, color: colors.accentText }}
+            className="text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded-md"
+          >
+            Zero Supplements • 100% Indian Kitchen
+          </span>
+          <h2 className="font-display text-3xl sm:text-4xl font-black uppercase mt-1">
+            Whole-Food Lean Bulk Nutrition
+          </h2>
         </div>
 
-        <div className="space-y-3 tabular-nums">
-          {appState.meals.map((meal) => {
-            const isEditing = editingMealId === meal.id;
-
+        <div className="flex flex-wrap items-center gap-1.5">
+          {['non-veg', 'eggetarian', 'veg'].map((t) => {
+            const active = (appState.profile.dietTrack || 'non-veg') === t;
             return (
-              <div
-                key={meal.id}
+              <button
+                key={t}
+                onClick={() => handleDietTrackChange(t)}
                 style={{
-                  backgroundColor: meal.completed ? colors.accentSurface : colors.elevated,
-                  borderColor: meal.completed ? colors.accentBorder : colors.border
+                  backgroundColor: active ? colors.accent : colors.elevated,
+                  color: active ? colors.accentText : colors.text,
+                  borderColor: active ? colors.accentBorder : colors.border
                 }}
-                className="p-3.5 sm:p-4 rounded-xl border transition-colors"
+                className="min-h-[40px] px-3 rounded-xl border text-xs font-extrabold uppercase"
               >
-                {isEditing ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-                    <div className="sm:col-span-3">
-                      <label className="block text-[10px] font-bold uppercase mb-1" style={{ color: colors.muted }}>
-                        Meal Name
-                      </label>
-                      <input
-                        type="text"
-                        value={editMealForm.name}
-                        onChange={(e) =>
-                          setEditMealForm((p) => ({ ...p, name: e.target.value }))
-                        }
-                        style={{
-                          backgroundColor: colors.card,
-                          borderColor: colors.border,
-                          color: colors.text
-                        }}
-                        className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-bold"
-                      />
-                    </div>
-                    <div className="sm:col-span-4">
-                      <label className="block text-[10px] font-bold uppercase mb-1" style={{ color: colors.muted }}>
-                        Food Items
-                      </label>
-                      <input
-                        type="text"
-                        value={editMealForm.items}
-                        onChange={(e) =>
-                          setEditMealForm((p) => ({ ...p, items: e.target.value }))
-                        }
-                        style={{
-                          backgroundColor: colors.card,
-                          borderColor: colors.border,
-                          color: colors.text
-                        }}
-                        className="w-full min-h-[44px] px-3 rounded-xl border text-sm"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 sm:col-span-3">
-                      <div>
-                        <label className="block text-[10px] font-bold uppercase mb-1" style={{ color: colors.muted }}>
-                          Kcal
-                        </label>
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          value={editMealForm.kcal}
-                          onChange={(e) =>
-                            setEditMealForm((p) => ({ ...p, kcal: e.target.value }))
-                          }
-                          style={{
-                            backgroundColor: colors.card,
-                            borderColor: colors.border,
-                            color: colors.text
-                          }}
-                          className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-bold"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold uppercase mb-1" style={{ color: colors.muted }}>
-                          Prot (g)
-                        </label>
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          value={editMealForm.protein}
-                          onChange={(e) =>
-                            setEditMealForm((p) => ({ ...p, protein: e.target.value }))
-                          }
-                          style={{
-                            backgroundColor: colors.card,
-                            borderColor: colors.border,
-                            color: colors.text
-                          }}
-                          className="w-full min-h-[44px] px-2 rounded-xl border text-sm font-bold"
-                        />
-                      </div>
-                    </div>
-                    <div className="sm:col-span-2 flex items-end gap-2 pt-2 sm:pt-0">
-                      <button
-                        onClick={() => saveEditMeal(meal.id)}
-                        style={{
-                          backgroundColor: colors.accent,
-                          color: colors.accentText,
-                          borderColor: colors.accentBorder
-                        }}
-                        className="flex-1 min-h-[44px] rounded-xl border font-bold text-xs uppercase"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingMealId(null)}
-                        style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                        className="min-h-[44px] px-3 rounded-xl border text-xs font-bold"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between gap-2.5">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <button
-                        onClick={() => toggleMeal(meal.id)}
-                        aria-label={`Toggle ${meal.name}`}
-                        style={{
-                          backgroundColor: meal.completed ? colors.accent : colors.card,
-                          color: meal.completed ? colors.accentText : colors.muted,
-                          borderColor: meal.completed ? colors.accentBorder : colors.border
-                        }}
-                        className="min-h-[44px] min-w-[44px] rounded-xl border flex items-center justify-center shrink-0"
-                      >
-                        <Check className="w-5 h-5 stroke-[2.5]" />
-                      </button>
-
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="font-bold text-sm sm:text-base">{meal.name}</span>
-                          <span className="text-[11px] font-medium" style={{ color: colors.muted }}>
-                            {meal.timeHint}
-                          </span>
-                        </div>
-                        <p className="text-xs mt-0.5 line-clamp-2" style={{ color: colors.muted }}>
-                          {meal.items}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                      <div className="text-right">
-                        <div
-                          style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                          className="text-xl sm:text-2xl font-extrabold leading-none"
-                        >
-                          {meal.kcal} kcal
-                        </div>
-                        <div
-                          style={{ color: isDark ? colors.accent : colors.text }}
-                          className="text-[11px] font-bold mt-0.5"
-                        >
-                          {meal.protein}g prot
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => startEditMeal(meal)}
-                        aria-label={`Edit ${meal.name}`}
-                        style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                        className="min-h-[42px] min-w-[42px] rounded-xl border flex items-center justify-center"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+                {t}
+              </button>
             );
           })}
         </div>
       </div>
+
+      {/* Macro & Hydration Bento Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 tabular-nums">
+        {/* Calories Card */}
+        <div
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          className="p-4 sm:p-5 rounded-2xl border space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-extrabold uppercase" style={{ color: colors.muted }}>
+              Daily Energy
+            </span>
+            <Flame className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
+          </div>
+          <div className="flex items-baseline justify-between">
+            <div className="font-display text-3xl sm:text-4xl font-black">
+              {nutritionTotals.consumedKcal}{' '}
+              <span className="text-lg font-bold" style={{ color: colors.muted }}>
+                / {kcalTarget} kcal
+              </span>
+            </div>
+            <span className="text-xs font-extrabold font-mono-num">{kcalPercent}%</span>
+          </div>
+          <div
+            style={{ backgroundColor: colors.elevated }}
+            className="w-full h-3 rounded-full overflow-hidden"
+          >
+            <div
+              style={{
+                width: `${kcalPercent}%`,
+                backgroundColor: colors.accent
+              }}
+              className="h-full transition-all"
+            />
+          </div>
+          <div className="text-[11px] flex justify-between" style={{ color: colors.muted }}>
+            <span>Planned Menu: {nutritionTotals.plannedKcal} kcal</span>
+            <span>Floor: {SCIENCE_RULES.MIN_ACCEPTABLE_KCAL} kcal</span>
+          </div>
+        </div>
+
+        {/* Protein Card */}
+        <div
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          className="p-4 sm:p-5 rounded-2xl border space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-extrabold uppercase" style={{ color: colors.muted }}>
+              Whole-Food Protein
+            </span>
+            <ShieldCheck
+              className="w-5 h-5"
+              style={{ color: isDark ? colors.accent : colors.text }}
+            />
+          </div>
+          <div className="flex items-baseline justify-between">
+            <div className="font-display text-3xl sm:text-4xl font-black">
+              {nutritionTotals.consumedProtein}g{' '}
+              <span className="text-lg font-bold" style={{ color: colors.muted }}>
+                / {proteinTarget}g
+              </span>
+            </div>
+            <span className="text-xs font-extrabold font-mono-num">{proteinPercent}%</span>
+          </div>
+          <div
+            style={{ backgroundColor: colors.elevated }}
+            className="w-full h-3 rounded-full overflow-hidden"
+          >
+            <div
+              style={{
+                width: `${proteinPercent}%`,
+                backgroundColor: colors.accent
+              }}
+              className="h-full transition-all"
+            />
+          </div>
+          <div className="text-[11px] flex justify-between" style={{ color: colors.muted }}>
+            <span>Feedings ≥18g: {nutritionTotals.proteinFeedingsCount}/4</span>
+            <span>Floor: 110g/day</span>
+          </div>
+        </div>
+
+        {/* Hydration & Sleep Card */}
+        <div
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          className="p-4 sm:p-5 rounded-2xl border space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-extrabold uppercase" style={{ color: colors.muted }}>
+              Water (3.5L) &amp; Sleep
+            </span>
+            <Droplets className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
+          </div>
+          <div className="flex items-baseline justify-between">
+            <div className="font-display text-3xl sm:text-4xl font-black">
+              {(appState.waterMl / 1000).toFixed(2)}L{' '}
+              <span className="text-lg font-bold" style={{ color: colors.muted }}>
+                / {(waterTarget / 1000).toFixed(1)}L
+              </span>
+            </div>
+            <span className="text-xs font-extrabold font-mono-num">{waterPercent}%</span>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            <button
+              onClick={() =>
+                setAppState((prev) => ({ ...prev, waterMl: prev.waterMl + 250 }))
+              }
+              style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+              className="min-h-[38px] rounded-xl border text-xs font-extrabold"
+            >
+              +250ml
+            </button>
+            <button
+              onClick={() =>
+                setAppState((prev) => ({ ...prev, waterMl: prev.waterMl + 500 }))
+              }
+              style={{ backgroundColor: colors.accent, color: colors.accentText }}
+              className="min-h-[38px] rounded-xl text-xs font-extrabold"
+            >
+              +500ml
+            </button>
+            <button
+              onClick={() => setAppState((prev) => ({ ...prev, waterMl: 0 }))}
+              style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+              className="min-h-[38px] rounded-xl border text-xs font-bold"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Sub-Tabs for Daily Checklist vs 7-Day Rotation & Grocery List vs IFCT Food DB */}
+      <div className="flex items-center gap-2">
+        {[
+          { id: 'daily', label: 'Today 7-Slot Checklist' },
+          { id: 'rotation', label: '7-Day Rotation & Grocery List' },
+          { id: 'foods', label: '29 Indian Whole Foods DB' }
+        ].map((tab) => {
+          const active = subView === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setSubView(tab.id)}
+              style={{
+                backgroundColor: active ? colors.accent : colors.card,
+                color: active ? colors.accentText : colors.text,
+                borderColor: active ? colors.accentBorder : colors.border
+              }}
+              className="min-h-[42px] px-3.5 rounded-xl border text-xs font-extrabold uppercase"
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {subView === 'daily' && (
+        <div className="space-y-4">
+          {/* 7 Meal Slots */}
+          <div className="space-y-3">
+            {MEAL_SLOTS.map((slot) => {
+              const allowedOptions = slot.options.filter((o) =>
+                o.tracks.includes(appState.profile.dietTrack || 'non-veg')
+              );
+              const selectedOptId = appState.selectedMealOptions?.[slot.slotId];
+              const activeOpt =
+                allowedOptions.find((o) => o.id === selectedOptId) ||
+                allowedOptions[0] ||
+                slot.options[0];
+              const macros = computeMealOptionMacros(activeOpt, appState.foodDatabase);
+              const isDone = Boolean(appState.completedMealSlots?.[slot.slotId]);
+
+              return (
+                <div
+                  key={slot.slotId}
+                  style={{
+                    backgroundColor: isDone ? colors.accentSurface : colors.card,
+                    borderColor: isDone ? colors.accentBorder : colors.border
+                  }}
+                  className="p-4 sm:p-5 rounded-2xl border space-y-3 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                          className="text-[11px] font-extrabold px-2 py-0.5 rounded border font-mono-num"
+                        >
+                          {slot.timeHint}
+                        </span>
+                        <h3 className="font-display text-2xl font-black uppercase">
+                          {slot.slotName}
+                        </h3>
+                        <span
+                          style={{
+                            backgroundColor: colors.accent,
+                            color: colors.accentText
+                          }}
+                          className="text-xs font-extrabold px-2 py-0.5 rounded font-mono-num"
+                        >
+                          {macros.kcal} kcal • {macros.protein}g P
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm font-semibold">{activeOpt.description}</p>
+                      <div className="text-[11px] font-mono-num" style={{ color: colors.muted }}>
+                        Carbs: {macros.carbs}g • Fat: {macros.fat}g • Anchor: {activeOpt.proteinAnchor}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => toggleMealSlotCompleted(slot.slotId)}
+                      aria-label={`Mark ${slot.slotName} completed`}
+                      style={{
+                        backgroundColor: isDone ? colors.accent : colors.elevated,
+                        color: isDone ? colors.accentText : colors.muted,
+                        borderColor: isDone ? colors.accentBorder : colors.border
+                      }}
+                      className="min-h-[48px] min-w-[48px] rounded-xl border flex items-center justify-center shrink-0"
+                    >
+                      <Check className="w-6 h-6 stroke-[2.5]" />
+                    </button>
+                  </div>
+
+                  {/* Option Switcher Pills */}
+                  {allowedOptions.length > 1 && (
+                    <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t" style={{ borderColor: colors.border }}>
+                      <span className="text-[11px] font-bold uppercase" style={{ color: colors.muted }}>
+                        Swap Option:
+                      </span>
+                      {allowedOptions.map((opt) => {
+                        const chosen = opt.id === activeOpt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            onClick={() => handleSelectSlotOption(slot.slotId, opt.id)}
+                            style={{
+                              backgroundColor: chosen ? colors.accent : colors.elevated,
+                              color: chosen ? colors.accentText : colors.text,
+                              borderColor: chosen ? colors.accentBorder : colors.border
+                            }}
+                            className="min-h-[34px] px-2.5 py-1 rounded-lg border text-xs font-extrabold"
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Appetite Helpers (One-Tap Calorie Boosters) */}
+          <div
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+            className="p-4 sm:p-5 rounded-2xl border space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-display text-2xl font-black uppercase">
+                  One-Tap Appetite Helpers (+Calories)
+                </h3>
+                <p className="text-xs" style={{ color: colors.muted }}>
+                  Struggling to hit 2,900 kcal or need +300 kcal for a plateau? Tap to log low-volume whole foods.
+                </p>
+              </div>
+              {(appState.loggedAppetiteHelpers?.length || 0) > 0 && (
+                <button
+                  onClick={handleClearHelpers}
+                  style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                  className="min-h-[38px] px-3 rounded-xl border text-xs font-bold"
+                >
+                  Clear ({appState.loggedAppetiteHelpers.length})
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              {APPETITE_HELPERS.map((helper) => (
+                <button
+                  key={helper.id}
+                  onClick={() => handleAddAppetiteHelper(helper)}
+                  style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                  className="min-h-[48px] p-3 rounded-xl border text-left flex items-center justify-between gap-2"
+                >
+                  <div>
+                    <div className="text-xs font-extrabold">{helper.label}</div>
+                    <div className="text-[11px] font-mono-num" style={{ color: colors.muted }}>
+                      +{helper.kcal} kcal • +{helper.protein}g P
+                    </div>
+                  </div>
+                  <Plus className="w-4 h-4 shrink-0" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {subView === 'rotation' && (
+        <div className="space-y-4">
+          <div
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+            className="p-4 sm:p-6 rounded-2xl border space-y-3"
+          >
+            <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
+              7-Day Non-Repeating Dinner Protein Rotation ({appState.profile.dietTrack})
+            </h3>
+            <p className="text-xs" style={{ color: colors.muted }}>
+              Lunch and Dinner never use the same primary protein anchor on the same day.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2 pt-2">
+              {weeklyMenu.map((d) => (
+                <div
+                  key={d.day}
+                  style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                  className="p-3 rounded-xl border space-y-1.5 text-xs"
+                >
+                  <div
+                    style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                    className="inline-block px-2 py-0.5 rounded font-extrabold uppercase"
+                  >
+                    {d.day}
+                  </div>
+                  <div className="font-mono-num space-y-0.5 text-[11px]">
+                    <div>B: {d.slots.breakfast}</div>
+                    <div>M: {d.slots.mid_morning}</div>
+                    <div>L: {d.slots.lunch}</div>
+                    <div>Pre: {d.slots.pre_workout}</div>
+                    <div>Post: {d.slots.post_workout}</div>
+                    <div>D: {d.slots.dinner}</div>
+                    <div>Bed: {d.slots.bedtime}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Auto-Computed Weekly Grocery List */}
+          <div
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+            className="p-4 sm:p-6 rounded-2xl border space-y-4"
+          >
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
+              <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
+                Weekly Indian Grocery List (7 Days)
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Object.entries(groceryList).map(([category, items]) => (
+                <div
+                  key={category}
+                  style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                  className="p-4 rounded-xl border space-y-2"
+                >
+                  <div className="text-xs font-extrabold uppercase tracking-wider" style={{ color: isDark ? colors.accent : colors.text }}>
+                    {category}
+                  </div>
+                  <div className="space-y-1.5 text-xs">
+                    {items.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between gap-2">
+                        <span>{item.name}</span>
+                        <span className="font-extrabold font-mono-num shrink-0">{item.displayQty}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {subView === 'foods' && (
+        <div
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          className="p-4 sm:p-6 rounded-2xl border space-y-3"
+        >
+          <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
+            IFCT 2017 / USDA Indian Whole-Food Database (29 Items)
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            {appState.foodDatabase.map((f) => (
+              <div
+                key={f.id}
+                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                className="p-3 rounded-xl border flex items-center justify-between gap-2 text-xs"
+              >
+                <div>
+                  <div className="font-extrabold">{f.name}</div>
+                  <div style={{ color: colors.muted }}>
+                    Per {f.basis} {f.unit} ({f.category})
+                  </div>
+                </div>
+                <div className="text-right font-mono-num shrink-0">
+                  <div className="font-extrabold">{f.kcal} kcal</div>
+                  <div style={{ color: colors.muted }}>
+                    P:{f.protein}g • C:{f.carbs}g • F:{f.fat}g
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ============================================================================
-// 4. PROGRESS VIEW COMPONENT
+// 4. PROGRESS VIEW COMPONENT (WEIGH-INS, GAIN RATE & V-TAPER RATIO)
 // ============================================================================
 
 function ProgressView({
@@ -3644,93 +4838,71 @@ function ProgressView({
   latestMeasurement,
   showToast
 }) {
-  const [newWeightInput, setNewWeightInput] = useState('');
-  const [newWeightDate, setNewWeightDate] = useState(() =>
-    new Date().toLocaleDateString('en-CA')
-  );
+  const [weightInput, setWeightInput] = useState('');
+  const [weightDate, setWeightDate] = useState(() => new Date().toLocaleDateString('en-CA'));
 
-  const [measureForm, setMeasureForm] = useState({
-    shoulders: latestMeasurement?.shoulders || '',
-    chest: latestMeasurement?.chest || '',
-    waist: latestMeasurement?.waist || '',
-    arms: latestMeasurement?.arms || '',
-    thighs: latestMeasurement?.thighs || ''
+  const [measForm, setMeasForm] = useState({
+    shoulders: latestMeasurement?.shoulders || 108,
+    chest: latestMeasurement?.chest || 92,
+    waist: latestMeasurement?.waist || 74,
+    arms: latestMeasurement?.arms || 31,
+    thighs: latestMeasurement?.thighs || 50
   });
-
-  useEffect(() => {
-    if (latestMeasurement) {
-      setMeasureForm({
-        shoulders: latestMeasurement.shoulders,
-        chest: latestMeasurement.chest,
-        waist: latestMeasurement.waist,
-        arms: latestMeasurement.arms,
-        thighs: latestMeasurement.thighs
-      });
-    }
-  }, [latestMeasurement]);
 
   const handleAddWeightLog = (e) => {
     e.preventDefault();
-    if (!newWeightInput || Number(newWeightInput) <= 0) return;
-    const weightKg = toKg(Number(newWeightInput));
+    const num = Number(weightInput);
+    if (!num || num <= 25 || num >= 250) {
+      showToast('Enter a valid morning weight.');
+      return;
+    }
+    const kgVal = toKg(num);
     const entry = {
       id: `w-${Date.now()}`,
-      date: newWeightDate,
-      label: `Wk ${appState.weightLogs.length + 1}`,
-      weightKg: Number(weightKg.toFixed(2))
+      date: weightDate,
+      label: weightDate.slice(5),
+      weightKg: kgVal
     };
     setAppState((prev) => ({
       ...prev,
-      weightLogs: [...prev.weightLogs, entry]
+      profile: { ...prev.profile, currentWeightKg: kgVal },
+      weightLogs: [...prev.weightLogs.filter((w) => w.date !== weightDate), entry].sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+      )
     }));
-    setNewWeightInput('');
-    showToast(`Logged ${newWeightInput} ${appState.unit}!`);
-  };
-
-  const handleDeleteWeightLog = (id) => {
-    setAppState((prev) => ({
-      ...prev,
-      weightLogs: prev.weightLogs.filter((w) => w.id !== id)
-    }));
+    setWeightInput('');
+    showToast(`Logged morning weigh-in: ${num} ${appState.unit}`);
   };
 
   const handleSaveMeasurements = (e) => {
     e.preventDefault();
-    if (!measureForm.shoulders || !measureForm.waist) {
-      showToast('Enter at least Shoulders and Waist measurements (cm).');
-      return;
-    }
     const entry = {
       id: `m-${Date.now()}`,
       date: new Date().toLocaleDateString('en-CA'),
-      shoulders: Number(measureForm.shoulders),
-      chest: Number(measureForm.chest || 0),
-      waist: Number(measureForm.waist),
-      arms: Number(measureForm.arms || 0),
-      thighs: Number(measureForm.thighs || 0)
+      shoulders: Number(measForm.shoulders || 0),
+      chest: Number(measForm.chest || 0),
+      waist: Number(measForm.waist || 0),
+      arms: Number(measForm.arms || 0),
+      thighs: Number(measForm.thighs || 0)
     };
     setAppState((prev) => ({
       ...prev,
       measurements: [...prev.measurements, entry]
     }));
-    showToast('Body measurements & V-Taper ratio updated!');
+    const ratio = (entry.shoulders / Math.max(1, entry.waist)).toFixed(2);
+    showToast(`Measurements saved! V-Taper Ratio: ${ratio}x`);
   };
 
   const chartData = useMemo(() => {
-    const sorted = [...appState.weightLogs].sort((a, b) => new Date(a.date) - new Date(b.date));
-    return sorted.map((log, index) => ({
-      name: log.label || `Wk ${index + 1}`,
-      date: log.date,
-      weight: formatWeight(log.weightKg)
+    return appState.weightLogs.map((w) => ({
+      date: w.date.slice(5),
+      weight: formatWeight(w.weightKg)
     }));
   }, [appState.weightLogs, formatWeight]);
 
-  const minBand = formatWeight(appState.profile.goalWeightMinKg || 65);
-  const maxBand = formatWeight(appState.profile.goalWeightMaxKg || 68);
-
   return (
     <div className="space-y-5">
-      {/* Weekly Gain Rate Status Banner */}
+      {/* Weekly Gain Rate Analyzer Banner */}
       <div
         style={{
           backgroundColor:
@@ -3746,358 +4918,250 @@ function ProgressView({
               ? colors.accentBorder
               : colors.border
         }}
-        className="p-4 sm:p-5 rounded-2xl border-2 space-y-3"
+        className="p-4 sm:p-6 rounded-2xl border-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
-        <div className="flex items-start gap-3">
-          <div
-            style={{
-              backgroundColor:
-                gainAnalysis.status === 'FAST_GAIN_WARNING' ? colors.danger : colors.accent,
-              color: gainAnalysis.status === 'FAST_GAIN_WARNING' ? '#FFFFFF' : colors.accentText
-            }}
-            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-          >
-            {gainAnalysis.status === 'FAST_GAIN_WARNING' ? (
-              <AlertTriangle className="w-6 h-6" />
-            ) : (
-              <TrendingUp className="w-6 h-6" />
-            )}
-          </div>
-          <div>
-            <div
-              className="text-xs font-extrabold uppercase tracking-wider"
-              style={{ color: colors.muted }}
-            >
-              Weekly Gain Rate Analyzer
-            </div>
-            <h3
-              style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-2xl sm:text-3xl font-extrabold uppercase"
-            >
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <AlertTriangle
+              className="w-4 h-4"
+              style={{
+                color:
+                  gainAnalysis.status === 'FAST_GAIN_WARNING'
+                    ? colors.danger
+                    : isDark
+                    ? colors.accent
+                    : colors.text
+              }}
+            />
+            <span className="text-xs font-extrabold uppercase tracking-wider">
               {gainAnalysis.headline}
-            </h3>
-            <p className="text-xs sm:text-sm mt-1" style={{ color: colors.muted }}>
-              {gainAnalysis.message}
-            </p>
+            </span>
           </div>
+          <p className="text-xs sm:text-sm" style={{ color: colors.muted }}>
+            {gainAnalysis.message}
+          </p>
         </div>
+
+        {gainAnalysis.calorieAdjustment !== 0 && (
+          <button
+            onClick={() => {
+              setAppState((prev) => ({
+                ...prev,
+                profile: {
+                  ...prev.profile,
+                  targetCalories:
+                    (prev.profile.targetCalories || 2900) + gainAnalysis.calorieAdjustment
+                }
+              }));
+              showToast(
+                `Updated daily target by ${
+                  gainAnalysis.calorieAdjustment > 0 ? '+' : ''
+                }${gainAnalysis.calorieAdjustment} kcal!`
+              );
+            }}
+            style={{
+              backgroundColor: colors.accent,
+              color: colors.accentText
+            }}
+            className="min-h-[44px] px-4 rounded-xl text-xs font-extrabold uppercase shrink-0"
+          >
+            Apply {gainAnalysis.calorieAdjustment > 0 ? '+300' : '-200'} kcal
+          </button>
+        )}
       </div>
 
-      {/* Weight Chart + Log Form */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Line Chart with 65-68 kg Target Band */}
+      {/* Weight Logger + Line Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <form
+          onSubmit={handleAddWeightLog}
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          className="p-4 sm:p-6 rounded-2xl border space-y-4"
+        >
+          <div className="flex items-center gap-2">
+            <Scale className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
+            <h3 className="font-display text-2xl font-black uppercase">
+              Log Morning Weigh-In
+            </h3>
+          </div>
+          <div>
+            <label className="block text-xs font-bold uppercase mb-1" style={{ color: colors.muted }}>
+              Date
+            </label>
+            <input
+              type="date"
+              value={weightDate}
+              onChange={(e) => setWeightDate(e.target.value)}
+              style={{
+                backgroundColor: colors.elevated,
+                borderColor: colors.border,
+                color: colors.text
+              }}
+              className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-bold font-mono-num"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold uppercase mb-1" style={{ color: colors.muted }}>
+              Morning Weight ({appState.unit})
+            </label>
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.1"
+              placeholder={`e.g. ${formatWeight(56.2)}`}
+              value={weightInput}
+              onChange={(e) => setWeightInput(e.target.value)}
+              style={{
+                backgroundColor: colors.elevated,
+                borderColor: colors.border,
+                color: colors.text
+              }}
+              className="w-full min-h-[44px] px-3 rounded-xl border text-base font-extrabold font-mono-num"
+            />
+          </div>
+          <button
+            type="submit"
+            style={{ backgroundColor: colors.accent, color: colors.accentText }}
+            className="w-full min-h-[46px] rounded-xl font-extrabold text-xs uppercase tracking-wider"
+          >
+            Save Weigh-In
+          </button>
+        </form>
+
+        {/* Weight Chart */}
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="lg:col-span-2 p-4 sm:p-6 rounded-2xl border space-y-4"
+          className="lg:col-span-2 p-4 sm:p-6 rounded-2xl border flex flex-col justify-between"
         >
-          <div>
-            <h3
-              style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-2xl sm:text-3xl font-extrabold uppercase tabular-nums"
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h3 className="font-display text-2xl font-black uppercase">
+                Lean-Bulk Trajectory (Target Band: {formatWeight(appState.profile.goalWeightMinKg)}–
+                {formatWeight(appState.profile.goalWeightMaxKg)} {appState.unit})
+              </h3>
+            </div>
+            <span
+              style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+              className="text-xs font-bold px-2.5 py-1 rounded-lg border font-mono-num"
             >
-              Body Weight Trajectory & Target Band ({minBand}–{maxBand} {appState.unit})
-            </h3>
-            <p className="text-xs" style={{ color: colors.muted }}>
-              Solid reference band marks your 65–68 kg V-taper goal zone.
-            </p>
+              {appState.weightLogs.length} logs
+            </span>
           </div>
 
-          <div className="h-64 sm:h-72 w-full">
-            {chartData.length === 0 ? (
-              <div
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="h-full rounded-xl border flex flex-col items-center justify-center p-6 text-center"
-              >
-                <Scale className="w-8 h-8 mb-2" style={{ color: colors.muted }} />
-                <div className="font-bold text-sm">No Weigh-Ins Logged Yet</div>
-                <p className="text-xs mt-1 max-w-xs" style={{ color: colors.muted }}>
-                  Add your first morning weigh-in to visualize your trajectory toward 65–68 kg.
-                </p>
-              </div>
-            ) : (
+          <div className="h-60 w-full">
+            {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 12, right: 16, left: -12, bottom: 8 }}>
+                <LineChart data={chartData} margin={{ top: 10, right: 16, left: -10, bottom: 0 }}>
                   <CartesianGrid stroke={colors.border} strokeDasharray="3 3" />
-                  <XAxis dataKey="name" stroke={colors.muted} tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="date" stroke={colors.muted} fontSize={11} />
                   <YAxis
-                    domain={[Math.floor(formatWeight(52)), Math.ceil(formatWeight(70))]}
                     stroke={colors.muted}
-                    tick={{ fontSize: 11 }}
+                    fontSize={11}
+                    domain={['dataMin - 2', 'dataMax + 5']}
                   />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: colors.card,
                       borderColor: colors.border,
-                      color: colors.text,
-                      borderRadius: '12px'
+                      borderRadius: '12px',
+                      color: colors.text
                     }}
                   />
                   <ReferenceArea
-                    y1={minBand}
-                    y2={maxBand}
+                    y1={formatWeight(appState.profile.goalWeightMinKg)}
+                    y2={formatWeight(appState.profile.goalWeightMaxKg)}
                     fill={colors.accent}
-                    fillOpacity={0.18}
+                    fillOpacity={0.12}
                   />
                   <ReferenceLine
-                    y={minBand}
-                    stroke={isDark ? colors.accent : colors.text}
+                    y={formatWeight(appState.profile.goalWeightMinKg)}
+                    stroke={colors.accentBorder}
                     strokeDasharray="4 4"
                   />
                   <Line
                     type="monotone"
                     dataKey="weight"
-                    stroke={isDark ? colors.accent : colors.text}
+                    stroke={isDark ? colors.accent : '#111113'}
                     strokeWidth={3}
-                    dot={{ r: 5, fill: isDark ? colors.accent : colors.text, strokeWidth: 0 }}
-                    activeDot={{ r: 7 }}
+                    dot={{ r: 4, fill: colors.accent }}
                   />
                 </LineChart>
               </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* Add Weekly Weigh-In Form */}
-        <div
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-6 rounded-2xl border flex flex-col justify-between gap-4 tabular-nums"
-        >
-          <form onSubmit={handleAddWeightLog} className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Scale className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
-              <h3
-                style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                className="text-2xl font-extrabold uppercase"
-              >
-                Log Weekly Weigh-In
-              </h3>
-            </div>
-
-            <div>
-              <label
-                className="block text-xs font-bold uppercase mb-1"
-                style={{ color: colors.muted }}
-              >
-                Date
-              </label>
-              <input
-                type="date"
-                value={newWeightDate}
-                onChange={(e) => setNewWeightDate(e.target.value)}
-                style={{
-                  backgroundColor: colors.elevated,
-                  borderColor: colors.border,
-                  color: colors.text
-                }}
-                className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-semibold"
-              />
-            </div>
-
-            <div>
-              <label
-                className="block text-xs font-bold uppercase mb-1"
-                style={{ color: colors.muted }}
-              >
-                Morning Weight ({appState.unit})
-              </label>
-              <input
-                type="number"
-                inputMode="decimal"
-                step="0.1"
-                placeholder={`e.g. ${formatWeight(55.5)}`}
-                value={newWeightInput}
-                onChange={(e) => setNewWeightInput(e.target.value)}
-                style={{
-                  backgroundColor: colors.elevated,
-                  borderColor: colors.border,
-                  color: colors.text
-                }}
-                className="w-full min-h-[44px] px-3 rounded-xl border text-base font-bold"
-              />
-            </div>
-
-            <button
-              type="submit"
-              style={{
-                backgroundColor: colors.accent,
-                color: colors.accentText,
-                borderColor: colors.accentBorder
-              }}
-              className="w-full min-h-[48px] rounded-xl border font-extrabold text-sm uppercase tracking-wider"
-            >
-              Add Weigh-In Entry
-            </button>
-          </form>
-
-          {/* Recent Weigh-ins List */}
-          <div
-            className="space-y-1.5 pt-3 border-t max-h-40 overflow-y-auto"
-            style={{ borderColor: colors.border }}
-          >
-            {appState.weightLogs.length === 0 ? (
-              <div className="text-xs text-center py-2" style={{ color: colors.muted }}>
-                No weigh-ins recorded yet.
-              </div>
             ) : (
-              appState.weightLogs
-                .slice()
-                .reverse()
-                .map((w) => (
-                  <div
-                    key={w.id}
-                    className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-lg"
-                    style={{ backgroundColor: colors.elevated }}
-                  >
-                    <span style={{ color: colors.muted }}>{w.date}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold">
-                        {formatWeight(w.weightKg)} {appState.unit}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteWeightLog(w.id)}
-                        aria-label={`Delete weigh-in from ${w.date}`}
-                        style={{ color: colors.muted }}
-                        className="hover:text-red-500 p-0.5"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))
+              <div
+                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                className="h-full rounded-xl border flex items-center justify-center text-xs font-semibold p-4 text-center"
+              >
+                Log your first weekly weigh-in on the left to plot your 55 kg → 65–68 kg trajectory.
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Body Measurements & Shoulder-to-Waist Ratio Calculator */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 tabular-nums">
-        {/* V-Taper Ratio Card */}
-        <div
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-6 rounded-2xl border flex flex-col justify-between gap-4"
-        >
-          <div>
-            <span
-              style={{ backgroundColor: colors.accent, color: colors.accentText }}
-              className="text-xs font-extrabold uppercase px-2.5 py-1 rounded-md"
-            >
-              V-Taper Index
-            </span>
-            <h3
-              style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-3xl font-extrabold uppercase mt-2"
-            >
-              Shoulder-to-Waist Ratio
-            </h3>
-            <p className="text-xs mt-1" style={{ color: colors.muted }}>
-              {latestMeasurement
-                ? `Shoulders (${latestMeasurement.shoulders} cm) ÷ Waist (${latestMeasurement.waist} cm).`
-                : 'Enter your shoulder and waist circumference to calculate your V-taper ratio.'}{' '}
-              Target: <strong>1.40 – 1.50</strong>.
-            </p>
+      {/* Body Measurements & Shoulder-to-Waist V-Taper Calculator */}
+      <div
+        style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        className="p-4 sm:p-6 rounded-2xl border space-y-4"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Ruler className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
+            <div>
+              <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
+                V-Taper Body Measurements (cm)
+              </h3>
+              <p className="text-xs" style={{ color: colors.muted }}>
+                Auto-calculates Shoulder-to-Waist Ratio (Goal: 1.40–1.50x). Keep waist gain ≤ 4 cm across the bulk.
+              </p>
+            </div>
           </div>
 
           <div
-            style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="p-5 rounded-2xl border text-center space-y-2"
+            style={{ backgroundColor: colors.accent, color: colors.accentText }}
+            className="px-3.5 py-2 rounded-xl font-mono-num text-right"
           >
-            <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
-              Current V-Taper Ratio
-            </div>
-            <div
-              style={{
-                fontFamily: "'Big Shoulders Display', sans-serif",
-                color: isDark ? colors.accent : colors.text
-              }}
-              className="text-6xl font-extrabold leading-none"
-            >
-              {vTaperRatio ? vTaperRatio : '—'}
-            </div>
-            <div className="text-xs font-bold uppercase">
-              {!vTaperRatio
-                ? 'Log measurements to unlock'
-                : vTaperRatio >= 1.4 && vTaperRatio <= 1.55
-                ? 'In Golden V-Taper Zone (1.40–1.50)!'
-                : `Need +${Math.max(
-                    0,
-                    Number((1.42 * latestMeasurement.waist - latestMeasurement.shoulders).toFixed(1))
-                  )} cm shoulder width for 1.42x`}
+            <div className="text-[10px] font-extrabold uppercase">Current V-Taper Ratio</div>
+            <div className="font-display text-2xl font-black">
+              {vTaperRatio ? `${vTaperRatio}x` : `${(measForm.shoulders / Math.max(1, measForm.waist)).toFixed(2)}x`}
             </div>
           </div>
         </div>
 
-        {/* Tape Measurements Form */}
-        <form
-          onSubmit={handleSaveMeasurements}
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="lg:col-span-2 p-4 sm:p-6 rounded-2xl border space-y-4"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Ruler className="w-5 h-5" style={{ color: isDark ? colors.accent : colors.text }} />
-              <h3
-                style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                className="text-2xl sm:text-3xl font-extrabold uppercase"
-              >
-                Body Measurements (cm)
-              </h3>
+        <form onSubmit={handleSaveMeasurements} className="grid grid-cols-2 sm:grid-cols-6 gap-2.5 items-end">
+          {[
+            { key: 'shoulders', label: 'Shoulders (cm)' },
+            { key: 'chest', label: 'Chest (cm)' },
+            { key: 'waist', label: 'Waist @ Navel (cm)' },
+            { key: 'arms', label: 'Arms (cm)' },
+            { key: 'thighs', label: 'Thighs (cm)' }
+          ].map((field) => (
+            <div key={field.key}>
+              <label className="block text-[11px] font-bold uppercase mb-1" style={{ color: colors.muted }}>
+                {field.label}
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.5"
+                value={measForm[field.key]}
+                onChange={(e) =>
+                  setMeasForm((prev) => ({ ...prev, [field.key]: Number(e.target.value) }))
+                }
+                style={{
+                  backgroundColor: colors.elevated,
+                  borderColor: colors.border,
+                  color: colors.text
+                }}
+                className="w-full min-h-[44px] px-3 rounded-xl border text-sm font-extrabold font-mono-num"
+              />
             </div>
-            {latestMeasurement && (
-              <span className="text-xs font-semibold" style={{ color: colors.muted }}>
-                Updated: {latestMeasurement.date}
-              </span>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            {[
-              { key: 'shoulders', label: 'Shoulders', placeholder: '104' },
-              { key: 'chest', label: 'Chest', placeholder: '88' },
-              { key: 'waist', label: 'Waist', placeholder: '74' },
-              { key: 'arms', label: 'Arms', placeholder: '30' },
-              { key: 'thighs', label: 'Thighs', placeholder: '49' }
-            ].map((field) => (
-              <div key={field.key}>
-                <label
-                  className="block text-xs font-bold uppercase mb-1.5"
-                  style={{ color: colors.muted }}
-                >
-                  {field.label} (cm)
-                </label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
-                  placeholder={field.placeholder}
-                  value={measureForm[field.key]}
-                  onChange={(e) =>
-                    setMeasureForm((prev) => ({
-                      ...prev,
-                      [field.key]: e.target.value
-                    }))
-                  }
-                  style={{
-                    backgroundColor: colors.elevated,
-                    borderColor: colors.border,
-                    color: colors.text
-                  }}
-                  className="w-full min-h-[44px] px-3 rounded-xl border font-bold text-base"
-                />
-              </div>
-            ))}
-          </div>
-
+          ))}
           <button
             type="submit"
-            style={{
-              backgroundColor: colors.accent,
-              color: colors.accentText,
-              borderColor: colors.accentBorder
-            }}
-            className="w-full sm:w-auto min-h-[48px] px-6 rounded-xl border font-extrabold text-sm uppercase tracking-wider"
+            style={{ backgroundColor: colors.accent, color: colors.accentText }}
+            className="col-span-2 sm:col-span-1 min-h-[44px] rounded-xl font-extrabold text-xs uppercase tracking-wider"
           >
-            Save Body Measurements
+            Save Tape
           </button>
         </form>
       </div>
@@ -4106,274 +5170,140 @@ function ProgressView({
 }
 
 // ============================================================================
-// 5. STATS VIEW COMPONENT
+// 5. STATS VIEW COMPONENT (MUSCLE VOLUMES, HISTORY & UNIT TESTS)
 // ============================================================================
 
 function StatsView({ colors, isDark, appState, formatWeight, formatTime }) {
-  const weeklySetsByMuscle = useMemo(() => {
-    const map = {};
-    WORKOUT_PLAN.forEach((day) => {
-      day.exercises.forEach((ex) => {
-        map[ex.muscleCategory] = (map[ex.muscleCategory] || 0) + ex.sets;
-      });
-    });
-
-    return Object.entries(map)
-      .map(([muscle, sets]) => ({
-        muscle,
-        sets,
-        inOptimalBand: sets >= 10 && sets <= 20
-      }))
-      .sort((a, b) => b.sets - a.sets);
-  }, []);
-
-  const unitTestResults = useMemo(() => runBuiltInUnitTests(), []);
-
-  const totalHistoricalVolume = useMemo(
-    () => appState.workoutHistory.reduce((sum, h) => sum + Number(h.totalVolumeKg || 0), 0),
-    [appState.workoutHistory]
-  );
+  const volumes = useMemo(() => computeWeeklyMuscleVolumes(), []);
+  const unitTests = useMemo(() => runBuiltInUnitTests(), []);
 
   return (
-    <div className="space-y-5 tabular-nums">
-      {/* Top KPI Bento Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+    <div className="space-y-5">
+      {/* Top KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 tabular-nums">
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-5 rounded-2xl border"
+          className="p-4 rounded-2xl border"
         >
           <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
             Workout Streak
           </div>
-          <div
-            style={{
-              fontFamily: "'Big Shoulders Display', sans-serif",
-              color: isDark ? colors.accent : colors.text
-            }}
-            className="text-4xl sm:text-5xl font-extrabold mt-1"
-          >
-            {appState.workoutStreak} Days
-          </div>
-          <div className="text-[11px] mt-1" style={{ color: colors.muted }}>
-            Consistency drives hypertrophy
+          <div className="font-display text-3xl font-black mt-1">
+            {appState.workoutStreak} Sessions
           </div>
         </div>
-
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-5 rounded-2xl border"
-        >
-          <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
-            Weekly Completion
-          </div>
-          <div
-            style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-            className="text-4xl sm:text-5xl font-extrabold mt-1"
-          >
-            {Math.min(6, appState.workoutHistory.length)} / 6
-          </div>
-          <div className="text-[11px] mt-1" style={{ color: colors.muted }}>
-            Sessions logged
-          </div>
-        </div>
-
-        <div
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-5 rounded-2xl border"
+          className="p-4 rounded-2xl border"
         >
           <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
             Prescribed Sets
           </div>
-          <div
-            style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-            className="text-4xl sm:text-5xl font-extrabold mt-1"
-          >
-            116 Sets
-          </div>
-          <div className="text-[11px] mt-1" style={{ color: colors.muted }}>
-            Across 6 PPL sessions
-          </div>
+          <div className="font-display text-3xl font-black mt-1">116 / wk</div>
         </div>
-
         <div
           style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-5 rounded-2xl border"
+          className="p-4 rounded-2xl border"
         >
           <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
-            Cumulative Volume
+            Logged Workouts
+          </div>
+          <div className="font-display text-3xl font-black mt-1">
+            {appState.workoutHistory.length}
+          </div>
+        </div>
+        <div
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+          className="p-4 rounded-2xl border"
+        >
+          <div className="text-xs font-bold uppercase" style={{ color: colors.muted }}>
+            Sunday Walk
           </div>
           <div
-            style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-            className="text-4xl sm:text-5xl font-extrabold mt-1"
+            style={{ color: isDark ? colors.accent : colors.text }}
+            className="font-display text-3xl font-black mt-1"
           >
-            {formatWeight(totalHistoricalVolume)} {appState.unit}
-          </div>
-          <div className="text-[11px] mt-1" style={{ color: colors.muted }}>
-            Total weight moved
+            {appState.sundayWalkDone ? 'Done ✓' : 'Pending'}
           </div>
         </div>
       </div>
 
-      {/* Weekly Sets Per Muscle Group + Workout History */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-6 rounded-2xl border space-y-4"
-        >
-          <div>
-            <h3
-              style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-2xl sm:text-3xl font-extrabold uppercase"
-            >
-              Sets Per Muscle Group / Week (Target: 10–20)
-            </h3>
-            <p className="text-xs" style={{ color: colors.muted }}>
-              High-priority V-taper muscles (Shoulders & Back/Lats) receive maximum volume allocation.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {weeklySetsByMuscle.map((item) => {
-              const pct = Math.min(100, Math.round((item.sets / 27) * 100));
-              return (
-                <div key={item.muscle} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span>{item.muscle}</span>
-                    <span style={{ color: isDark ? colors.accent : colors.text }}>
-                      {item.sets} sets / wk {item.sets >= 10 ? '✓' : ''}
-                    </span>
-                  </div>
-                  <div
-                    style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                    className="w-full h-3.5 rounded-lg border overflow-hidden"
-                  >
-                    <div
-                      style={{
-                        width: `${pct}%`,
-                        backgroundColor: colors.accent
-                      }}
-                      className="h-full"
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Recent Workout Sessions Log */}
-        <div
-          style={{ backgroundColor: colors.card, borderColor: colors.border }}
-          className="p-4 sm:p-6 rounded-2xl border space-y-4"
-        >
-          <div>
-            <h3
-              style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-              className="text-2xl sm:text-3xl font-extrabold uppercase"
-            >
-              Completed Workout Sessions
-            </h3>
-            <p className="text-xs" style={{ color: colors.muted }}>
-              Automatically recorded each time you tap Finish Workout on the Today tab.
-            </p>
-          </div>
-
-          <div className="space-y-2.5 max-h-80 overflow-y-auto">
-            {appState.workoutHistory.length === 0 ? (
-              <div
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="p-8 rounded-xl border text-center text-sm"
-              >
-                <span style={{ color: colors.muted }}>
-                  No workouts completed yet. Log sets in the Today tab and tap Finish Workout!
-                </span>
-              </div>
-            ) : (
-              appState.workoutHistory.map((h) => (
-                <div
-                  key={h.id}
-                  style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                  className="p-3.5 rounded-xl border flex items-center justify-between"
-                >
-                  <div>
-                    <div className="font-bold text-sm">{h.dayTitle}</div>
-                    <div className="text-xs" style={{ color: colors.muted }}>
-                      {h.date} • {formatTime(h.durationSec || 0)} • {h.setsCompleted} sets
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div
-                      style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                      className="text-xl font-extrabold"
-                    >
-                      {formatWeight(h.totalVolumeKg)} {appState.unit}
-                    </div>
-                    {h.prsCount > 0 && (
-                      <span
-                        style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                        className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded"
-                      >
-                        {h.prsCount} PRs
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Live Unit Test Runner Verification Panel */}
+      {/* Weekly Sets Per Muscle Group (Primary vs Secondary Credit) */}
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
         className="p-4 sm:p-6 rounded-2xl border space-y-4"
       >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <ShieldCheck
-              className="w-6 h-6 shrink-0"
-              style={{ color: isDark ? colors.accent : colors.text }}
-            />
-            <div>
-              <h3
-                style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-                className="text-2xl font-extrabold uppercase"
-              >
-                Automated Unit Test Suite (Overload & Gain Logic)
-              </h3>
-              <p className="text-xs" style={{ color: colors.muted }}>
-                Verifies +2.5kg upper / +5kg lower overload and &gt;0.7kg/wk warning &amp; &lt;0.2kg/wk plateau rules.
-              </p>
-            </div>
-          </div>
-          <span
-            style={{ backgroundColor: colors.accent, color: colors.accentText }}
-            className="text-xs font-extrabold uppercase px-3 py-1 rounded-lg"
-          >
-            {unitTestResults.filter((t) => t.passed).length} / {unitTestResults.length} Passing
-          </span>
+        <div>
+          <h3 className="font-display text-2xl sm:text-3xl font-black uppercase">
+            Weekly Hypertrophy Volume Per Muscle Group (Target 10–20 Sets)
+          </h3>
+          <p className="text-xs" style={{ color: colors.muted }}>
+            Shows direct primary sets and effective sets including 0.5× secondary compound credit.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {unitTestResults.map((test, idx) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 tabular-nums">
+          {Object.entries(volumes.primary).map(([group, primSets]) => {
+            const effSets = volumes.totalWithSecondary[group];
+            const pct = Math.min(100, Math.round((primSets / 20) * 100));
+            return (
+              <div
+                key={group}
+                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                className="p-3.5 rounded-xl border space-y-2"
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-extrabold uppercase">{group}</span>
+                  <span className="font-mono-num font-bold">
+                    {primSets} direct ({effSets} eff)
+                  </span>
+                </div>
+                <div
+                  style={{ backgroundColor: colors.card }}
+                  className="w-full h-2.5 rounded-full overflow-hidden"
+                >
+                  <div
+                    style={{ width: `${pct}%`, backgroundColor: colors.accent }}
+                    className="h-full"
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Built-in Science & Logic Verification Suite */}
+      <div
+        style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        className="p-4 sm:p-6 rounded-2xl border space-y-3"
+      >
+        <h3 className="font-display text-2xl font-black uppercase">
+          Automated Science &amp; Overload Unit Tests ({unitTests.filter((t) => t.passed).length}/
+          {unitTests.length} Passing)
+        </h3>
+        <div className="space-y-2">
+          {unitTests.map((t, idx) => (
             <div
               key={idx}
               style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-              className="p-3.5 rounded-xl border space-y-1"
+              className="p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-bold">{test.name}</span>
-                <span
-                  style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                  className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded shrink-0"
-                >
-                  PASS
-                </span>
+              <div>
+                <div className="font-extrabold">{t.name}</div>
+                <div className="font-mono-num text-[11px]" style={{ color: colors.muted }}>
+                  Actual: {t.actual}
+                </div>
               </div>
-              <div className="text-[11px]" style={{ color: colors.muted }}>
-                Output: {test.actual}
-              </div>
+              <span
+                style={{
+                  backgroundColor: t.passed ? colors.accent : colors.danger,
+                  color: t.passed ? colors.accentText : '#FFFFFF'
+                }}
+                className="px-2.5 py-1 rounded-md font-extrabold uppercase text-[10px] self-start sm:self-center shrink-0"
+              >
+                {t.passed ? 'PASS' : 'FAIL'}
+              </span>
             </div>
           ))}
         </div>
@@ -4383,7 +5313,7 @@ function StatsView({ colors, isDark, appState, formatWeight, formatTime }) {
 }
 
 // ============================================================================
-// 6. SETTINGS VIEW COMPONENT
+// 6. SETTINGS VIEW COMPONENT (PROFILE, ICON.SVG DOWNLOAD, JSON BACKUP, RESET)
 // ============================================================================
 
 function SettingsView({
@@ -4393,6 +5323,7 @@ function SettingsView({
   setAppState,
   setShowOnboarding,
   setOnboardingForm,
+  handleDietTrackChange,
   showToast
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
@@ -4406,7 +5337,7 @@ function SettingsView({
     a.download = `vtaper-backup-${new Date().toLocaleDateString('en-CA')}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Backup JSON exported!');
+    showToast('Exported VTaper JSON backup.');
   };
 
   const handleDownloadSvgIcon = () => {
@@ -4417,130 +5348,72 @@ function SettingsView({
     a.download = 'icon.svg';
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Downloaded icon.svg for your website / public folder!');
+    showToast('Downloaded public/icon.svg!');
   };
 
   const handleImportJson = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = (ev) => {
       try {
-        const parsed = JSON.parse(String(event.target?.result || ''));
-        if (parsed && parsed.profile && parsed.meals) {
-          setAppState({
-            ...getFreshInitialState(),
-            ...parsed
-          });
-          showToast('Backup restored successfully!');
-        } else {
-          showToast('Invalid backup JSON file format.');
-        }
+        const parsed = JSON.parse(String(ev.target?.result || '{}'));
+        const { name: _legacyName, ...importedProfile } = parsed.profile || {};
+        setAppState((prev) => ({
+          ...prev,
+          ...parsed,
+          profile: { ...DEFAULT_PROFILE, ...importedProfile }
+        }));
+        showToast('Backup restored successfully!');
       } catch (err) {
-        showToast('Could not parse JSON file.');
+        showToast('Invalid JSON backup file.');
       }
     };
     reader.readAsText(file);
-  };
-
-  const handleResetAllData = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    setAppState({
-      ...getFreshInitialState(appState.theme),
-      onboarded: false
-    });
-    setOnboardingForm(DEFAULT_PROFILE);
-    setConfirmReset(false);
-    setShowOnboarding(true);
-    showToast('All data wiped clean! Enter your name to start fresh.');
   };
 
   return (
     <div className="space-y-5">
       <div
         style={{ backgroundColor: colors.card, borderColor: colors.border }}
-        className="p-4 sm:p-6 rounded-2xl border space-y-5"
+        className="p-4 sm:p-6 rounded-2xl border space-y-4"
       >
-        <div>
-          <h2
-            style={{ fontFamily: "'Big Shoulders Display', sans-serif" }}
-            className="text-3xl sm:text-4xl font-extrabold uppercase"
+        <h2 className="font-display text-3xl font-black uppercase">
+          Profile &amp; App Preferences
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            onClick={() => {
+              setOnboardingForm(appState.profile);
+              setShowOnboarding(true);
+            }}
+            style={{ backgroundColor: colors.accent, color: colors.accentText }}
+            className="min-h-[48px] px-4 rounded-xl font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2"
           >
-            Settings & Local Storage Backup
-          </h2>
-          <p className="text-xs sm:text-sm" style={{ color: colors.muted }}>
-            100% offline-first persistence (`vtaper_tracker_state_v3`). No backend, no login required.
-          </p>
+            <Edit3 className="w-4 h-4" />
+            <span>Edit Profile &amp; Goals</span>
+          </button>
+
+          <button
+            onClick={handleDownloadSvgIcon}
+            style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+            className="min-h-[48px] px-4 rounded-xl border font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download Brand icon.svg</span>
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Edit Profile & Name */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
           <div
             style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="p-4 rounded-xl border flex items-center justify-between gap-2"
-          >
-            <div className="min-w-0">
-              <div className="font-bold text-sm">Athlete Name & Profile</div>
-              <div className="text-xs tabular-nums truncate" style={{ color: colors.muted }}>
-                {appState.profile.name || 'XYZ'}, {appState.profile.heightCm} cm, Goal{' '}
-                {appState.profile.goalWeightMinKg}–{appState.profile.goalWeightMaxKg} kg
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setOnboardingForm(appState.profile);
-                setShowOnboarding(true);
-              }}
-              style={{
-                backgroundColor: colors.accent,
-                color: colors.accentText,
-                borderColor: colors.accentBorder
-              }}
-              className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase flex items-center gap-1.5 shrink-0"
-            >
-              <User className="w-4 h-4" />
-              <span>Edit Name</span>
-            </button>
-          </div>
-
-          {/* Theme Toggle */}
-          <div
-            style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="p-4 rounded-xl border flex items-center justify-between gap-2"
+            className="p-4 rounded-xl border flex items-center justify-between"
           >
             <div>
-              <div className="font-bold text-sm">Solid Color Theme</div>
+              <div className="font-extrabold text-sm">Weight Unit</div>
               <div className="text-xs" style={{ color: colors.muted }}>
-                Zero-glare flat palette ({isDark ? 'Dark Mode' : 'Light Mode'})
-              </div>
-            </div>
-            <button
-              onClick={() =>
-                setAppState((prev) => ({
-                  ...prev,
-                  theme: prev.theme === 'dark' ? 'light' : 'dark'
-                }))
-              }
-              style={{
-                backgroundColor: colors.accent,
-                color: colors.accentText,
-                borderColor: colors.accentBorder
-              }}
-              className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase shrink-0"
-            >
-              Switch to {isDark ? 'Light' : 'Dark'}
-            </button>
-          </div>
-
-          {/* Unit Toggle */}
-          <div
-            style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="p-4 rounded-xl border flex items-center justify-between gap-2"
-          >
-            <div>
-              <div className="font-bold text-sm">Weight Units (kg / lb)</div>
-              <div className="text-xs" style={{ color: colors.muted }}>
-                Currently displaying in {appState.unit.toUpperCase()}
+                Switch between kilograms (kg) and pounds (lb)
               </div>
             </div>
             <button
@@ -4550,94 +5423,94 @@ function SettingsView({
                   unit: prev.unit === 'kg' ? 'lb' : 'kg'
                 }))
               }
-              style={{
-                backgroundColor: colors.accent,
-                color: colors.accentText,
-                borderColor: colors.accentBorder
-              }}
-              className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase shrink-0"
+              style={{ backgroundColor: colors.accent, color: colors.accentText }}
+              className="min-h-[42px] px-4 rounded-xl font-extrabold text-xs uppercase"
             >
-              Use {appState.unit === 'kg' ? 'Pounds (lb)' : 'Kilograms (kg)'}
+              {appState.unit.toUpperCase()}
             </button>
           </div>
 
-          {/* Export / Import JSON */}
           <div
             style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-            className="p-4 rounded-xl border flex flex-wrap items-center justify-between gap-2"
+            className="p-4 rounded-xl border flex items-center justify-between"
           >
             <div>
-              <div className="font-bold text-sm">JSON Backup & Restore</div>
+              <div className="font-extrabold text-sm">Color Theme</div>
               <div className="text-xs" style={{ color: colors.muted }}>
-                Save or import local storage snapshot
+                Solid flat dark or light mode (electric lime buttons)
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleExportJson}
-                style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                className="min-h-[44px] px-3.5 rounded-xl border text-xs font-bold flex items-center gap-1.5"
-              >
-                <Download className="w-4 h-4" />
-                <span>Export</span>
-              </button>
-              <label
-                style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                className="min-h-[44px] px-3.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-              >
-                <Upload className="w-4 h-4" />
-                <span>Import</span>
-                <input
-                  type="file"
-                  accept="application/json"
-                  onChange={handleImportJson}
-                  className="hidden"
-                />
-              </label>
-            </div>
+            <button
+              onClick={() =>
+                setAppState((prev) => ({
+                  ...prev,
+                  theme: prev.theme === 'dark' ? 'light' : 'dark'
+                }))
+              }
+              style={{ backgroundColor: colors.accent, color: colors.accentText }}
+              className="min-h-[42px] px-4 rounded-xl font-extrabold text-xs uppercase"
+            >
+              {appState.theme.toUpperCase()}
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Reset Data Zone */}
-        <div
-          style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-          className="p-4 rounded-xl border flex flex-wrap items-center justify-between gap-3"
-        >
-          <div>
-            <div className="font-bold text-sm" style={{ color: colors.danger }}>
-              Reset All Tracker Data
-            </div>
-            <div className="text-xs" style={{ color: colors.muted }}>
-              Wipes all logs and resets to a clean zero-data state (`XYZ`, 55 kg → 65–68 kg).
-            </div>
-          </div>
+      {/* Backup & Reset */}
+      <div
+        style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        className="p-4 sm:p-6 rounded-2xl border space-y-4"
+      >
+        <h3 className="font-display text-2xl font-black uppercase">
+          Local Backup (JSON) &amp; Data Reset
+        </h3>
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5">
+          <button
+            onClick={handleExportJson}
+            style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+            className="min-h-[46px] px-4 rounded-xl border text-xs font-extrabold uppercase flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Export JSON Backup</span>
+          </button>
+
+          <label
+            style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+            className="min-h-[46px] px-4 rounded-xl border text-xs font-extrabold uppercase flex items-center gap-2 cursor-pointer"
+          >
+            <Upload className="w-4 h-4" />
+            <span>Import JSON Backup</span>
+            <input type="file" accept=".json" onChange={handleImportJson} className="hidden" />
+          </label>
 
           {!confirmReset ? (
             <button
               onClick={() => setConfirmReset(true)}
-              style={{
-                backgroundColor: colors.card,
-                borderColor: colors.danger,
-                color: colors.danger
-              }}
-              className="min-h-[44px] px-4 rounded-xl border text-xs font-bold uppercase flex items-center gap-1.5"
+              style={{ backgroundColor: colors.danger, color: '#FFFFFF' }}
+              className="min-h-[46px] px-4 rounded-xl text-xs font-extrabold uppercase flex items-center gap-2 ml-auto"
             >
               <Trash2 className="w-4 h-4" />
-              <span>Reset Data</span>
+              <span>Reset All Data</span>
             </button>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ml-auto">
               <button
-                onClick={handleResetAllData}
+                onClick={() => {
+                  const fresh = getFreshInitialState(appState.theme);
+                  setAppState(fresh);
+                  setConfirmReset(false);
+                  setShowOnboarding(true);
+                  showToast('All data reset to clean defaults.');
+                }}
                 style={{ backgroundColor: colors.danger, color: '#FFFFFF' }}
-                className="min-h-[44px] px-4 rounded-xl text-xs font-extrabold uppercase"
+                className="min-h-[46px] px-4 rounded-xl text-xs font-extrabold uppercase"
               >
-                Confirm Reset
+                Confirm Wipe
               </button>
               <button
                 onClick={() => setConfirmReset(false)}
-                style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                className="min-h-[44px] px-3 rounded-xl border text-xs font-bold"
+                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                className="min-h-[46px] px-3 rounded-xl border text-xs font-bold"
               >
                 Cancel
               </button>
