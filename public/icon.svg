@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <!-- App Tile Background (Solid Near-Black) -->
+  <rect width="512" height="512" rx="112" fill="#0A0A0B" />
+  
+  <!-- 1px-style Inner Structural Border (Solid Dark Zinc) -->
+  <rect x="16" y="16" width="480" height="480" rx="96" stroke="#27272A" stroke-width="8" />
+
+  <!-- Top Shoulder Barbell Bar & Plates (Solid Structural Grey) -->
+  <rect x="76" y="116" width="360" height="20" rx="6" fill="#27272A" />
+  <rect x="92" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
+  <rect x="396" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
+
+  <!-- Outer V-Taper Lat Wings (Electric Lime #CCFF00) -->
+  <!-- Wide at shoulders (top), tapering sharply to a tight waist (bottom) -->
+  <path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="#CCFF00" />
+
+  <!-- Inner Core Cutout / Negative Space Accent -->
+  <polygon points="208,156 304,156 256,284" fill="#27272A" />
+
+  <!-- Waist Ratio Marker Line (1.45 Golden V-Taper Target) -->
+  <rect x="212" y="444" width="88" height="12" rx="6" fill="#27272A" />
+</svg>
