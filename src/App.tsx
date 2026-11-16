@@ -2258,11 +2258,11 @@ export default function App() {
     () =>
       isDark
         ? {
-            bg: '#0A0A0B',
-            card: '#141416',
-            elevated: '#1C1C1F',
+            bg: '#0b0b0b',
+            card: '#000000',
+            elevated: '#101010',
             border: '#27272A',
-            text: '#F4F4F5',
+            text: '#f6f6f6',
             muted: '#A1A1AA',
             accent: '#CCFF00',
             accentText: '#0A0A0B',
@@ -2277,7 +2277,7 @@ export default function App() {
             card: '#FFFFFF',
             elevated: '#E4E4E7',
             border: '#D4D4D8',
-            text: '#111113',
+            text: '#000000',
             muted: '#52525B',
             accent: '#CCFF00',
             accentText: '#0A0A0B',
@@ -4970,7 +4970,7 @@ function NutritionView({
                   key={helper.id}
                   onClick={() => handleAddAppetiteHelper(helper)}
                   style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                  className="vt-btn vt-h-48 vt-p-3 vt-box-xl vt-text-left vt-between-center vt-gap-2"
+                  className="vt-btnn vt-h-48 vt-p-3 vt-box-xl vt-text-left vt-between-center vt-gap-2"
                 >
                   <div>
                     <div className="vt-text-xs vt-font-extrabold">{helper.label}</div>
@@ -5806,3 +5806,4 @@ function SettingsView({
     </div>
   );
 }
+
