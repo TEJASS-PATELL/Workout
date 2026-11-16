@@ -4473,34 +4473,6 @@ function SettingsView({
           </p>
         </div>
 
-        {/* Download Website SVG Favicon Card */}
-        <div
-          style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-          className="p-4 rounded-xl border flex flex-wrap items-center justify-between gap-4"
-        >
-          <div className="flex items-center gap-3.5">
-            <BrandLogo size={48} />
-            <div>
-              <div className="font-bold text-sm">VTaper Website Favicon (`public/icon.svg`)</div>
-              <div className="text-xs" style={{ color: colors.muted }}>
-                512×512 solid flat-color geometric SVG icon (`#0A0A0B`, `#27272A`, `#CCFF00`)
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={handleDownloadSvgIcon}
-            style={{
-              backgroundColor: colors.accent,
-              color: colors.accentText,
-              borderColor: colors.accentBorder
-            }}
-            className="min-h-[44px] px-4 rounded-xl border text-xs font-extrabold uppercase flex items-center gap-1.5"
-          >
-            <Download className="w-4 h-4" />
-            <span>Download icon.svg</span>
-          </button>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Edit Profile & Name */}
           <div
