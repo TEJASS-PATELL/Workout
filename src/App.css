@@ -1039,6 +1039,7 @@ input[type='number'] {
 
 .vt-stack-1-5 {
   display: flex;
+  padding: 10px;
   flex-direction: column;
   gap: 0.375rem;
 }
@@ -1054,6 +1055,10 @@ input[type='number'] {
   flex-direction: column;
   gap: 0.75rem;
 }
+
+/* .vt-between-center{
+  padding: 4px 12px 4px 12px;
+} */
 
 .vt-stack-3-5 {
   display: flex;
@@ -2867,4 +2872,289 @@ input[type='number'] {
   gap: 0.25rem;
   min-width: 0;
   flex: 1;
+}
+
+/* ============================================================================
+   PROGRESS VIEW — RESPONSIVE POLISH & NEW DUAL-WEIGH-IN / REPORT UI
+   Appended overrides; existing component logic and class names remain intact.
+   ============================================================================ */
+
+.vt-p-2-5 {
+  padding: 0.625rem;
+}
+
+/* Consistent card geometry and readable content */
+.vt-stack-5 {
+  gap: clamp(1rem, 2.2vw, 1.5rem);
+}
+
+.vt-card,
+.vt-card-compact,
+.vt-card-b2,
+.vt-box-xl {
+  min-width: 0;
+}
+
+.vt-grid-kpi > *,
+.vt-grid-lg-3 > *,
+.vt-grid-md-2 > *,
+.vt-grid-meas > *,
+.vt-grid-2 > *,
+.vt-grid-3 > * {
+  min-width: 0;
+}
+
+.vt-grid-kpi > .vt-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.45rem;
+  min-height: 7.25rem;
+  padding: clamp(0.75rem, 1.5vw, 1rem);
+  overflow: hidden;
+}
+
+.vt-grid-kpi .font-display {
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.vt-grid-kpi .vt-text-11 {
+  line-height: 1.45;
+}
+
+/* Weight logger and measurement forms */
+.vt-grid-lg-3 {
+  align-items: start;
+}
+
+.vt-grid-meas {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.vt-grid-meas > * {
+  min-width: 0;
+}
+
+.vt-input {
+  min-width: 0;
+  min-height: 2.625rem;
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+  line-height: 1.35;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.vt-input:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 16%, transparent);
+}
+
+.vt-btn {
+  min-width: 35px;
+  min-height: 35px;
+  border-radius: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.025em;
+  transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+
+.vt-btn:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.vt-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.vt-between-center,
+.vt-between-start {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.vt-between-center > *,
+.vt-between-start > * {
+  min-width: 0;
+}
+
+/* Reports, chart panels and data cards */
+.vt-chart-h-60 {
+  min-height: 15rem;
+  height: clamp(15rem, 32vw, 22rem);
+  min-width: 0;
+}
+
+.recharts-responsive-container,
+.recharts-wrapper {
+  min-width: 0 !important;
+}
+
+.recharts-text {
+  font-size: 11px;
+}
+
+.vt-badge,
+.vt-badge-lg,
+.vt-badge-xs {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.vt-grid-3 {
+  gap: clamp(0.35rem, 1vw, 0.625rem);
+}
+
+.vt-grid-3 > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.vt-grid-md-2 {
+  align-items: stretch;
+}
+
+.vt-grid-md-2 > * {
+  min-width: 0;
+}
+
+.vt-stack-2,
+.vt-stack-3,
+.vt-stack-3-5,
+.vt-stack-4 {
+  min-width: 0;
+}
+
+/* Keep long dates, values and notes from breaking the layout */
+.font-mono-num,
+.vt-tabular,
+.vt-text-11 {
+  font-variant-numeric: tabular-nums;
+}
+
+.vt-p-4.vt-box-xl,
+.vt-p-3.vt-box-xl {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.vt-p-3.vt-box-xl.vt-between-center {
+  align-items: center;
+}
+
+.vt-col-span-lg-2 {
+  min-width: 0;
+}
+
+/* Tablet */
+@media (min-width: 640px) {
+  .vt-grid-meas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .vt-grid-kpi > .vt-card {
+    min-height: 7.75rem;
+  }
+
+  .vt-chart-h-60 {
+    min-height: 17rem;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .vt-grid-lg-3 {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.85fr);
+    align-items: stretch;
+  }
+
+  .vt-grid-lg-3 > .vt-col-span-lg-2 {
+    grid-column: span 1;
+  }
+
+  .vt-grid-meas {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .vt-chart-h-60 {
+    min-height: 0rem;
+    height: 20rem;
+  }
+}
+
+/* Small phones */
+@media (max-width: 420px) {
+  .vt-grid-kpi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .vt-grid-kpi > .vt-card {
+    min-height: 6.5rem;
+    padding: 0.7rem;
+    border-radius: 0.85rem;
+  }
+
+  .vt-grid-kpi .font-display {
+    font-size: clamp(1.35rem, 7vw, 1.8rem);
+  }
+
+  .vt-grid-kpi .vt-text-11 {
+    font-size: 0.625rem;
+  }
+
+  .vt-grid-3 {
+    gap: 0.35rem;
+  }
+
+  .vt-grid-3 .vt-text-sm,
+  .vt-grid-3 .vt-text-xs {
+    overflow-wrap: anywhere;
+  }
+
+  .vt-chart-h-60 {
+    height: 14rem;
+    min-height: 14rem;
+  }
+
+  .vt-resp-row-lg {
+    align-items: stretch;
+  }
+
+  .vt-resp-row-lg > .vt-btn {
+    width: 100%;
+  }
+
+  .vt-grid-meas {
+    gap: 0.55rem;
+  }
+}
+
+/* Very narrow screens */
+@media (max-width: 350px) {
+  .vt-grid-kpi > .vt-card {
+    padding: 0.6rem;
+  }
+
+  .vt-grid-kpi .font-display {
+    font-size: 1.25rem;
+  }
+
+  .vt-grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .vt-btn,
+  .vt-input {
+    transition: none !important;
+  }
 }
