@@ -658,7 +658,7 @@ input[type='number'] {
   border-top-style: solid;
   z-index: 30;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   padding-top: 0.25rem;
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
@@ -1977,12 +1977,6 @@ input[type='number'] {
   .vt-day-short {
     font-size: 0.75rem;
   }
-}
-
-.vt-today-dot {
-  width: 0.375rem;
-  height: 0.375rem;
-  border-radius: 9999px;
 }
 
 .vt-day-sub {
