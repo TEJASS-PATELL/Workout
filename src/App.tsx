@@ -1522,11 +1522,11 @@ export function calculateProgressiveOverload(
     mode: isAssisted ? 'assist' : 'add',
     reason: isAssisted
       ? `Hit ${exercise.repMax} reps on all ${prescribedSets} sets to reduce assistance by ${Math.abs(
-          customDelta
-        )} kg`
+        customDelta
+      )} kg`
       : `Hit ${exercise.repMax} reps across all ${prescribedSets} sets to unlock +${Math.abs(
-          customDelta
-        )} kg`
+        customDelta
+      )} kg`
   };
 }
 
@@ -2258,35 +2258,35 @@ export default function App() {
     () =>
       isDark
         ? {
-            bg: '#0b0b0b',
-            card: '#000000',
-            elevated: '#101010',
-            border: '#27272A',
-            text: '#f6f6f6',
-            muted: '#A1A1AA',
-            accent: '#CCFF00',
-            accentText: '#0A0A0B',
-            accentSurface: '#22290A',
-            accentBorder: '#CCFF00',
-            danger: '#EF4444',
-            warning: '#F59E0B',
-            success: '#22C55E'
-          }
+          bg: '#0b0b0b',
+          card: '#000000',
+          elevated: '#101010',
+          border: '#27272A',
+          text: '#f6f6f6',
+          muted: '#A1A1AA',
+          accent: '#CCFF00',
+          accentText: '#0A0A0B',
+          accentSurface: '#22290A',
+          accentBorder: '#CCFF00',
+          danger: '#f90505',
+          warning: '#F59E0B',
+          success: '#22C55E'
+        }
         : {
-            bg: '#F4F4F5',
-            card: '#FFFFFF',
-            elevated: '#E4E4E7',
-            border: '#D4D4D8',
-            text: '#000000',
-            muted: '#52525B',
-            accent: '#CCFF00',
-            accentText: '#0A0A0B',
-            accentSurface: '#ECFCCB',
-            accentBorder: '#84CC16',
-            danger: '#DC2626',
-            warning: '#D97706',
-            success: '#16A34A'
-          },
+          bg: '#F4F4F5',
+          card: '#FFFFFF',
+          elevated: '#E4E4E7',
+          border: '#D4D4D8',
+          text: '#000000',
+          muted: '#52525B',
+          accent: '#CCFF00',
+          accentText: '#0A0A0B',
+          accentSurface: '#ECFCCB',
+          accentBorder: '#84CC16',
+          danger: '#fc0404',
+          warning: '#D97706',
+          success: '#16A34A'
+        },
     [isDark]
   );
 
@@ -2680,6 +2680,7 @@ export default function App() {
 
   const navItems = [
     { id: 'today', label: 'Today', icon: Dumbbell },
+    { id: 'cardio', label: 'Cardio', icon: Flame },
     { id: 'plan', label: 'Plan', icon: Calendar },
     { id: 'nutrition', label: 'Nutrition', icon: Utensils },
     { id: 'progress', label: 'Progress', icon: TrendingUp },
@@ -3027,6 +3028,16 @@ export default function App() {
             />
           )}
 
+          {activeTab === 'cardio' && (
+            <HomeCardioSection
+              colors={colors}
+              isDark={isDark}
+              appState={appState}
+              setAppState={setAppState}
+              showToast={showToast}
+            />
+          )}
+
           {activeTab === 'nutrition' && (
             <NutritionView
               colors={colors}
@@ -3155,13 +3166,13 @@ export default function App() {
                     weightLogs: prev.onboarded
                       ? prev.weightLogs
                       : [
-                          {
-                            id: 'w-0',
-                            date: new Date().toLocaleDateString('en-CA'),
-                            label: 'Start',
-                            weightKg: Number(onboardingForm.startWeightKg || 55)
-                          }
-                        ]
+                        {
+                          id: 'w-0',
+                          date: new Date().toLocaleDateString('en-CA'),
+                          label: 'Start',
+                          weightKg: Number(onboardingForm.startWeightKg || 55)
+                        }
+                      ]
                   }));
                   setShowOnboarding(false);
                 }}
@@ -3380,13 +3391,13 @@ export default function App() {
                   weightLogs: prev.onboarded
                     ? prev.weightLogs
                     : [
-                        {
-                          id: 'w-0',
-                          date: new Date().toLocaleDateString('en-CA'),
-                          label: 'Start',
-                          weightKg: Number(onboardingForm.startWeightKg || 55)
-                        }
-                      ]
+                      {
+                        id: 'w-0',
+                        date: new Date().toLocaleDateString('en-CA'),
+                        label: 'Start',
+                        weightKg: Number(onboardingForm.startWeightKg || 55)
+                      }
+                    ]
                 }));
                 setShowOnboarding(false);
                 showToast(`Profile saved (${chosenTrack.toUpperCase()})!`);
@@ -4192,13 +4203,12 @@ function TodayView({
                       <span style={{ color: colors.muted }} className="font-mono-num">
                         {prevSets.length > 0
                           ? prevSets
-                              .map(
-                                (s) =>
-                                  `${isAssisted ? 'Assist ' : ''}${formatWeight(s.weight)}${
-                                    appState.unit
-                                  } × ${s.reps}`
-                              )
-                              .join('  |  ')
+                            .map(
+                              (s) =>
+                                `${isAssisted ? 'Assist ' : ''}${formatWeight(s.weight)}${appState.unit
+                                } × ${s.reps}`
+                            )
+                            .join('  |  ')
                           : 'First session — log your starting working weights'}
                       </span>
                     </div>
@@ -4224,11 +4234,11 @@ function TodayView({
                         <span>
                           {overload.mode === 'assist'
                             ? `${formatWeight(overload.incrementKg)} ${appState.unit} Assist → ${formatWeight(
-                                overload.suggestedWeightKg
-                              )} ${appState.unit}`
+                              overload.suggestedWeightKg
+                            )} ${appState.unit}`
                             : `+${formatWeight(overload.incrementKg)} ${appState.unit} → ${formatWeight(
-                                overload.suggestedWeightKg
-                              )} ${appState.unit}`}
+                              overload.suggestedWeightKg
+                            )} ${appState.unit}`}
                         </span>
                       </span>
                       <button
@@ -4430,10 +4440,10 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
             muscleFilter === 'All'
               ? day.exercises
               : day.exercises.filter(
-                  (ex) =>
-                    ex.primaryGroup === muscleFilter ||
-                    (ex.secondaryGroups || []).includes(muscleFilter)
-                );
+                (ex) =>
+                  ex.primaryGroup === muscleFilter ||
+                  (ex.secondaryGroups || []).includes(muscleFilter)
+              );
 
           if (muscleFilter !== 'All' && filteredExercises.length === 0 && !day.isRest) {
             return null;
@@ -5189,14 +5199,14 @@ function ProgressView({
             gainAnalysis.status === 'FAST_GAIN_WARNING'
               ? colors.card
               : gainAnalysis.status === 'PLATEAU_SUGGESTION'
-              ? colors.accentSurface
-              : colors.card,
+                ? colors.accentSurface
+                : colors.card,
           borderColor:
             gainAnalysis.status === 'FAST_GAIN_WARNING'
               ? colors.danger
               : gainAnalysis.status === 'PLATEAU_SUGGESTION'
-              ? colors.accentBorder
-              : colors.border
+                ? colors.accentBorder
+                : colors.border
         }}
         className="vt-card-b2 vt-p-card vt-resp-row-lg"
       >
@@ -5209,8 +5219,8 @@ function ProgressView({
                   gainAnalysis.status === 'FAST_GAIN_WARNING'
                     ? colors.danger
                     : isDark
-                    ? colors.accent
-                    : colors.text
+                      ? colors.accent
+                      : colors.text
               }}
             />
             <span className="vt-text-xs vt-font-extrabold vt-uppercase vt-tracking-wider">
@@ -5234,8 +5244,7 @@ function ProgressView({
                 }
               }));
               showToast(
-                `Updated daily target by ${
-                  gainAnalysis.calorieAdjustment > 0 ? '+' : ''
+                `Updated daily target by ${gainAnalysis.calorieAdjustment > 0 ? '+' : ''
                 }${gainAnalysis.calorieAdjustment} kcal!`
               );
             }}
@@ -5379,7 +5388,7 @@ function ProgressView({
         >
           <div className="vt-between-center vt-flex-wrap vt-gap-3">
             <div className="vt-flex vt-items-center vt-gap-2">
-              
+
               <div>
                 <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
                   V-Taper Body Measurements (cm)
@@ -5807,3 +5816,482 @@ function SettingsView({
   );
 }
 
+// ============================================================================
+// HOME 30-MIN NO-EQUIPMENT V-TAPER CARDIO & WAIST CONDITIONING PROTOCOL
+// ============================================================================
+
+export const HOME_CARDIO_PROTOCOL = {
+  totalMinutes: 30,
+  estimatedKcalBurn: 210,
+  phases: [
+    {
+      id: 'phase-1',
+      title: 'Phase 1: Thoracic & Shoulder Frame Opener',
+      durationMin: 5,
+      focus: 'Posture, Ribcage Expansion & Scapular Mobility',
+      drills: [
+        {
+          id: 'hc-1',
+          name: 'High-Knee March + Overhead Arm Swings',
+          durationSec: 120,
+          repsLabel: '2 min continuous',
+          target: 'Warm-up & Heart Rate',
+          cue: 'Chest tall, core braced, swing arms full range overhead to open lats.'
+        },
+        {
+          id: 'hc-2',
+          name: 'Wall Scapular Slides (No-Equipment Wall Angel)',
+          durationSec: 90,
+          repsLabel: '15 slow reps',
+          target: 'Lower Traps & Posture',
+          cue: 'Back and wrists near wall, slide elbows down into back pockets for wider frame.'
+        },
+        {
+          id: 'hc-3',
+          name: 'World’s Greatest Stretch + Thoracic Reach',
+          durationSec: 90,
+          repsLabel: '6 reps / side',
+          target: 'T-Spine & Hips',
+          cue: 'Deep lunge, rotate upper back and reach hand to ceiling, follow with eyes.'
+        }
+      ]
+    },
+    {
+      id: 'phase-2',
+      title: 'Phase 2: V-Taper Athletic Calisthenics Circuit',
+      durationMin: 15,
+      focus: '3 Rounds • Delt Cap Endurance, Serratus & Conditioning',
+      drills: [
+        {
+          id: 'hc-4',
+          name: 'Incline / Pike Push-Up + Shoulder Tap Combo',
+          durationSec: 180,
+          repsLabel: '3 sets × 45s work / 15s rest',
+          target: 'Side/Front Delts & Serratus',
+          cue: 'Hips high in V-position, push floor away hard at top to protract serratus, tap each shoulder.'
+        },
+        {
+          id: 'hc-5',
+          name: 'Prisoner Squat to Tiplock Calf Raise',
+          durationSec: 180,
+          repsLabel: '3 sets × 45s work / 15s rest',
+          target: 'Leg Drive & Upper Back Posture',
+          cue: 'Hands behind head, elbows pulled wide back (opens chest), squat deep and rise onto big toes.'
+        },
+        {
+          id: 'hc-6',
+          name: 'Cross-Body Slow Mountain Climbers',
+          durationSec: 180,
+          repsLabel: '3 sets × 40s work / 20s rest',
+          target: 'Obliques & Serratus Lines',
+          cue: 'Drive knee toward opposite elbow with 1s squeeze, keep hips low and shoulders stacked.'
+        },
+        {
+          id: 'hc-7',
+          name: 'Shadow Boxing + Sprawl Conditioning',
+          durationSec: 180,
+          repsLabel: '3 sets × 45s work / 15s rest',
+          target: 'VO2 Max & Shoulder Stamina',
+          cue: ' crisp 1-2 punches at eye level, drop into a fast plank sprawl every 6 punches.'
+        },
+        {
+          id: 'hc-8',
+          name: 'Prone Y-T-W Isometric Back Flies (Floor)',
+          durationSec: 180,
+          repsLabel: '3 sets × 45s work / 15s rest',
+          target: 'Rear Delts & Mid-Back',
+          cue: 'Lie face down on mat/towel, lift chest slightly, sweep thumbs up in Y-T-W shapes.'
+        }
+      ]
+    },
+    {
+      id: 'phase-3',
+      title: 'Phase 3: Waist-Cincher & Stomach Vacuum Block',
+      durationMin: 7,
+      focus: 'Transverse Abdominis Control (Shrinks Waist Measurement)',
+      drills: [
+        {
+          id: 'hc-9',
+          name: 'Standing / Quadruped Stomach Vacuums',
+          durationSec: 240,
+          repsLabel: '6 sets × 20s hold / 20s rest',
+          target: 'Inner Waist Belt (TVA)',
+          cue: 'Exhale all air, pull navel hard toward spine and up under ribs. #1 drill for 1.45x V-taper.'
+        },
+        {
+          id: 'hc-10',
+          name: 'Hollow-Body Hold / Dead Bug Control',
+          durationSec: 180,
+          repsLabel: '3 sets × 40s work / 20s rest',
+          target: 'Flat Lower Abs',
+          cue: 'Lower back glued flat to floor, ribs tucked down, zero arch in lumbar spine.'
+        }
+      ]
+    },
+    {
+      id: 'phase-4',
+      title: 'Phase 4: Nasal Recovery & Lat Decompression',
+      durationMin: 3,
+      focus: 'Cortisol Drop & Fascia Stretch',
+      drills: [
+        {
+          id: 'hc-11',
+          name: 'Child’s Pose Lat Reach + 4-4-4-4 Box Breathing',
+          durationSec: 180,
+          repsLabel: '3 min nasal breathing',
+          target: 'Lat Width Stretch & Recovery',
+          cue: 'Knees wide, walk fingers far forward on floor, breathe deep into side ribs.'
+        }
+      ]
+    }
+  ]
+};
+
+export function HomeCardioSection({ colors, isDark, appState, setAppState, showToast }) {
+  const allDrills = useMemo(
+    () => HOME_CARDIO_PROTOCOL.phases.flatMap((p) => p.drills),
+    []
+  );
+
+  const [activeDrillIdx, setActiveDrillIdx] = useState(0);
+  const [drillSecLeft, setDrillSecLeft] = useState(allDrills[0].durationSec);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [completedDrills, setCompletedDrills] = useState({});
+
+  const currentDrill = allDrills[activeDrillIdx] || allDrills[0];
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const cardioLogs = appState.cardioLogs || [];
+  const isCompletedToday = cardioLogs.some((log) => log.date === todayStr);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    const interval = setInterval(() => {
+      setDrillSecLeft((prev) => {
+        if (prev <= 1) {
+          setCompletedDrills((cd) => ({ ...cd, [currentDrill.id]: true }));
+          if (activeDrillIdx < allDrills.length - 1) {
+            const nextIdx = activeDrillIdx + 1;
+            setActiveDrillIdx(nextIdx);
+            return allDrills[nextIdx].durationSec;
+          }
+          setTimerRunning(false);
+          if (showToast) showToast('30-Min Home V-Taper Cardio Complete! Log your session below.');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timerRunning, activeDrillIdx, allDrills, currentDrill.id, showToast]);
+
+  const formatClock = (sec) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  const handleSelectDrill = (idx) => {
+    setActiveDrillIdx(idx);
+    setDrillSecLeft(allDrills[idx].durationSec);
+    setTimerRunning(false);
+  };
+
+  const handleToggleDrillDone = (drillId) => {
+    setCompletedDrills((prev) => ({ ...prev, [drillId]: !prev[drillId] }));
+  };
+
+  const completedCount = Object.values(completedDrills).filter(Boolean).length;
+  const progressPct = Math.round((completedCount / allDrills.length) * 100);
+
+  const handleLogCardioSession = () => {
+    setAppState((prev) => {
+      const existing = prev.cardioLogs || [];
+      const filtered = existing.filter((item) => item.date !== todayStr);
+      return {
+        ...prev,
+        sundayWalkDone: true,
+        cardioLogs: [
+          {
+            id: `cardio-${Date.now()}`,
+            date: todayStr,
+            durationMin: 30,
+            drillsCompleted: completedCount || allDrills.length,
+            kcalBurned: HOME_CARDIO_PROTOCOL.estimatedKcalBurn
+          },
+          ...filtered
+        ]
+      };
+    });
+    if (showToast) {
+      showToast('Logged 30-Min Home V-Taper Cardio! Eat +200 kcal if bulking hard.');
+    }
+  };
+
+  return (
+    <section className="vt-cardio-section vt-stack-4">
+      {/* Hero Banner */}
+      <div
+        style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        className="vt-card vt-p-card vt-cardio-hero"
+      >
+        <div className="vt-cardio-hero-top">
+          <div className="vt-stack-1">
+            <div className="vt-pill-row">
+              <span
+                style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                className="vt-badge-accent"
+              >
+                Zero Equipment • Home Protocol
+              </span>
+              <span
+                style={{
+                  backgroundColor: colors.elevated,
+                  borderColor: colors.border,
+                  color: colors.muted
+                }}
+                className="vt-meta-pill font-mono-num"
+              >
+                <Clock size={14} />
+                <span>30 Min • ~{HOME_CARDIO_PROTOCOL.estimatedKcalBurn} kcal</span>
+              </span>
+              <span
+                style={{
+                  backgroundColor: colors.elevated,
+                  borderColor: colors.border,
+                  color: isDark ? colors.accent : colors.text
+                }}
+                className="vt-meta-pill font-mono-num"
+              >
+                <Flame size={14} />
+                <span>Sessions Logged: {cardioLogs.length}</span>
+              </span>
+            </div>
+
+            <h2 className="vt-hero-heading font-display">
+              30-Min V-Taper Conditioning & Waist Vacuum Circuit
+            </h2>
+            <p className="vt-text-xs" style={{ color: colors.muted }}>
+              Designed for home execution without equipment: widens upper-back posture, builds serratus & lateral delt stamina, and tightens your waist via transverse abdominis vacuums.
+            </p>
+          </div>
+
+          <button
+            onClick={handleLogCardioSession}
+            style={{
+              backgroundColor: isCompletedToday ? colors.accentSurface : colors.accent,
+              color: isCompletedToday ? colors.text : colors.accentText,
+              borderColor: colors.accentBorder
+            }}
+            className="vt-finish-btn vt-shrink-0"
+          >
+            <Check size={16} strokeWidth={2.5} />
+            <span>{isCompletedToday ? 'Completed Today ✓' : 'Complete 30m Session'}</span>
+          </button>
+        </div>
+
+        {/* Live Guided Drill Timer Bar */}
+        <div
+          style={{
+            backgroundColor: colors.elevated,
+            borderColor: timerRunning ? colors.accentBorder : colors.border
+          }}
+          className="vt-cardio-player"
+        >
+          <div className="vt-cardio-player-left">
+            <div
+              style={{ backgroundColor: colors.accent, color: colors.accentText }}
+              className="vt-cardio-clock font-display tabular-nums"
+            >
+              {formatClock(drillSecLeft)}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div
+                className="vt-text-10 vt-font-extrabold vt-uppercase font-mono-num"
+                style={{ color: isDark ? colors.accent : colors.text }}
+              >
+                Drill {activeDrillIdx + 1} of {allDrills.length} • {currentDrill.target}
+              </div>
+              <div className="vt-cardio-active-name">{currentDrill.name}</div>
+              <div className="vt-text-11" style={{ color: colors.muted }}>
+                {currentDrill.cue}
+              </div>
+            </div>
+          </div>
+
+          <div className="vt-cardio-player-controls">
+            <button
+              onClick={() => setTimerRunning((prev) => !prev)}
+              style={{
+                backgroundColor: colors.accent,
+                color: colors.accentText,
+                borderColor: colors.accentBorder
+              }}
+              className="vt-cardio-ctrl-btn"
+            >
+              {timerRunning ? <Pause size={16} /> : <Play size={16} />}
+              <span>{timerRunning ? 'Pause' : 'Start Drill'}</span>
+            </button>
+
+            <button
+              onClick={() => setDrillSecLeft(currentDrill.durationSec)}
+              aria-label="Reset current drill timer"
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                color: colors.text
+              }}
+              className="vt-icon-btn-44"
+            >
+              <RotateCcw size={16} />
+            </button>
+
+            <button
+              onClick={() => {
+                const nextIdx = (activeDrillIdx + 1) % allDrills.length;
+                handleSelectDrill(nextIdx);
+              }}
+              aria-label="Next drill"
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                color: colors.text
+              }}
+              className="vt-icon-btn-44"
+            >
+              <SkipForward size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="vt-stack-1">
+          <div className="vt-between-center vt-text-11 font-mono-num" style={{ color: colors.muted }}>
+            <span>Circuit Progress: {completedCount} / {allDrills.length} drills checked</span>
+            <span>{progressPct}%</span>
+          </div>
+          <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track-sm">
+            <div
+              style={{ width: `${progressPct}%`, backgroundColor: colors.accent }}
+              className="vt-progress-fill"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 4-Phase Breakdown Grid */}
+      <div className="vt-cardio-phases-grid">
+        {HOME_CARDIO_PROTOCOL.phases.map((phase) => (
+          <div
+            key={phase.id}
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+            className="vt-card vt-p-card vt-stack-3"
+          >
+            <div className="vt-between-start vt-gap-2">
+              <div>
+                <span
+                  style={{
+                    backgroundColor: colors.elevated,
+                    borderColor: colors.border,
+                    color: isDark ? colors.accent : colors.text
+                  }}
+                  className="vt-badge vt-border vt-text-10 vt-font-extrabold vt-uppercase"
+                >
+                  {phase.focus}
+                </span>
+                <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase vt-mt-1">
+                  {phase.title}
+                </h3>
+              </div>
+              <span
+                style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                className="vt-badge vt-text-xs vt-font-extrabold font-mono-num vt-shrink-0"
+              >
+                {phase.durationMin} MIN
+              </span>
+            </div>
+
+            <div className="vt-stack-2">
+              {phase.drills.map((drill) => {
+                const globalIdx = allDrills.findIndex((d) => d.id === drill.id);
+                const isCurrent = globalIdx === activeDrillIdx;
+                const isDone = Boolean(completedDrills[drill.id]);
+
+                return (
+                  <div
+                    key={drill.id}
+                    style={{
+                      backgroundColor: isDone
+                        ? colors.accentSurface
+                        : isCurrent
+                          ? colors.elevated
+                          : colors.elevated,
+                      borderColor: isDone || isCurrent ? colors.accentBorder : colors.border
+                    }}
+                    className="vt-cardio-drill-row"
+                  >
+                    <div
+                      onClick={() => handleSelectDrill(globalIdx)}
+                      className="vt-cardio-drill-main vt-cursor-pointer"
+                    >
+                      <div className="vt-row-wrap vt-gap-1-5">
+                        <span className="vt-font-extrabold vt-text-sm">{drill.name}</span>
+                        <span
+                          style={{
+                            backgroundColor: colors.card,
+                            borderColor: colors.border,
+                            color: isDark ? colors.accent : colors.text
+                          }}
+                          className="vt-badge-xs vt-border vt-text-10 vt-font-extrabold vt-uppercase"
+                        >
+                          {drill.target}
+                        </span>
+                      </div>
+                      <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
+                        {drill.repsLabel} ({Math.round(drill.durationSec / 60)}m)
+                      </div>
+                      <p className="vt-text-xs" style={{ color: colors.muted }}>
+                        <strong style={{ color: colors.text }}>Cue:</strong> {drill.cue}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => handleToggleDrillDone(drill.id)}
+                      aria-label={`Mark ${drill.name} done`}
+                      style={{
+                        backgroundColor: isDone ? colors.accent : colors.card,
+                        color: isDone ? colors.accentText : colors.muted,
+                        borderColor: isDone ? colors.accentBorder : colors.border
+                      }}
+                      className="vt-btn vt-sq-44 vt-box-xl vt-shrink-0"
+                    >
+                      <Check size={18} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Lean-Bulk Science Advisory Note */}
+      <div
+        style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        className="vt-card vt-p-4 vt-flex vt-items-start vt-gap-3"
+      >
+        <ShieldCheck
+          size={20}
+          className="vt-shrink-0 vt-mt-0-5"
+          style={{ color: isDark ? colors.accent : colors.text }}
+        />
+        <div className="vt-text-xs" style={{ color: colors.muted }}>
+          <strong style={{ color: colors.text }}>Lean-Bulk Cardio Rule:</strong> Perform this 30-min circuit on{' '}
+          <strong style={{ color: colors.text }}>Sunday (Active Recovery)</strong> or 2–3×/week separated by at least 4 hours from lifting. Since it burns ~210 kcal, tap{' '}
+          <strong style={{ color: colors.text }}>+1 Medium Banana + 250 ml Milk (+257 kcal)</strong> in the Nutrition tab on cardio days so your muscle-gain surplus stays intact.
+        </div>
+      </div>
+    </section>
+  );
+}
+
+<main className="vt-page-main"></main>

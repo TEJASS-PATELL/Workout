@@ -2751,4 +2751,126 @@ input[type='number'] {
   gap: 0.5rem;
   cursor: pointer;
 }
-padding-bottom: calc(9.5rem + env(safe-area-inset-bottom));
+
+/* ==========================================================================
+   30-MIN HOME V-TAPER CARDIO & WAIST CONDITIONING SECTION
+   ========================================================================== */
+
+.vt-cardio-section {
+  width: 100%;
+}
+
+.vt-cardio-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.vt-cardio-hero-top {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+@media (min-width: 768px) {
+  .vt-cardio-hero-top {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.vt-cardio-player {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 0.875rem;
+  border-radius: 0.875rem;
+  border: 1px solid;
+  justify-content: space-between;
+}
+
+@media (min-width: 640px) {
+  .vt-cardio-player {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.vt-cardio-player-left {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-width: 0;
+}
+
+.vt-cardio-clock {
+  font-size: 1.75rem;
+  font-weight: 900;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.vt-cardio-active-name {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vt-cardio-player-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.vt-cardio-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.vt-cardio-phases-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .vt-cardio-phases-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.vt-cardio-drill-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.vt-cardio-drill-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 1;
+}
