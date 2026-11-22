@@ -2376,6 +2376,7 @@ function getFreshInitialState(theme = 'dark') {
     const defaultTrack = DEFAULT_PROFILE.dietTrack;
     return {
         onboarded: false,
+        dayStamp: new Date().toLocaleDateString('en-CA'),
         theme,
         unit: 'kg',
         rampInEnabled: true,
@@ -2415,14 +2416,14 @@ function BrandLogo({ size = 40 }) {
             aria-label="VTaper Logo"
             className="vt-brand-logo"
         >
-            <rect width="512" height="512" rx="112" fill="#0A0A0B" />
-            <rect x="16" y="16" width="480" height="480" rx="96" stroke="#27272A" strokeWidth="14" />
-            <rect x="76" y="116" width="360" height="20" rx="6" fill="#27272A" />
-            <rect x="92" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
-            <rect x="396" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
-            <path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="#CCFF00" />
-            <polygon points="208,156 304,156 256,284" fill="#27272A" />
-            <rect x="212" y="444" width="88" height="12" rx="6" fill="#27272A" />
+            <rect width="512" height="512" rx="112" fill="#ffffff" />
+            <rect x="16" y="16" width="480" height="480" rx="96" stroke="#000000" strokeWidth="14" />
+            <rect x="76" y="116" width="360" height="20" rx="6" fill="#000000" />
+            <rect x="92" y="96" width="24" height="60" rx="6" fill="rgb(0, 89, 255)" />
+            <rect x="396" y="96" width="24" height="60" rx="6" fill="rgb(0, 89, 255)" />
+            <path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="rgb(0, 89, 255)" />
+            <polygon points="208,156 304,156 256,284" fill="#000000" />
+            <rect x="212" y="444" width="88" height="12" rx="6" fill="#000000" />
         </svg>
     );
 }
@@ -2972,6 +2973,33 @@ export default function App() {
         }
     }, [appState]);
 
+    useEffect(() => {
+        const rollover = () => {
+            const t = new Date().toLocaleDateString('en-CA');
+            setAppState((prev) => {
+                if (prev.dayStamp === t) return prev;
+                const drafts = Object.fromEntries(
+                    Object.entries(prev.activeDrafts).map(([id, sets]) => [
+                        id,
+                        sets.map((s) => ({ ...s, completed: false }))
+                    ])
+                );
+                return {
+                    ...prev,
+                    dayStamp: t,
+                    waterMl: 0,
+                    completedMealSlots: {},
+                    loggedAppetiteHelpers: [],
+                    pelvicHabits: {},
+                    activeDrafts: drafts
+                };
+            });
+        };
+        rollover();
+        document.addEventListener('visibilitychange', rollover);
+        return () => document.removeEventListener('visibilitychange', rollover);
+    }, []);
+
     const [activeTab, setActiveTab] = useState('today');
 
     const currentWeekdayIndex = useMemo(() => new Date().getDay(), []);
@@ -3020,55 +3048,45 @@ export default function App() {
         if (restTimer.remainingSec <= 0) {
             setRestTimer((prev) => ({ ...prev, active: false }));
             showToast('Rest complete — hit your next working set with 1–2 RIR!');
+            navigator.vibrate?.([200, 100, 200]);   // ← nayi line (phone vibrate)
             return;
         }
         const interval = setInterval(() => {
-            setRestTimer((prev) => {
-                if (prev.remainingSec <= 1) {
-                    return { ...prev, remainingSec: 0, active: false };
-                }
-                return { ...prev, remainingSec: prev.remainingSec - 1 };
-            });
+            setRestTimer((prev) => ({ ...prev, remainingSec: Math.max(0, prev.remainingSec - 1) }));
         }, 1000);
         return () => clearInterval(interval);
     }, [restTimer.active, restTimer.paused, restTimer.remainingSec, showToast]);
 
     const isDark = appState.theme === 'dark';
+
     const colors = useMemo(
         () =>
             isDark
                 ? {
-                    bg: '#0b0b0b',
-                    card: '#000000',
-                    elevated: '#101010',
-                    border: '#27272A',
-                    text: '#f6f6f6',
-                    muted: '#A1A1AA',
-                    accent: '#CCFF00',
-                    accentText: '#0A0A0B',
-                    accentSurface: '#22290A',
-                    accentBorder: '#CCFF00',
-                    danger: '#f90505',
-                    warning: '#F59E0B',
-                    success: '#22C55E'
+                    bg: '#000000', card: '#0A0A0B', elevated: '#141416', border: '#2A2A2E',
+                    text: '#F5F5F6', muted: '#A1A1AA',
+                    accent: '#CCFF00', accentText: '#0A0A0B', accentSurface: '#1A2205', accentBorder: '#CCFF00',
+                    danger: '#FF4D4F', warning: '#FBBF24', success: '#4ADE80'
                 }
                 : {
-                    bg: '#F4F4F5',
-                    card: '#FFFFFF',
-                    elevated: '#E4E4E7',
-                    border: '#D4D4D8',
-                    text: '#000000',
-                    muted: '#52525B',
-                    accent: '#CCFF00',
-                    accentText: '#0A0A0B',
-                    accentSurface: '#ECFCCB',
-                    accentBorder: '#84CC16',
-                    danger: '#fc0404',
-                    warning: '#D97706',
-                    success: '#16A34A'
+                    bg: '#F4F4F2', card: '#FFFFFF', elevated: '#EDEDEA', border: '#D6D6D1',
+                    text: '#000000', muted: '#55555C',
+                    accent: '#0059ff', accentText: '#FFFFFF', accentSurface: '#ECFCCB', accentBorder: '#113fa3',
+                    danger: '#fc1504', warning: '#f46e08', success: '#08e559'
                 },
         [isDark]
     );
+
+    useEffect(() => {
+        document.documentElement.dataset.theme = appState.theme;
+        let m = document.querySelector('meta[name="theme-color"]');
+        if (!m) {
+            m = document.createElement('meta');
+            m.name = 'theme-color';
+            document.head.appendChild(m);
+        }
+        m.content = colors.bg;
+    }, [appState.theme, colors.bg]);
 
     const isLb = appState.unit === 'lb';
     const formatWeight = useCallback(
@@ -3484,7 +3502,7 @@ export default function App() {
                 backgroundColor: colors.bg,
                 color: colors.text,
                 fontFamily: "'Sora', -apple-system, BlinkMacSystemFont, sans-serif",
-                '--ring': isDark ? '#CCFF00' : '#84CC16'
+                '--ring': colors.accentBorder
             }}
             className="vt-app"
         >
