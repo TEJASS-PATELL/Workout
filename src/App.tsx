@@ -92,6 +92,9 @@ export const SCIENCE_RULES = {
     REST_ISOLATION_STRETCH_SEC: 90,
     REST_ISOLATION_STD_SEC: 75,
 
+    pelvicSide: 'right',
+    pelvicLogs: [],
+    pelvicHabits: {},
     // Energy (Mifflin–St Jeor for 22y male, 173 cm, 55 kg):
     // BMR = (10 * 55) + (6.25 * 173) - (5 * 22) + 5 = 1,526.25 kcal/day.
     // TDEE (6 days/wk training, activity multiplier 1.55–1.725) ≈ 2,350–2,650 kcal/day.
@@ -147,9 +150,11 @@ export const WORKOUT_PLAN = [
         shortDay: 'Mon',
         dayName: 'Monday',
         title: 'Push A',
-        subtitle: 'Chest, Shoulders & Triceps (18 Sets)',
+        subtitle: 'Chest, Shoulders & Triceps (7 Exercises • 21 Sets)',
         isRest: false,
-        estimatedMinutes: 70,
+        estimatedMinutes: 75,
+        chartFile: 'monday.png',
+        chartImage: '/charts/monday.png',
         exercises: [
             {
                 id: 'mon-1',
@@ -166,7 +171,13 @@ export const WORKOUT_PLAN = [
                 step: 'B2.5',
                 cue: 'Shoulder blades pinned back and down, feet planted, touch the lower chest, press up and slightly back.',
                 alternatives: ['Machine Chest Press', 'Flat DB Press'],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Bench par let kar aankhein bar ke bilkul neeche rakhein. Dono pair zameen par mazbooti se jamayein. Shoulder blades (kandhe ki peechli haddiyan) peeche aur neeche pinch karke bench mein lock karein—halka natural arch aayega. Grip shoulder-width se thodi wide rakhein.',
+                    execution: 'Bar ko unrack karke chest ke upar laayein. Saans andar bhar kar elbows ko 45° angle par (body se chipka nahi, aur bilkul 90° T-shape bhi nahi) rakh kar 2–3 second mein bar ko lower chest / nipple line par touch karein, phir upar press karein.',
+                    feelRight: 'Neeche aate waqt poore chest (middle & outer) mein deep stretch aur upar press karte waqt chest mein tight squeeze feel hona chahiye.',
+                    feelWrong: 'Agar front shoulder mein chubhan ya elbow mein dard ho, toh aap elbows ko 90° bahar phaila rahe hain ya bar ko gale ke paas neeche laa rahe hain.'
+                }
             },
             {
                 id: 'mon-2',
@@ -183,7 +194,13 @@ export const WORKOUT_PLAN = [
                 step: 'DB',
                 cue: 'Elbows about 45° from the torso, deep stretch at the bottom, press without clanging the dumbbells.',
                 alternatives: ['Incline Machine Press'],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Bench ko 30° angle par set karein (45° ya usse zyada mat karein warna shoulder takeover kar lega). Chest upar utha kar shoulder blades bench mein press karein.',
+                    execution: 'Dumbbells ko 45° elbow angle par dheere se chest ke kinare tak neeche laayein taaki poora stretch mile. Upar press karte waqt dumbbells ko halka andar laayein par aapas mein takrana nahi hai.',
+                    feelRight: 'Collarbone ke neeche wale hisse (Upper Chest) mein gehra stretch aur pump feel hona chahiye—yahi aesthetic chest shelf banata hai.',
+                    feelWrong: 'Agar sirf front shoulder jal raha hai, toh bench angle zyada uncha hai ya shoulders aage roll ho rahe hain.'
+                }
             },
             {
                 id: 'mon-3',
@@ -200,7 +217,13 @@ export const WORKOUT_PLAN = [
                 step: 'DB',
                 cue: 'Back flat on the pad, ribs down, press up and slightly inward, stop just short of lockout.',
                 alternatives: ['Machine Shoulder Press'],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Bench ko bilkul 90° seedha na rakh kar ek notch peeche (~75–80°) rakhein. Peeth pad se chipka kar core tight karein aur elbows ko bilkul side mein nahi balki 30° aage (scapular plane) rakhein.',
+                    execution: 'Dumbbells ko kaan (ear) ke level tak slow neeche laayein, phir seedha upar press karein. Top par elbows ko hard lock karne se just pehle ruk kar next rep shuru karein.',
+                    feelRight: 'Front aur side shoulder (deltoid cap) mein clean burn aur fullness feel honi chahiye.',
+                    feelWrong: 'Agar lower back mein dard aaye toh weight heavy hai aur aap peeth arch kar rahe hain; agar neck tight ho toh shoulders upar shrug kar rahe hain.'
+                }
             },
             {
                 id: 'mon-4',
@@ -217,7 +240,13 @@ export const WORKOUT_PLAN = [
                 step: 'S1',
                 cue: 'Slight forward lean, lead with the elbows, raise to shoulder height, lower over 2 s, no swinging.',
                 alternatives: ['Cable Lateral Raise', 'Machine Lateral Raise'],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Pair shoulder-width par, kamar se halka sa (10–15°) aage jhukein. Dumbbells thighs ke side mein rakhein, elbows mein halka bend aur shoulders neeche relaxed rakhein.',
+                    execution: 'Haathon ko seedha side mein nahi balki halka aage (20–30° angle par) bahar ki taraf push karein jaise deewar chhuni ho. Sirf shoulder height tak uthayein aur 2 second mein slow neeche laayein.',
+                    feelRight: 'Kandhe ke bilkul side (Side Delt cap) mein tez burn feel hona chahiye—V-taper width ka #1 muscle yahi hai.',
+                    feelWrong: 'Agar gardan ke side (upper traps) mein tension aaye, toh weight zyada heavy hai ya aap shoulders ko kaan ki taraf uchka rahe hain.'
+                }
             },
             {
                 id: 'mon-5',
@@ -234,7 +263,13 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Elbows beside the ears, lower until the triceps stretch hard behind the head, then extend fully.',
                 alternatives: ['EZ Skull Crusher'],
-                flags: { updatedInV2: true }
+                flags: { updatedInV2: true },
+                guide: {
+                    setup: 'Cable pulley ko kamar ya neeche ke level par set karein, machine se peeth karke khade hon aur ek pair aage rakh kar balance banayein. Elbows sir ke side mein lock rakhein.',
+                    execution: 'Sirf forearms ko peeche jaane dein jab tak triceps mein poora stretch na aa jaye, phir rope ko aage-upar extend karein aur 1 second squeeze karein.',
+                    feelRight: 'Baanh ke bilkul peeche aur andar (Triceps Long Head — arm ka sabse bada hissa) mein deep stretch aur burn feel hoga.',
+                    feelWrong: 'Agar elbow joint mein sharp pain aaye toh weight kam karein aur thoda zyada warm-up karein; lower back arch mat hone dein.'
+                }
             },
             {
                 id: 'mon-6',
@@ -251,7 +286,36 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Elbows pinned to the ribs, spread the rope at the bottom, control the return.',
                 alternatives: [],
-                flags: { updatedInV2: true }
+                flags: { updatedInV2: true },
+                guide: {
+                    setup: 'High pulley par rope lagayein, machine se 1 kadam peeche, hips halka peeche aur chest upar rakhein. Elbows ko pasliyon (ribs) ke side mein chipka kar fix kar dein.',
+                    execution: 'Upper arm ko bilkul hilaye bina rope ko neeche push karein aur neeche pahunch kar dono haath halka bahar kholein. Slow control se 90° se thoda upar tak wapas aayein.',
+                    feelRight: 'Baanh ke peeche outer side (Triceps horseshoe shape) mein sharp contraction aur pump feel hona chahiye.',
+                    feelWrong: 'Agar shoulders aage jhuk rahe hain ya poori body hil rahi hai, toh weight heavy hai aur chest/shoulders kaam chura rahe hain.'
+                }
+            },
+            {
+                id: 'mon-7',
+                name: 'Low-to-High Cable Fly',
+                sets: 2,
+                repMin: 12,
+                repMax: 15,
+                repLabel: '12-15',
+                type: 'isolation',
+                restSec: 75,
+                targetMuscle: 'Upper chest shelf',
+                primaryGroup: 'Chest',
+                secondaryGroups: ['Front delts'],
+                step: 'PIN',
+                cue: 'Pulleys at lowest notch, chest proud, scoop arms up and across toward collarbone level.',
+                alternatives: ['Incline DB Fly'],
+                flags: { updatedInV2: true },
+                guide: {
+                    setup: 'Dono cable pulleys ko bilkul neeche (ankle level) set karein. Beech mein khade hokar 1 kadam aage lein, chest bahar aur shoulders peeche-neeche lock rakhein.',
+                    execution: 'Elbows mein halka soft bend rakh kar dono haathon ko neeche se upar-andar ki taraf scoop karein (jaise kisi ko hug kar rahe hon) aur collarbone ke saamne 1 second squeeze karein.',
+                    feelRight: 'Upper aur inner chest line mein zabardast tight squeeze aur pump feel hoga—zero joint stress.',
+                    feelWrong: 'Agar sirf biceps ya front shoulder thak raha hai, toh elbows zyada bend kar rahe hain ya haath bahut upar (face ke upar) le ja rahe hain.'
+                }
             }
         ]
     },
@@ -260,9 +324,11 @@ export const WORKOUT_PLAN = [
         shortDay: 'Tue',
         dayName: 'Tuesday',
         title: 'Pull A',
-        subtitle: 'Lat Width, Back, Rear Delts & Biceps (18 Sets)',
+        subtitle: 'Lat Width, Back, Rear Delts & Biceps (7 Exercises • 21 Sets)',
         isRest: false,
-        estimatedMinutes: 70,
+        estimatedMinutes: 75,
+        chartFile: 'tuesday.png',
+        chartImage: '/charts/tuesday.png',
         exercises: [
             {
                 id: 'tue-1',
@@ -279,7 +345,13 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Slight lean back, chest tall, drive the elbows down toward the back pockets, full stretch overhead.',
                 alternatives: ['Neutral-grip Pulldown'],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Thigh pad ko thighs par tight lock karein. Bar ko shoulder-width se 1.5x wide pakdein (thumbless/hook grip se biceps kam involve hota hai). Torso ko sirf 10–15° peeche rakhein.',
+                    execution: 'Pehle shoulders ko kaan se neeche girayein (depress), phir bar ko nahi balki apni elbows ko kamar/hips ki taraf neeche kheenchein jab tak bar upper chest ke paas na aa jaye. Upar jaate waqt poora lat stretch lein.',
+                    feelRight: 'Bagal ke neeche aur peeth ke dono side (Lats — V-shape wings) mein strong stretch aur pull feel hona chahiye.',
+                    feelWrong: 'Agar sirf forearms ya biceps jal rahe hain, toh aap haathon se kheench rahe hain—elbows se neeche drive karne par focus karein.'
+                }
             },
             {
                 id: 'tue-2',
@@ -296,7 +368,13 @@ export const WORKOUT_PLAN = [
                 step: 'ASSIST',
                 cue: 'Start from a dead hang, set the shoulder blades down first, chin over the bar.',
                 alternatives: ['Lat Pulldown'],
-                flags: { assisted: true }
+                flags: { assisted: true },
+                guide: {
+                    setup: 'Itna assistance weight lagayein ki aap 8–10 clean reps bina jhatke kar sakein. Wide ya shoulder-width grip pakad kar ghutne pad par rakhein aur core tight rakhein.',
+                    execution: 'Neeche poora dead hang stretch lein. Pehle shoulders neeche set karein, phir chest ko bar ki taraf upar le jayein aur chin bar se upar nikalkar 2–3 second mein slow neeche aayein.',
+                    feelRight: 'Poore upper back aur outer lats mein deep vertical stretch aur load feel hoga.',
+                    feelWrong: 'Agar kandhe kaan mein ghuse hue hain ya body jhool rahi hai, toh assistance thoda badhayein aur form clean karein.'
+                }
             },
             {
                 id: 'tue-3',
@@ -313,7 +391,13 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Sit tall, pull the handle to the lower ribs, 1 s squeeze, let the shoulder blades stretch forward.',
                 alternatives: ['Chest-Supported Row'],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Footplate par pair rakhein, ghutne halka soft bend, aur peeth bilkul seedhi (90° upright) rakhein. V-bar handle pakad kar chest tall karein.',
+                    execution: 'Kamar ko aage-peeche hilaye bina handle ko nabhi (lower ribs/stomach) ki taraf pull karein. Peeche shoulder blades ko 1 second pinch karein, phir aage jaakar poora stretch lein.',
+                    feelRight: 'Peeth ke beech (Mid-Back / Rhomboids) aur lower lats mein thick squeeze aur stretch feel hoga.',
+                    feelWrong: 'Agar lower back mein thakan ya dard aaye, toh aap aage-peeche swing kar rahe hain—torso ko bilkul stable rakhein.'
+                }
             },
             {
                 id: 'tue-4',
@@ -330,7 +414,13 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Rope to the forehead, thumbs back, elbows high.',
                 alternatives: ['Reverse Pec Deck'],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Cable pulley ko forehead/eye level par rakhein. Rope ko aise pakdein ki dono anguthe (thumbs) aapki taraf point karein. 2 kadam peeche hokar stagger stance lein.',
+                    execution: 'Rope ko maathe (forehead) ki taraf pull karein aur saath mein dono haath bahar kholein—end position double-bicep pose jaisi dikhni chahiye jahan wrists elbows se peeche jayein.',
+                    feelRight: 'Kandhe ke bilkul peeche (Rear Delts) aur upper back mein burn feel hoga—yeh rounded shoulders theek karta hai aur 3D look deta hai.',
+                    feelWrong: 'Agar lower back peeche jhuk rahi hai ya sirf upper traps tight ho rahe hain, toh weight kam karein.'
+                }
             },
             {
                 id: 'tue-5',
@@ -347,7 +437,13 @@ export const WORKOUT_PLAN = [
                 step: 'B2.5',
                 cue: 'Elbows fixed at the ribs, no torso swing, full stretch at the bottom.',
                 alternatives: ['DB Curl'],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'EZ-bar ke angled outer grip par haath rakhein (wrists natural rahengi). Pair shoulder-width, glutes aur abs tight, elbows kamar ke bilkul side mein pin rakhein.',
+                    execution: 'Kamar hilaye bina bar ko chest ke paas curl karein, top par 1 second bicep hard squeeze karein, aur 2–3 second mein poora neeche straight hone tak laayein.',
+                    feelRight: 'Baanh ke aage poore Bicep belly mein tight pump aur neeche poora stretch feel hona chahiye.',
+                    feelWrong: 'Agar lower back ya front shoulder mein load aaye, toh aap body jhatak kar weight upar fek rahe hain.'
+                }
             },
             {
                 id: 'tue-6',
@@ -364,7 +460,36 @@ export const WORKOUT_PLAN = [
                 step: 'DB',
                 cue: 'Neutral grip, slow 2 s lowering.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Dono dumbbells ko neutral grip (thumbs upar ki taraf, hatheliyan andar) mein pakdein. Elbows ko body ke side mein lock karein.',
+                    execution: 'Wrists ko bilkul twist kiye bina dumbbell ko shoulder ki taraf curl karein, top par pause lein, aur slow 2 second mein neeche laayein.',
+                    feelRight: 'Bicep ke side/neeche (Brachialis) aur forearm ke upar wale hisse mein thick pump feel hoga—yeh arm ko side se chauda dikhata hai.',
+                    feelWrong: 'Agar elbows aage bhaag rahe hain ya wrist mud rahi hai, toh halka dumbbell use karein.'
+                }
+            },
+            {
+                id: 'tue-7',
+                name: 'Single-Arm Cable Lat Pull-In',
+                sets: 2,
+                repMin: 12,
+                repMax: 15,
+                repLabel: '12-15 / arm',
+                type: 'isolation',
+                restSec: 75,
+                targetMuscle: 'Lower Lats (V-Sweep)',
+                primaryGroup: 'Lats/Back',
+                secondaryGroups: [],
+                step: 'PIN',
+                cue: 'Kneel sideways to high pulley, drive elbow in an arc tight to your hip pocket, squeeze lower lat.',
+                alternatives: ['Single-Arm Lat Pulldown'],
+                flags: { unilateral: true, updatedInV2: true },
+                guide: {
+                    setup: 'High pulley par single D-handle lagayein. Machine ke side mein ek ghutne par baithein (ya bench par), taaki cable line upar se aapke working side ke angle par aaye.',
+                    execution: 'Working haath ko upar-aage poora stretch hone dein, phir elbow ko body ke bilkul paas rakh kar apni hip pocket ki taraf neeche-peeche arc mein pull karein aur 1 second hold karein.',
+                    feelRight: 'Kamar ke upar side wale hisse (Lower Lats) mein razor-sharp cramp jaisa squeeze feel hoga—left aur right side ka imbalance bhi theek hota hai.',
+                    feelWrong: 'Agar sirf bicep thak raha hai, toh elbow ko peeche zyada mat khinchein—sirf hip bone ke level par ruk kar lat squeeze karein.'
+                }
             }
         ]
     },
@@ -373,9 +498,11 @@ export const WORKOUT_PLAN = [
         shortDay: 'Wed',
         dayName: 'Wednesday',
         title: 'Legs A',
-        subtitle: 'Quads, Hamstrings, Calves & Abs (20 Sets)',
+        subtitle: 'Quads, Hamstrings, Calves, Glute Med & Abs (7 Exercises • 23 Sets)',
         isRest: false,
-        estimatedMinutes: 70,
+        estimatedMinutes: 75,
+        chartFile: 'wednesday.png',
+        chartImage: '/charts/wednesday.png',
         exercises: [
             {
                 id: 'wed-1',
@@ -392,7 +519,13 @@ export const WORKOUT_PLAN = [
                 step: 'B5',
                 cue: 'Feet shoulder-width mid-platform, lower to about 90° at the knee with the lower back staying on the pad, never lock out.',
                 alternatives: ['Hack Squat'],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Seat par poore hips aur lower back ko chipka kar baithein. Pair shoulder-width par platform ke middle-low area mein rakhein, panje halka bahar (10–15°). Side handles kas kar pakdein.',
+                    execution: 'Safety unlock karke sled ko slow (2–3s) neeche laayein jab tak ghutne 90° ya usse thode zyada bend na hon (lower back pad se uthna nahi chahiye). Heels aur mid-foot se upar push karein—top par ghutne lock mat karein.',
+                    feelRight: 'Thighs ke aage (Quads) mein heavy pressure aur burn feel hona chahiye.',
+                    feelWrong: 'Agar lower back pad se uth kar gol ho rahi hai (butt wink) ya ghutno ke aage chubhan ho, toh range thodi kam karein ya pair thoda upar rakhein.'
+                }
             },
             {
                 id: 'wed-2',
@@ -409,7 +542,13 @@ export const WORKOUT_PLAN = [
                 step: 'B5',
                 cue: 'Soft knees, hips back, bar slides down the thighs, stop at a deep hamstring stretch with a flat back.',
                 alternatives: ['DB RDL'],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Barbell ya dumbbells pakad kar pair hip-width par khade hon. Chest upar, lats tight (jaise bagal mein pencil dabayi ho), aur ghutno mein halka soft bend (15°) fix kar dein.',
+                    execution: 'Neeche jhukne ki jagah apni hips ko peeche deewar ki taraf push karein. Bar thighs se chipak kar neeche jaye. Jaise hi hips peeche jana band karein (shin ke mid tak), glutes squeeze karke upar aayein.',
+                    feelRight: 'Thighs ke bilkul peeche (Hamstrings) aur glutes mein gehra rubber-band jaisa stretch feel hona chahiye.',
+                    feelWrong: 'Agar lower back mein tez dard ya kheenchav aaye, toh aap kamar gol kar rahe hain ya bar body se door ja rahi hai.'
+                }
             },
             {
                 id: 'wed-3',
@@ -426,7 +565,13 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Pause 1 s at the top, lower over 2–3 s, knee aligned with the machine pivot.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Back pad aise set karein ki aapka knee joint machine ke red pivot dot ki seedh mein aaye. Lower pad ankle ke bilkul upar (shin par) hona chahiye. Handles pakad kar hips seat mein dabaye rakhein.',
+                    execution: 'Dono pairo ko smoothly upar straight karein, top par 1 full second quads ko squeeze karein, phir 2–3 second mein slow neeche laayein.',
+                    feelRight: 'Ghutne ke upar teardrop muscle (VMO) aur poori front thigh (Quads) mein intense burn feel hoga.',
+                    feelWrong: 'Agar knee cap ke andar sharp pain aaye, toh bottom par weight jhatke se utha rahe hain ya machine pivot align nahi hai.'
+                }
             },
             {
                 id: 'wed-4',
@@ -443,7 +588,13 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Hips pinned, lean slightly forward, full stretch at the start, curl the heels under the seat.',
                 alternatives: ['Lying Leg Curl'],
-                flags: { updatedInV2: true }
+                flags: { updatedInV2: true },
+                guide: {
+                    setup: 'Lap/thigh pad ko thighs par jitna tight ho sake lock karein (yeh sabse important step hai). Ankle pad Achilles tendon ke upar set karein aur torso halka sa aage rakhein.',
+                    execution: 'Heels ko seat ke bilkul neeche tak curl karein, 1 second squeeze karein, aur 3 second mein slow upar aayein jab tak legs almost seedhi na ho jayein.',
+                    feelRight: 'Poori back thigh (Hamstrings) mein deep stretch aur strong contraction feel hoga.',
+                    feelWrong: 'Agar calves mein cramp aaye toh toes ko apni taraf (dorsiflex) na kheench kar halka relaxed/pointed rakhein.'
+                }
             },
             {
                 id: 'wed-5',
@@ -460,7 +611,13 @@ export const WORKOUT_PLAN = [
                 step: 'B5',
                 cue: '1–2 s stretch at the bottom, rise high on the big toe, no bouncing.',
                 alternatives: ['Leg-Press Calf Raise'],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Step edge par sirf pair ka aage wala hissa (balls of feet) rakhein, heels bahar latki rahein. Ghutne almost seedhe (soft lock) aur core tight rakhein.',
+                    execution: 'Heels ko poora neeche girne dein aur bottom par 2 second ruk kar bounce khatam karein. Phir big toe (anguthe) ke ball se jitna uncha ho sake upar uthein aur 1 second hold karein.',
+                    feelRight: 'Pindli (upper Calf / Gastrocnemius) mein deep stretch aur tez burn feel hona chahiye.',
+                    feelWrong: 'Agar bilkul feel nahi ho raha toh aap jaldi-jaldi bounce kar rahe hain—bottom pause zaroori hai.'
+                }
             },
             {
                 id: 'wed-6',
@@ -477,7 +634,36 @@ export const WORKOUT_PLAN = [
                 step: 'BW',
                 cue: 'Curl the pelvis up toward the ribs rather than swinging the legs; start with knee raises if needed.',
                 alternatives: ["Captain's-Chair Knee Raise"],
-                flags: { bodyweight: true }
+                flags: { bodyweight: true },
+                guide: {
+                    setup: 'Pull-up bar par shoulder-width grip se latkein (ya Captain’s Chair use karein). Body bilkul still rakhein—swing rokne ke liye lats halka engage karein.',
+                    execution: 'Sirf taangein upar mat uthayein; apni lower back ko halka gol karke pelvis (hips) ko upar chest ki taraf curl karein (agar seedhe pair mushkil hon toh knees bend karke karein). Slow neeche laayein.',
+                    feelRight: 'Poore pet (khaaskar lower & mid Abs) mein gehra crunch aur burn feel hoga.',
+                    feelWrong: 'Agar sirf thighs ke upar (hip flexors) mein dard ho raha hai, toh aap sirf legs hila rahe hain aur pelvis curl nahi kar rahe.'
+                }
+            },
+            {
+                id: 'wed-7',
+                name: 'Seated Hip Abduction Machine',
+                sets: 3,
+                repMin: 15,
+                repMax: 20,
+                repLabel: '15-20',
+                type: 'isolation',
+                restSec: 60,
+                targetMuscle: 'Glute Medius (Pelvic Stability)',
+                primaryGroup: 'Glutes',
+                secondaryGroups: [],
+                step: 'PIN',
+                cue: 'Sit tall or lean slightly forward, push knees outward smoothly, pause 1 s at outer end.',
+                alternatives: ['Cable Hip Abduction'],
+                flags: { updatedInV2: true },
+                guide: {
+                    setup: 'Machine par seedhe baithein (ya 10° aage jhuk kar handles pakdein). Pads outer knees/thighs par set karein aur dono sides par barabar pressure rakhne par dhyan dein.',
+                    execution: 'Outer hips ki power se dono ghutno ko bahar ki taraf kholein, bahar 1 second hold karein, aur 2 second mein control ke saath andar laayein (weight plates takrane na dein).',
+                    feelRight: 'Hips ke bilkul outer upper side (Glute Medius) mein clean burn feel hoga—yeh athletic lower body aur level pelvis dono ke liye best hai.',
+                    feelWrong: 'Agar lower back mein khinchav aaye toh weight heavy hai aur aap peeth arch kar rahe hain.'
+                }
             }
         ]
     },
@@ -486,9 +672,11 @@ export const WORKOUT_PLAN = [
         shortDay: 'Thu',
         dayName: 'Thursday',
         title: 'Push B',
-        subtitle: 'Overhead Strength, Side Delts, Chest & Triceps (20 Sets)',
+        subtitle: 'Overhead Strength, Side Delts, Chest & Triceps (7 Exercises • 22 Sets)',
         isRest: false,
-        estimatedMinutes: 70,
+        estimatedMinutes: 75,
+        chartFile: 'thursday.png',
+        chartImage: '/charts/thursday.png',
         exercises: [
             {
                 id: 'thu-1',
@@ -505,7 +693,13 @@ export const WORKOUT_PLAN = [
                 step: 'B2.5',
                 cue: 'Glutes and abs tight, bar path vertical, head through at the top, no leaning back.',
                 alternatives: ['Seated DB Press', 'Machine Press'],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Pair shoulder-width par, glutes aur abs kas kar tight (pelvis bilkul neutral). Bar ko collarbone par rest karein, grip shoulders se just bahar aur elbows bar ke halka aage rakhein.',
+                    execution: 'Chin ko halka peeche hatakar bar ko seedhi vertical line mein upar press karein. Jaise hi bar forehead cross kare, sir ko halka aage (window through) le aayein taaki bar mid-foot ke upar lock ho.',
+                    feelRight: 'Front & side shoulders aur triceps mein solid strength load aur upper body stability feel hogi.',
+                    feelWrong: 'Agar lower back mein dard aaye, toh aap peeche jhuk kar incline bench bana rahe hain—glutes squeeze karein aur weight kam karein.'
+                }
             },
             {
                 id: 'thu-2',
@@ -522,7 +716,13 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Shoulders pinned back into the seat, drive through the palms, control the stretch.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Seat height aise adjust karein ki handles mid-lower chest ke level par aayein. Shoulder blades seat mein peeche daba kar chest bahar nikaalein.',
+                    execution: 'Palms se aage press karein bina shoulders ko seat se aage uthaye. 2–3 second mein slow peeche laayein taaki chest mein full stretch mile.',
+                    feelRight: 'Poore pectoral (Chest) area mein bina balance ki tension ke pure pump feel hoga.',
+                    feelWrong: 'Agar shoulder ke aage pain aaye toh seat bahut neeche hai (handles collarbones ke paas aa rahe hain)—seat upar karein.'
+                }
             },
             {
                 id: 'thu-3',
@@ -539,7 +739,13 @@ export const WORKOUT_PLAN = [
                 step: 'S1',
                 cue: 'Pulley low, sweep the arm out and up with a slight lean away, constant tension.',
                 alternatives: ['DB Lateral Raise', 'Machine Lateral Raise'],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Cable pulley ko wrist/hip height par rakhein (bilkul zameen se thoda upar—is height par stretch best milta hai). Machine ke side khade hon aur far hand se handle pakdein.',
+                    execution: 'Cable ko body ke saamne ya peeche se guzaar kar working arm ko bahar-upar shoulder level tak sweep karein. Slow neeche laayein taaki neeche bhi tension bani rahe.',
+                    feelRight: 'Side Delt mein shuru se lekar end tak constant burning pump feel hoga—broad shoulders ke liye best exercise.',
+                    feelWrong: 'Agar traps/gardan mein tension aaye toh shoulder neeche drop rakhein aur arm ko upar nahi balki deewar ki taraf door le jaane ka sochein.'
+                }
             },
             {
                 id: 'thu-4',
@@ -556,7 +762,13 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Soft elbows, hug a wide tree, deep controlled stretch, squeeze at the centre.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Seat aise set karein ki haath mid-chest level par hon. Handles ko bahut peeche mat set karein (comfortable stretch notch rakhein). Chest up, shoulders back.',
+                    execution: 'Haathon ko nahi balki apni elbows (inner biceps) ko aapas mein milaane ki koshish karein. Centre mein 1 second squeeze, aur slow peeche stretch.',
+                    feelRight: 'Outer se lekar inner chest line tak full stretch aur strong squeeze feel hoga.',
+                    feelWrong: 'Agar front shoulder mein khinchav aaye toh handles zyada peeche set hain ya shoulders aage roll ho rahe hain.'
+                }
             },
             {
                 id: 'thu-5',
@@ -588,6 +800,12 @@ export const WORKOUT_PLAN = [
                             assisted: false
                         }
                     ]
+                },
+                guide: {
+                    setup: 'Dips ke liye shoulders neeche press karein, torso 15° aage jhukayein aur elbows peeche tucked rakhein. Skull Crusher ke liye flat bench par let kar arms vertical se 10° peeche tilt rakhein.',
+                    execution: 'Dips mein 90° elbow bend tak slow neeche jayein aur upar press karein. Skull Crusher mein bar ko maathe ke peeche (sir ke upar) le jaakar stretch karein aur upar extend karein.',
+                    feelRight: 'Triceps aur lower chest (dips mein) mein strong stretch aur heavy contraction feel hoga.',
+                    feelWrong: 'Agar front shoulder ya elbow mein sharp pinch aaye, toh depth thodi kam karein ya EZ Skull Crusher variant select karein.'
                 }
             },
             {
@@ -605,7 +823,36 @@ export const WORKOUT_PLAN = [
                 step: 'S1',
                 cue: 'Hinge forward, push the hands out and back, no shrugging.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Incline bench par chest tika kar (ya hip hinge karke) light dumbbells pakdein. Arms neeche hang karein, palms ek dusre ki taraf ya peeche.',
+                    execution: 'Shoulder blades ko zor se peeche pinch karne ki jagah haathon ko 45° bahar aur door sweep karein (elbow height shoulder line se just neeche).',
+                    feelRight: 'Kandhe ke bilkul peeche chhote ball (Rear Delts) mein sharp localized burn feel hoga.',
+                    feelWrong: 'Agar peeth ke beech (traps) mein zyada pressure aa raha hai, toh aap shoulder blades squeeze kar rahe hain ya weight zyada heavy hai.'
+                }
+            },
+            {
+                id: 'thu-7',
+                name: 'Single-Arm Cable Triceps Pushdown',
+                sets: 2,
+                repMin: 12,
+                repMax: 15,
+                repLabel: '12-15 / arm',
+                type: 'isolation',
+                restSec: 60,
+                targetMuscle: 'Triceps (Symmetry)',
+                primaryGroup: 'Triceps',
+                secondaryGroups: [],
+                step: 'PIN',
+                cue: 'No attachment or single handle, elbow pinned beside torso, extend fully down and slightly back.',
+                alternatives: ['Single-Arm Rope Pushdown'],
+                flags: { unilateral: true, updatedInV2: true },
+                guide: {
+                    setup: 'High pulley par single handle (ya seedha rubber ball) pakdein. Halka sa side turn lein taaki cable arm ki seedh mein aaye. Working elbow ribs ke paas lock rakhein.',
+                    execution: 'Forearm ko poora neeche extend karke halka sa peeche hip ke paas lock karein aur 1 second triceps squeeze karein. Weak arm se pehle start karein.',
+                    feelRight: 'Triceps ke lateral aur medial head mein clean isolation burn—dono arms ka size barabar rakhta hai.',
+                    feelWrong: 'Agar shoulder aage ghoom raha hai ya elbow aage-peeche hil raha hai, toh pin ek notch halka karein.'
+                }
             }
         ]
     },
@@ -614,9 +861,11 @@ export const WORKOUT_PLAN = [
         shortDay: 'Fri',
         dayName: 'Friday',
         title: 'Pull B',
-        subtitle: 'Lat Thickness, V-Taper Sweep, Rear Delts & Biceps (18 Sets)',
+        subtitle: 'Lat Thickness, V-Taper Sweep, Rear Delts, Biceps & Forearms (7 Exercises • 22 Sets)',
         isRest: false,
-        estimatedMinutes: 70,
+        estimatedMinutes: 75,
+        chartFile: 'friday.png',
+        chartImage: '/charts/friday.png',
         exercises: [
             {
                 id: 'fri-1',
@@ -633,7 +882,13 @@ export const WORKOUT_PLAN = [
                 step: 'DB',
                 cue: 'Row in an arc toward the hip pocket, let the shoulder blade stretch at the bottom.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'One-Arm DB Row ke liye ek haath aur ghutna bench par (ya free hand incline bench par) tika kar peeth bilkul flat rakhein. Chest-Supported Row mein chest pad se chipka kar rakhein.',
+                    execution: 'Dumbbell ko seedha upar chest par mat kheenchein—ek curve (J-arc) mein apni hip pocket ki taraf pull karein. Neeche aate waqt shoulder blade ko poora stretch hone dein.',
+                    feelRight: 'Outer aur lower Lats mein deep stretch aur thick back contraction feel hoga.',
+                    feelWrong: 'Agar torso twist ho raha hai ya bicep zyada jal raha hai, toh weight kam karein aur elbow ko hip ki taraf drive karein.'
+                }
             },
             {
                 id: 'fri-2',
@@ -650,7 +905,13 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Elbows forward and tucked, drive down to the upper chest.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Shoulder-width neutral-grip handle (palms ek dusre ke saamne) lagayein. Thigh pad tight lock karein aur bilkul seedhe ya 10° peeche baithein.',
+                    execution: 'Elbows ko aage aur body ke kareeb rakh kar seedha neeche hips ki taraf drive karein jab tak handle upper chest tak na aa jaye. Upar full stretch lein.',
+                    feelRight: 'Lats ke lower aur front-side hisse mein zabardast vertical stretch aur V-taper thickness feel hogi.',
+                    feelWrong: 'Agar elbows bahar phail rahe hain ya aap 45° peeche let rahe hain, toh load lats se hat kar upper back par chala jayega.'
+                }
             },
             {
                 id: 'fri-3',
@@ -667,7 +928,13 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Arms nearly straight, sweep the bar to the thighs using the lats only.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'High pulley par rope ya straight bar lagayein. 2 kadam peeche hokar hips se 30° aage jhukein (peeth flat). Arms sir ke upar poora stretch, elbows mein halka soft bend fix rakhein.',
+                    execution: 'Bina elbows ko bend kiye bar ko ek bade arc mein thighs tak neeche sweep karein—chest upar kholein aur bottom par lats ko 1 second hard squeeze karein.',
+                    feelRight: 'Pure Lats (bagal se kamar tak) mein zero-bicep involvement ke saath intense burn feel hoga.',
+                    feelWrong: 'Agar triceps zyada thak rahe hain, toh aap elbows ko bend karke pushdown bana rahe hain—elbow angle bilkul lock rakhein.'
+                }
             },
             {
                 id: 'fri-4',
@@ -684,7 +951,13 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Chest on the pad, sweep the arms back without shrugging.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Machine ki taraf munh karke baithein, chest pad par press karein. Seat height aise rakhein ki handles shoulders ke level par hon. Neutral ya palms-down grip use karein.',
+                    execution: 'Shoulders neeche relax rakh kar arms ko bahar-peeche wide sweep karein (torso ki line ke just peeche tak, usse zyada peeche mat le jayein).',
+                    feelRight: 'Kandhe ke bilkul peeche (Rear Delts) mein deep burn feel hoga.',
+                    feelWrong: 'Agar handles bahut peeche le ja rahe hain toh shoulder blades aapas mein takra kar traps kaam karne lagenge.'
+                }
             },
             {
                 id: 'fri-5',
@@ -701,7 +974,13 @@ export const WORKOUT_PLAN = [
                 step: 'DB',
                 cue: 'Bench at 45–60°, let the arms hang behind the torso for a full stretch before each curl.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Bench ko 45°–60° par set karein. Peeth aur sir pad par tika kar dono arms ko torso ke peeche seedha neeche latakne dein (palms aage ki taraf).',
+                    execution: 'Elbows ko peeche hi lock rakh kar dumbbells upar curl karein. Top par 1 second squeeze aur 3 second mein slow poora neeche stretch hone dein.',
+                    feelRight: 'Bicep ke outer/upper hisse (Long Head — bicep peak) mein gehra stretch aur intense pump feel hoga.',
+                    feelWrong: 'Agar front shoulder mein khinchav ya dard aaye, toh bench thoda zyada seedha (60°) karein aur elbows aage mat khiskein.'
+                }
             },
             {
                 id: 'fri-6',
@@ -718,7 +997,36 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Constant tension, squeeze at the top.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Low pulley par straight ya EZ bar lagayein. Machine se 1 kadam peeche khade hon taaki bottom par bhi cable mein tension rahe. Elbows sides par fixed.',
+                    execution: 'Smoothly shoulders ki taraf curl karein, top par pinky finger ko halka andar twist karke squeeze karein, aur 2 second mein slow neeche laayein.',
+                    feelRight: 'Poore bicep mein start se finish tak lagatar blood pump feel hoga.',
+                    feelWrong: 'Agar kamar peeche jhuk rahi hai toh pin 1–2 notches kam karein.'
+                }
+            },
+            {
+                id: 'fri-7',
+                name: 'Reverse EZ-Bar Curl',
+                sets: 3,
+                repMin: 12,
+                repMax: 15,
+                repLabel: '12-15',
+                type: 'isolation',
+                restSec: 60,
+                targetMuscle: 'Forearms & Brachialis',
+                primaryGroup: 'Biceps',
+                secondaryGroups: [],
+                step: 'B2.5',
+                cue: 'Overhand grip (knuckles up), wrists straight, elbows pinned to ribs, slow 2 s negative.',
+                alternatives: ['Reverse Cable Curl'],
+                flags: { updatedInV2: true },
+                guide: {
+                    setup: 'EZ-bar ko overhand grip (hatheliyan neeche, knuckles upar) se shoulder-width par pakdein. Wrists bilkul straight (neeche jhuki nahi honi chahiye) aur elbows ribs par fixed.',
+                    execution: 'Bar ko chest tak curl karein, top par forearm aur outer arm squeeze karein, aur 2–3 second mein slow control se neeche laayein.',
+                    feelRight: 'Forearms ke upar wale hisse (Brachioradialis) aur outer bicep mein zabardast vascular pump feel hoga—t-shirt mein aesthetic arms ke liye must hai.',
+                    feelWrong: 'Agar wrist joint mein dard aaye toh straight bar ki jagah EZ-bar ya cable use karein aur weight light rakhein.'
+                }
             }
         ]
     },
@@ -727,9 +1035,11 @@ export const WORKOUT_PLAN = [
         shortDay: 'Sat',
         dayName: 'Saturday',
         title: 'Legs B',
-        subtitle: 'Glutes, Quads, Hamstrings, Calves, Side Delts & Abs (22 Sets)',
+        subtitle: 'Glutes, Quads, Hamstrings, Calves, Side Delts & Abs (7 Exercises • 22 Sets)',
         isRest: false,
-        estimatedMinutes: 70,
+        estimatedMinutes: 75,
+        chartFile: 'saturday.png',
+        chartImage: '/charts/saturday.png',
         exercises: [
             {
                 id: 'sat-1',
@@ -746,7 +1056,13 @@ export const WORKOUT_PLAN = [
                 step: 'DB',
                 cue: 'Rear foot on the bench, slight forward lean, lower the back knee straight down.',
                 alternatives: ['Smith Split Squat'],
-                flags: { unilateral: true }
+                flags: { unilateral: true },
+                guide: {
+                    setup: 'Bench se ~2–2.5 feet aage front foot rakhein aur peeche wala pair bench par (laces down). Hips seedhe saamne (pelvis level) aur torso halka 10–15° aage lean rakhein.',
+                    execution: 'Peechle ghutne ko seedha zameen ki taraf neeche le jayein jab tak front thigh zameen ke parallel na aa jaye. Front heel aur mid-foot se upar drive karein. Weak leg se start karein.',
+                    feelRight: 'Front leg ke Quad aur Glute mein deep stretch aur burning pressure feel hoga—single-leg symmetry ke liye king exercise hai.',
+                    feelWrong: 'Agar peechle pair ke quad mein zyada pressure aa raha hai, toh aap peechle pair par weight daal rahe hain—85% weight front leg par rakhein.'
+                }
             },
             {
                 id: 'sat-2',
@@ -763,7 +1079,13 @@ export const WORKOUT_PLAN = [
                 step: 'B5',
                 cue: 'Chin tucked, drive through the heels to full hip lockout, squeeze for 1 s.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Upper back (shoulder blades ke just neeche) bench edge par tikayein. Barbell pad hips ke crease par rakhein. Pair aise rakhein ki top position par shins bilkul 90° vertical hon.',
+                    execution: 'Chin ko chest ki taraf tuck rakhein (aankhein saamne, upar ceiling par nahi). Heels se push karke hips upar lockout karein, top par glutes 1 second squeeze karein.',
+                    feelRight: 'Sirf Glutes mein strong top squeeze feel hona chahiye.',
+                    feelWrong: 'Agar lower back mein dard ho toh aap top par kamar hyperextend kar rahe hain; agar hamstrings mein cramp aaye toh pair thode paas laayein; agar quads mein feel ho toh pair thode aage karein.'
+                }
             },
             {
                 id: 'sat-3',
@@ -780,7 +1102,13 @@ export const WORKOUT_PLAN = [
                 step: 'B5',
                 cue: 'Back flat on the pad, go below parallel with the knees tracking over the toes.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Hack squat mein poori peeth aur hips pad se chipka kar pair platform ke lower-mid mein shoulder-width rakhein. Smith squat mein bar upper traps par aur pair bar se 4–6 inch aage rakhein.',
+                    execution: 'Saans pet mein bhar kar core brace karein, 3 second mein slow neeche parallel ke neeche tak jayein (ghutne toes ki direction mein). Heels zameen par rakh kar upar drive karein.',
+                    feelRight: 'Poore front thighs (Quads) mein deep stretch aur massive pump feel hoga.',
+                    feelWrong: 'Agar heels uth rahi hain toh pair thode aage rakhein; agar knees andar gir rahi hain toh ghutno ko bahar toes ki taraf push karein.'
+                }
             },
             {
                 id: 'sat-4',
@@ -797,7 +1125,13 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Thigh pad snug, curl the heels all the way under the seat.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Lap pad ko thighs par tightly press karke lock karein taaki hips bilkul na uthein. Ankle pad heels ke upar set karein.',
+                    execution: 'Heels ko seat ke neeche tak full range mein curl karein, 1 second squeeze, phir 3 second mein slow upar stretch.',
+                    feelRight: 'Hamstrings mein bottom se top tak complete tension aur burn feel hoga.',
+                    feelWrong: 'Agar hips seat se uth rahi hain toh lap pad loose hai ya weight zyada heavy hai.'
+                }
             },
             {
                 id: 'sat-5',
@@ -814,7 +1148,13 @@ export const WORKOUT_PLAN = [
                 step: 'B5',
                 cue: 'Full pause at the bottom stretch and at the top.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Knee pad ghutno ke bilkul upar (thighs ke end par) set karein. Balls of feet footplate par rakhein, heels free.',
+                    execution: 'Heels poora neeche drop karke 2 second stretch hold karein, phir upar panjo par high rise karke 1 second squeeze karein.',
+                    feelRight: 'Lower calf aur pindli ke andar wale hisse (Soleus) mein deep burn feel hoga—yeh calf ko chauda banata hai.',
+                    feelWrong: 'Agar bounce karke tez reps kar rahe hain toh Achilles tendon load le lega aur muscle grow nahi hoga.'
+                }
             },
             {
                 id: 'sat-6',
@@ -831,7 +1171,13 @@ export const WORKOUT_PLAN = [
                 step: 'S1',
                 cue: 'Bonus V-taper volume: strict form, zero momentum.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'Light weight lein kyunki yeh high-rep (15–20) bonus V-taper pump set hai. Torso 10° forward lean, shoulders down & relaxed.',
+                    execution: 'Arms ko 20–30° aage wale plane mein bahar-upar shoulder level tak uthayein. 2 second slow neeche—zero body swing.',
+                    feelRight: 'Side delts mein crazy burning pump feel hoga—3x/week frequency se shoulders jaldi wide dikhte hain.',
+                    feelWrong: 'Agar gardan ya lower back hile toh weight turant kam karein.'
+                }
             },
             {
                 id: 'sat-7',
@@ -848,7 +1194,13 @@ export const WORKOUT_PLAN = [
                 step: 'PIN',
                 cue: 'Hips still, flex the spine bringing the elbows toward the knees.',
                 alternatives: [],
-                flags: {}
+                flags: {},
+                guide: {
+                    setup: 'High pulley par rope lagakar machine ke saamne ghutno par baithein. Rope ke ends ko forehead/ears ke paas fix kar dein (haath poore set mein nahi hilenge). Hips ko heels ke upar lock rakhein.',
+                    execution: 'Saans bahar chhodte hue apni spine (upper back) ko gol karke ribs ko pelvis ki taraf crunch karein (elbows ghutno ya thighs ki taraf aayein). Hips peeche mat khisakne dein.',
+                    feelRight: 'Upper aur middle Abs (6-pack blocks) mein deep cramp jaisa contraction feel hoga.',
+                    feelWrong: 'Agar hips aage-peeche hil rahi hain aur sirf hip flexors ya arms thak rahe hain, toh aap spine flex nahi kar rahe balki sirf kamar se jhuk rahe hain.'
+                }
             }
         ]
     },
@@ -860,6 +1212,8 @@ export const WORKOUT_PLAN = [
         subtitle: '20–30 min easy walk, light mobility, no lifting',
         isRest: true,
         estimatedMinutes: 30,
+        chartFile: null,
+        chartImage: null,
         exercises: []
     }
 ];
@@ -1252,6 +1606,179 @@ export function computeMealOptionMacros(option, foodDb = INITIAL_FOOD_DATABASE) 
         protein: Number(protein.toFixed(1)),
         carbs: Number(carbs.toFixed(1)),
         fat: Number(fat.toFixed(1))
+    };
+}
+
+export function buildPelvicProtocol(highSideKey = 'right') {
+    const high = highSideKey === 'right' ? 'Right' : 'Left';
+    const low = highSideKey === 'right' ? 'Left' : 'Right';
+
+    return {
+        highSide: high,
+        lowSide: low,
+        totalMinutes: 18,
+        frequency: '5–6 days / week',
+        imbalanceMap: {
+            tight: [
+                `${high} Quadratus Lumborum (QL / Side Waist) — pulls ${high} hip upward`,
+                `${high} Inner Thigh (Adductors) — pulls ${high} hip inward/up`,
+                `${low} Outer Hip (Piriformis / TFL) — pulls ${low} hip downward`
+            ],
+            weak: [
+                `${high} Glute Medius (Outer Hip) — fails to stabilize level pelvis`,
+                `${low} QL & Obliques (Side Core) — fails to lift ${low} hip up`,
+                'Deep Core (Transverse Abdominis) — locks neutral pelvis alignment'
+            ]
+        },
+        habits: [
+            {
+                id: 'hab-stand',
+                label: 'Stand with 50–50% equal weight on both feet (avoid leaning onto one hip)'
+            },
+            {
+                id: 'hab-sit',
+                label: 'Sit evenly on both sit-bones (no crossing legs, no wallet/phone in back pocket)'
+            },
+            {
+                id: 'hab-bag',
+                label: 'Use a dual-strap backpack evenly on both shoulders instead of one-sided bags'
+            },
+            {
+                id: 'hab-sleep',
+                label: 'Place a pillow between knees if side-sleeping to keep pelvis neutral overnight'
+            }
+        ],
+        phases: [
+            {
+                id: 'pelvic-p1',
+                title: 'Phase 1: Release & Stretch Tight Muscles',
+                durationMin: 6,
+                focus: 'Unilateral Mobility • Decompress High-Side Waist',
+                exercises: [
+                    {
+                        id: 'pt-1',
+                        name: `${high} Standing QL Side Bend Stretch`,
+                        standardName: 'Standing Quadratus Lumborum Stretch',
+                        sideTag: `${high} Side Only`,
+                        target: `${high} QL & Side Waist`,
+                        mode: 'hold',
+                        sets: 3,
+                        workSec: 30,
+                        restSec: 15,
+                        prescription: '3 sets × 30 sec hold',
+                        tempo: 'Slow nasal breathing into side ribs',
+                        cue: `Stand tall, raise your ${high} arm overhead, and slowly lean your torso toward the ${low} side until you feel a clean stretch along your ${high} waist.`,
+                        mistake: 'Avoid twisting your chest forward or collapsing your shoulder—stay strictly sideways.'
+                    },
+                    {
+                        id: 'pt-2',
+                        name: `${high} Half-Kneeling Adductor Rock-Back`,
+                        standardName: 'Half-Kneeling Adductor Stretch',
+                        sideTag: `${high} Leg Only`,
+                        target: `${high} Inner Thigh (Adductors)`,
+                        mode: 'hold',
+                        sets: 3,
+                        workSec: 30,
+                        restSec: 15,
+                        prescription: '3 sets × 30 sec hold',
+                        tempo: 'Gentle rock back on exhale',
+                        cue: `Kneel on your ${low} knee and extend your ${high} leg straight out to the side with foot flat. Keep back flat and push hips gently backward.`,
+                        mistake: 'Do not round your lower back to force depth—stop as soon as the inner thigh feels a moderate stretch.'
+                    },
+                    {
+                        id: 'pt-3',
+                        name: `${low} Supine Figure-4 Outer Hip Stretch`,
+                        standardName: 'Supine Piriformis / Reclined Pigeon Stretch',
+                        sideTag: `${low} Hip Only`,
+                        target: `${low} Outer Hip / Piriformis`,
+                        mode: 'hold',
+                        sets: 3,
+                        workSec: 30,
+                        restSec: 15,
+                        prescription: '3 sets × 30 sec hold',
+                        tempo: 'Relax tailbone into the floor',
+                        cue: `Lie on your back with knees bent. Cross your ${low} ankle over your ${high} knee, then pull your ${high} thigh toward your chest.`,
+                        mistake: 'Keep your tailbone and head resting on the mat—do not yank hard if you feel knee discomfort.'
+                    }
+                ]
+            },
+            {
+                id: 'pelvic-p2',
+                title: 'Phase 2: Strengthen & Level the Pelvis',
+                durationMin: 9,
+                focus: 'Activate Weak Glute Medius & Opposite Side Core',
+                exercises: [
+                    {
+                        id: 'pt-4',
+                        name: `${high}-Leg Standing Pelvic Drop & Hike`,
+                        standardName: 'Single-Leg Hip Hike (Step Drill)',
+                        sideTag: `Stand on ${high} Leg`,
+                        target: `${high} Glute Medius + ${low} QL`,
+                        mode: 'reps',
+                        sets: 3,
+                        workSec: 45,
+                        restSec: 45,
+                        prescription: '3 sets × 12 reps (~45s / set)',
+                        tempo: '2s lift • 2s pause at level • 2s lower',
+                        cue: `Stand with your ${high} foot on a 2–4 inch step/book and let your ${low} leg hang off the edge (hold a wall lightly). Keep both knees straight; drop the ${low} hip slightly, then squeeze your ${high} outer glute to hike the ${low} hip back to level.`,
+                        mistake: 'Do not bend the standing knee or lean your upper body sideways—all motion comes purely from the pelvis.'
+                    },
+                    {
+                        id: 'pt-5',
+                        name: `${high} Side-Lying Clamshells`,
+                        standardName: 'Side-Lying Clamshell (Glute Medius Isolation)',
+                        sideTag: `${high} Leg On Top`,
+                        target: `${high} Glute Medius`,
+                        mode: 'reps',
+                        sets: 3,
+                        workSec: 50,
+                        restSec: 40,
+                        prescription: '3 sets × 15 reps (~50s / set)',
+                        tempo: '1s open • 2s squeeze at top • 2s lower',
+                        cue: `Lie on your ${low} side with hips and knees bent ~45–90° and feet stacked together. Open your top (${high}) knee upward without letting your pelvis roll backward.`,
+                        mistake: 'Rolling your hips backward turns this into a hip-flexor move—keep your back near a wall to check form.'
+                    },
+                    {
+                        id: 'pt-6',
+                        name: `${low}-Side Modified Side Plank`,
+                        standardName: 'Short-Lever Side Plank (Hip Lift)',
+                        sideTag: `${low} Side Down`,
+                        target: `${low} QL & Lateral Obliques`,
+                        mode: 'hold',
+                        sets: 3,
+                        workSec: 25,
+                        restSec: 40,
+                        prescription: '3 sets × 25–30 sec hold',
+                        tempo: 'Steady brace • breathe through ribs',
+                        cue: `Lie on your ${low} forearm with knees bent (or legs straight if strong). Drive your ${low} hip up toward the ceiling so your body forms a straight line from shoulder to knees.`,
+                        mistake: 'Do not let your bottom shoulder shrug into your ear or allow your hips to sag.'
+                    }
+                ]
+            },
+            {
+                id: 'pelvic-p3',
+                title: 'Phase 3: Neutral Pelvis Core Lock',
+                durationMin: 3,
+                focus: 'Anti-Rotation & Bilateral Symmetry Integration',
+                exercises: [
+                    {
+                        id: 'pt-7',
+                        name: 'Slow Controlled Dead Bug',
+                        standardName: 'Supine Dead Bug (Core Stabilization)',
+                        sideTag: 'Both Sides',
+                        target: 'Deep Core (TVA) & Neutral Pelvis',
+                        mode: 'reps',
+                        sets: 3,
+                        workSec: 50,
+                        restSec: 35,
+                        prescription: '3 sets × 10 reps / side (~50s / set)',
+                        tempo: '3s slow reach • exhale on extension',
+                        cue: 'Lie on your back, arms vertical, knees at 90°. Press your lower back flat into the floor, then slowly lower opposite arm and leg near the ground without arching your spine.',
+                        mistake: 'If your lower back lifts off the floor, reduce how far you extend your leg.'
+                    }
+                ]
+            }
+        ]
     };
 }
 
@@ -2420,14 +2947,15 @@ export default function App() {
                     foodDatabase: parsed.foodDatabase?.length ? parsed.foodDatabase : INITIAL_FOOD_DATABASE,
                     selectedMealOptions:
                         parsed.selectedMealOptions || getDefaultSelectedMealsForTrack(mergedProfile.dietTrack),
-                    activeDrafts:
-                        parsed.activeDrafts ||
-                        buildInitialActiveDrafts(
+                    activeDrafts: {
+                        ...buildInitialActiveDrafts(
                             parsed.lastSessionLogs || INITIAL_LAST_SESSION_LOGS,
                             parsed.rampInEnabled ?? true,
                             parsed.customSteps || {},
                             parsed.variantChoices || { 'thu-5': 'dips' }
-                        )
+                        ),
+                        ...(parsed.activeDrafts || {})
+                    }
                 };
             }
         } catch (e) {
@@ -2933,6 +3461,7 @@ export default function App() {
     const navItems = [
         { id: 'today', label: 'Today', icon: Dumbbell },
         { id: 'cardio', label: 'Cardio', icon: Flame },
+        { id: 'pelvic', label: 'Pelvic', icon: ShieldCheck },
         { id: 'plan', label: 'Plan', icon: Calendar },
         { id: 'nutrition', label: 'Nutrition', icon: Utensils },
         { id: 'progress', label: 'Progress', icon: TrendingUp },
@@ -3299,6 +3828,16 @@ export default function App() {
                             nutritionTotals={nutritionTotals}
                             gainAnalysis={gainAnalysis}
                             handleDietTrackChange={handleDietTrackChange}
+                            showToast={showToast}
+                        />
+                    )}
+
+                    {activeTab === 'pelvic' && (
+                        <PelvicRehabSection
+                            colors={colors}
+                            isDark={isDark}
+                            appState={appState}
+                            setAppState={setAppState}
                             showToast={showToast}
                         />
                     )}
@@ -3853,6 +4392,234 @@ export default function App() {
 // 1. TODAY VIEW COMPONENT
 // ============================================================================
 
+// ============================================================================
+// FULL-SCREEN VISUAL FORM CHART MODAL (ZOOM + DAY SWITCHER + PANEL FOCUS)
+// ============================================================================
+
+function FormChartModal({
+    initialDayIndex,
+    focusExercise = null,
+    onClose,
+    colors,
+    isDark
+}) {
+    const trainingDays = useMemo(
+        () =>
+            [1, 2, 3, 4, 5, 6]
+                .map((idx) => WORKOUT_PLAN.find((d) => d.dayIndex === idx))
+                .filter(Boolean),
+        []
+    );
+
+    const [viewDayIndex, setViewDayIndex] = useState(
+        trainingDays.some((d) => d.dayIndex === initialDayIndex) ? initialDayIndex : 1
+    );
+    const [zoom, setZoom] = useState(1);
+    const [imgError, setImgError] = useState(false);
+
+    const activeChartDay =
+        trainingDays.find((d) => d.dayIndex === viewDayIndex) || trainingDays[0];
+
+    useEffect(() => {
+        setImgError(false);
+        setZoom(1);
+    }, [viewDayIndex]);
+
+    useEffect(() => {
+        const onKeyDown = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [onClose]);
+
+    const cycleZoom = () => {
+        setZoom((prev) => (prev === 1 ? 1.5 : prev === 1.5 ? 2 : 1));
+    };
+
+    const showFocusBanner =
+        focusExercise && viewDayIndex === initialDayIndex;
+
+    return (
+        <div
+            onClick={onClose}
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.92)' }}
+            className="vt-chart-modal-overlay"
+        >
+            <div
+                onClick={(e) => e.stopPropagation()}
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                className="vt-chart-modal-box"
+            >
+                {/* Header */}
+                <div
+                    style={{ borderColor: colors.border }}
+                    className="vt-chart-modal-header"
+                >
+                    <div className="vt-stack-0-5">
+                        <span
+                            style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                            className="vt-badge-xs vt-text-10 vt-font-extrabold vt-uppercase"
+                        >
+                            Red Highlight = Target Muscle Pressure
+                        </span>
+                        <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                            {activeChartDay.dayName}: {activeChartDay.title} Form Chart
+                        </h3>
+                    </div>
+
+                    <div className="vt-flex vt-items-center vt-gap-1-5">
+                        <button
+                            type="button"
+                            onClick={cycleZoom}
+                            style={{
+                                backgroundColor: zoom > 1 ? colors.accent : colors.elevated,
+                                color: zoom > 1 ? colors.accentText : colors.text,
+                                borderColor: zoom > 1 ? colors.accentBorder : colors.border
+                            }}
+                            className="vt-btn vt-h-38 vt-px-3 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold font-mono-num"
+                        >
+                            Zoom {Math.round(zoom * 100)}%
+                        </button>
+
+                        {zoom > 1 && (
+                            <button
+                                type="button"
+                                onClick={() => setZoom(1)}
+                                aria-label="Reset zoom"
+                                style={{
+                                    backgroundColor: colors.elevated,
+                                    borderColor: colors.border,
+                                    color: colors.text
+                                }}
+                                className="vt-icon-btn-44"
+                            >
+                                <RotateCcw size={16} />
+                            </button>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            aria-label="Close chart modal"
+                            style={{
+                                backgroundColor: colors.elevated,
+                                borderColor: colors.border,
+                                color: colors.text
+                            }}
+                            className="vt-icon-btn-44"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Focused Exercise Reminder Strip */}
+                {showFocusBanner && (
+                    <div
+                        style={{
+                            backgroundColor: colors.accentSurface,
+                            borderColor: colors.accentBorder
+                        }}
+                        className="vt-chart-focus-strip"
+                    >
+                        <Sparkles
+                            size={15}
+                            style={{
+                                color: isDark ? colors.accent : colors.text,
+                                flexShrink: 0
+                            }}
+                        />
+                        <span className="vt-text-xs vt-font-extrabold">
+                            Chart mein Panel #{focusExercise.number} dekhein: {focusExercise.name}
+                        </span>
+                    </div>
+                )}
+
+                {/* Mon–Sat Switcher */}
+                <div
+                    style={{ borderColor: colors.border }}
+                    className="vt-chart-day-tabs"
+                >
+                    {trainingDays.map((day) => {
+                        const active = viewDayIndex === day.dayIndex;
+                        return (
+                            <button
+                                key={day.dayIndex}
+                                type="button"
+                                onClick={() => setViewDayIndex(day.dayIndex)}
+                                style={{
+                                    backgroundColor: active ? colors.accent : colors.elevated,
+                                    color: active ? colors.accentText : colors.text,
+                                    borderColor: active ? colors.accentBorder : colors.border
+                                }}
+                                className="vt-btn vt-h-34 vt-px-3 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase vt-nowrap"
+                            >
+                                {day.shortDay} • {day.title}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Image Viewport */}
+                <div
+                    style={{ backgroundColor: colors.elevated }}
+                    className="vt-chart-modal-body"
+                >
+                    {imgError ? (
+                        <div
+                            style={{
+                                backgroundColor: colors.card,
+                                borderColor: colors.warning,
+                                color: colors.text
+                            }}
+                            className="vt-chart-missing-box"
+                        >
+                            <AlertTriangle size={28} style={{ color: colors.warning }} />
+                            <div className="vt-font-extrabold vt-text-sm">
+                                Photo missing: <code>public/charts/{activeChartDay.chartFile}</code>
+                            </div>
+                            <p className="vt-text-xs" style={{ color: colors.muted }}>
+                                Apni image ko <strong>public/charts/{activeChartDay.chartFile}</strong> naam se save karein aur page refresh karein—yahan turant high-res chart load ho jayega.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="vt-chart-img-scroll">
+                            <img
+                                src={activeChartDay.chartImage}
+                                alt={`${activeChartDay.dayName} ${activeChartDay.title} Form Chart`}
+                                onClick={cycleZoom}
+                                onError={() => setImgError(true)}
+                                style={{
+                                    width: `${zoom * 100}%`,
+                                    maxWidth: zoom === 1 ? '680px' : 'none',
+                                    cursor: zoom >= 2 ? 'zoom-out' : 'zoom-in'
+                                }}
+                                className="vt-chart-full-img"
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div
+                    style={{ borderColor: colors.border, color: colors.muted }}
+                    className="vt-chart-modal-footer vt-text-11"
+                >
+                    <span>
+                        <strong style={{ color: isDark ? colors.accent : colors.text }}>Tip:</strong> Photo par tap karke zoom karein (100% → 150% → 200%). Har rep mein 2–3s slow neeche laayein.
+                    </span>
+                    <span className="font-mono-num">{activeChartDay.chartImage}</span>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ============================================================================
+// 1. TODAY VIEW COMPONENT (UPGRADED WITH VISUAL FORM CHARTS & GUIDE CONTROLS)
+// ============================================================================
+
 function TodayView({
     colors,
     isDark,
@@ -3876,13 +4643,45 @@ function TodayView({
     setRestTimer,
     showToast
 }) {
+    const [openGuides, setOpenGuides] = useState({});
+    const [chartModalState, setChartModalState] = useState(null); // { dayIndex, focusExercise }
+    const [thumbFailed, setThumbFailed] = useState(false);
+
+    useEffect(() => {
+        setThumbFailed(false);
+    }, [activeDayPlan.dayIndex]);
+
+    const toggleGuide = (exerciseId) => {
+        setOpenGuides((prev) => ({
+            ...prev,
+            [exerciseId]: !prev[exerciseId]
+        }));
+    };
+
+    const allGuidesExpanded = useMemo(() => {
+        if (activeDayPlan.isRest || !activeDayPlan.exercises.length) return false;
+        return activeDayPlan.exercises.every((ex) => Boolean(openGuides[ex.id]));
+    }, [activeDayPlan, openGuides]);
+
+    const handleToggleAllGuides = () => {
+        if (activeDayPlan.isRest) return;
+        const nextVal = !allGuidesExpanded;
+        setOpenGuides((prev) => {
+            const updated = { ...prev };
+            activeDayPlan.exercises.forEach((ex) => {
+                updated[ex.id] = nextVal;
+            });
+            return updated;
+        });
+    };
+
     const orderedDays = [1, 2, 3, 4, 5, 6, 0].map((idx) =>
         WORKOUT_PLAN.find((d) => d.dayIndex === idx)
     );
 
     const sessionProgress = useMemo(() => {
         if (activeDayPlan.isRest) {
-            return { completedSets: 0, totalSets: 0, volumeKg: 0, overloadReadyCount: 0 };
+            return { completedSets: 0, totalSets: 0, volumeKg: 0, overloadReadyCount: 0, pct: 0 };
         }
         let completedSets = 0;
         let totalSets = 0;
@@ -3910,7 +4709,8 @@ function TodayView({
             });
         });
 
-        return { completedSets, totalSets, volumeKg: Math.round(volumeKg), overloadReadyCount };
+        const pct = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
+        return { completedSets, totalSets, volumeKg: Math.round(volumeKg), overloadReadyCount, pct };
     }, [
         activeDayPlan,
         appState.activeDrafts,
@@ -4020,7 +4820,7 @@ function TodayView({
                                         className="vt-ramp-btn"
                                     >
                                         {appState.rampInEnabled
-                                            ? 'Wk 1–2 Ramp-In: ON (2 sets @ 3–4 RIR)'
+                                            ? 'Wk 1–2 Ramp-In: ON (Max 3 sets @ 3–4 RIR)'
                                             : 'Full Volume: ON (1–3 RIR)'}
                                     </button>
                                 )}
@@ -4082,35 +4882,64 @@ function TodayView({
                     </div>
 
                     {!activeDayPlan.isRest && (
-                        <div className="vt-hero-metrics" style={{ borderColor: colors.border }}>
-                            <div>
-                                <div className="vt-stat-caption" style={{ color: colors.muted }}>
-                                    Sets Logged
+                        <>
+                            <div className="vt-hero-metrics" style={{ borderColor: colors.border }}>
+                                <div>
+                                    <div className="vt-stat-caption" style={{ color: colors.muted }}>
+                                        Sets Logged
+                                    </div>
+                                    <div className="vt-metric-val font-display">
+                                        {sessionProgress.completedSets} / {sessionProgress.totalSets}
+                                    </div>
                                 </div>
-                                <div className="vt-metric-val font-display">
-                                    {sessionProgress.completedSets} / {sessionProgress.totalSets}
+                                <div>
+                                    <div className="vt-stat-caption" style={{ color: colors.muted }}>
+                                        Live Volume
+                                    </div>
+                                    <div className="vt-metric-val font-display">
+                                        {formatWeight(sessionProgress.volumeKg)} {appState.unit}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="vt-stat-caption" style={{ color: colors.muted }}>
+                                        Effort Target
+                                    </div>
+                                    <div
+                                        style={{ color: isDark ? colors.accent : colors.text }}
+                                        className="vt-metric-val font-display"
+                                    >
+                                        {appState.rampInEnabled ? '3–4 RIR' : '1–3 RIR'}
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <div className="vt-stat-caption" style={{ color: colors.muted }}>
-                                    Live Volume
-                                </div>
-                                <div className="vt-metric-val font-display">
-                                    {formatWeight(sessionProgress.volumeKg)} {appState.unit}
-                                </div>
-                            </div>
-                            <div>
-                                <div className="vt-stat-caption" style={{ color: colors.muted }}>
-                                    Effort Target
-                                </div>
+
+                            {/* Live Workout Completion Bar */}
+                            <div className="vt-stack-1">
                                 <div
-                                    style={{ color: isDark ? colors.accent : colors.text }}
-                                    className="vt-metric-val font-display"
+                                    className="vt-between-center vt-text-11 font-mono-num"
+                                    style={{ color: colors.muted }}
                                 >
-                                    {appState.rampInEnabled ? '3–4 RIR' : '1–3 RIR'}
+                                    <span>
+                                        Session Progress ({sessionProgress.pct}%)
+                                        {sessionProgress.overloadReadyCount > 0
+                                            ? ` • ${sessionProgress.overloadReadyCount} Overload Ready`
+                                            : ''}
+                                    </span>
+                                    <span>
+                                        {Math.max(0, sessionProgress.totalSets - sessionProgress.completedSets)} sets left
+                                    </span>
+                                </div>
+                                <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track-sm">
+                                    <div
+                                        style={{
+                                            width: `${sessionProgress.pct}%`,
+                                            backgroundColor: colors.accent
+                                        }}
+                                        className="vt-progress-fill"
+                                    />
                                 </div>
                             </div>
-                        </div>
+                        </>
                     )}
                 </div>
 
@@ -4183,6 +5012,105 @@ function TodayView({
                 </div>
             </div>
 
+            {/* Today's Visual Form Chart Preview Banner + All-Guides Toggle */}
+            {!activeDayPlan.isRest && activeDayPlan.chartImage && (
+                <div
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                    className="vt-card vt-p-4 vt-chart-preview-bar"
+                >
+                    <div className="vt-chart-preview-left">
+                        {!thumbFailed ? (
+                            <img
+                                src={activeDayPlan.chartImage}
+                                alt={`${activeDayPlan.dayName} Visual Form Chart`}
+                                onClick={() =>
+                                    setChartModalState({
+                                        dayIndex: activeDayPlan.dayIndex,
+                                        focusExercise: null
+                                    })
+                                }
+                                onError={() => setThumbFailed(true)}
+                                style={{ borderColor: colors.border }}
+                                className="vt-chart-thumb"
+                            />
+                        ) : (
+                            <div
+                                onClick={() =>
+                                    setChartModalState({
+                                        dayIndex: activeDayPlan.dayIndex,
+                                        focusExercise: null
+                                    })
+                                }
+                                style={{
+                                    backgroundColor: colors.elevated,
+                                    borderColor: colors.border,
+                                    color: colors.muted
+                                }}
+                                className="vt-chart-thumb-placeholder font-mono-num"
+                            >
+                                {activeDayPlan.chartFile}
+                            </div>
+                        )}
+
+                        <div className="vt-stack-0-5">
+                            <div className="vt-row-wrap vt-gap-1-5">
+                                <span
+                                    style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                                    className="vt-badge-xs vt-text-10 vt-font-extrabold vt-uppercase"
+                                >
+                                    Visual Form Chart
+                                </span>
+                                <span
+                                    className="vt-text-10 font-mono-num"
+                                    style={{ color: colors.muted }}
+                                >
+                                    /charts/{activeDayPlan.chartFile}
+                                </span>
+                            </div>
+                            <div className="vt-font-extrabold vt-text-sm">
+                                {activeDayPlan.dayName} ({activeDayPlan.title}) — Saari 7 Exercises Ka Sahi Posture & Red Target Muscle
+                            </div>
+                            <div className="vt-text-xs" style={{ color: colors.muted }}>
+                                Set se pehle 1 tap mein full-screen zoom karke exact angle aur position verify karein.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="vt-chart-banner-actions">
+                        <button
+                            type="button"
+                            onClick={handleToggleAllGuides}
+                            style={{
+                                backgroundColor: colors.elevated,
+                                borderColor: colors.border,
+                                color: colors.text
+                            }}
+                            className="vt-btn vt-h-44 vt-px-3 vt-box-xl vt-text-11 vt-font-extrabold vt-uppercase vt-nowrap"
+                        >
+                            {allGuidesExpanded ? 'Collapse Guides' : 'Expand All Guides'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setChartModalState({
+                                    dayIndex: activeDayPlan.dayIndex,
+                                    focusExercise: null
+                                })
+                            }
+                            style={{
+                                backgroundColor: colors.accent,
+                                color: colors.accentText,
+                                borderColor: colors.accentBorder
+                            }}
+                            className="vt-finish-btn vt-shrink-0"
+                        >
+                            <Sparkles size={15} />
+                            <span>Open Form Chart</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Sunday Rest Day View */}
             {activeDayPlan.isRest ? (
                 <div
@@ -4201,32 +5129,58 @@ function TodayView({
                     <p style={{ color: colors.muted }} className="vt-rest-day-desc">
                         Light mobility, no lifting. Keep nutrition identical to training days (2,900 kcal & 130 g protein from whole Indian foods) and sleep ≥ 7.5 hours.
                     </p>
-                    <button
-                        onClick={() => {
-                            setAppState((prev) => ({ ...prev, sundayWalkDone: !prev.sundayWalkDone }));
-                            showToast('Sunday 20–30 min walk status updated!');
-                        }}
-                        style={{
-                            backgroundColor: appState.sundayWalkDone ? colors.accent : colors.elevated,
-                            color: appState.sundayWalkDone ? colors.accentText : colors.text,
-                            borderColor: appState.sundayWalkDone ? colors.accentBorder : colors.border
-                        }}
-                        className="vt-walk-btn"
-                    >
-                        <Check size={16} strokeWidth={2.5} />
-                        <span>
-                            {appState.sundayWalkDone
-                                ? '20–30 Min Walk Completed ✓'
-                                : 'Mark 20–30 Min Walk Complete'}
-                        </span>
-                    </button>
+                    <div className="vt-row-wrap vt-gap-2" style={{ justifyContent: 'center' }}>
+                        <button
+                            onClick={() => {
+                                setAppState((prev) => ({ ...prev, sundayWalkDone: !prev.sundayWalkDone }));
+                                showToast('Sunday 20–30 min walk status updated!');
+                            }}
+                            style={{
+                                backgroundColor: appState.sundayWalkDone ? colors.accent : colors.elevated,
+                                color: appState.sundayWalkDone ? colors.accentText : colors.text,
+                                borderColor: appState.sundayWalkDone ? colors.accentBorder : colors.border
+                            }}
+                            className="vt-walk-btn"
+                        >
+                            <Check size={16} strokeWidth={2.5} />
+                            <span>
+                                {appState.sundayWalkDone
+                                    ? '20–30 Min Walk Completed ✓'
+                                    : 'Mark 20–30 Min Walk Complete'}
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setChartModalState({ dayIndex: 1, focusExercise: null })
+                            }
+                            style={{
+                                backgroundColor: colors.elevated,
+                                borderColor: colors.border,
+                                color: colors.text
+                            }}
+                            className="vt-walk-btn"
+                        >
+                            <Sparkles size={15} />
+                            <span>Revise Mon–Sat Form Charts</span>
+                        </button>
+                    </div>
                 </div>
             ) : (
                 /* Exercise Cards List */
                 <div className="vt-stack-3-5">
                     {activeDayPlan.exercises.map((exercise, exIdx) => {
                         const limit = getEffectiveSetCount(exercise);
-                        const draftSets = (appState.activeDrafts[exercise.id] || []).slice(0, limit);
+                        const existingDraft = appState.activeDrafts[exercise.id];
+                        const draftSets = Array.from({ length: limit }, (_, idx) => {
+                            if (existingDraft?.[idx]) return existingDraft[idx];
+                            return {
+                                setNumber: idx + 1,
+                                weight: exercise.flags?.assisted ? 25 : 0,
+                                reps: exercise.repMin,
+                                completed: false
+                            };
+                        });
                         const prevSets = appState.lastSessionLogs[exercise.id] || [];
                         const activeVariantId =
                             appState.variantChoices?.[exercise.id] ||
@@ -4242,6 +5196,8 @@ function TodayView({
                         const isAssisted = Boolean(
                             activeVariantObj ? activeVariantObj.assisted : exercise.flags?.assisted
                         );
+                        const isGuideOpen = Boolean(openGuides[exercise.id]);
+                        const allSetsDone = draftSets.length > 0 && draftSets.every((s) => s.completed);
 
                         const overload = calculateProgressiveOverload(
                             exercise,
@@ -4253,7 +5209,10 @@ function TodayView({
                         return (
                             <div
                                 key={exercise.id}
-                                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                                style={{
+                                    backgroundColor: colors.card,
+                                    borderColor: allSetsDone ? colors.accentBorder : colors.border
+                                }}
                                 className="vt-card vt-p-card vt-stack-3-5"
                             >
                                 {/* Exercise Header */}
@@ -4261,7 +5220,11 @@ function TodayView({
                                     <div className="vt-stack-1 vt-min-w-0 vt-flex-1">
                                         <div className="vt-row-wrap vt-gap-1-5">
                                             <span
-                                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                                style={{
+                                                    backgroundColor: allSetsDone ? colors.accent : colors.elevated,
+                                                    color: allSetsDone ? colors.accentText : colors.text,
+                                                    borderColor: allSetsDone ? colors.accentBorder : colors.border
+                                                }}
                                                 className="vt-badge vt-border vt-text-11 vt-font-extrabold font-mono-num"
                                             >
                                                 #{exIdx + 1}
@@ -4271,7 +5234,19 @@ function TodayView({
                                                     style={{ backgroundColor: colors.accent, color: colors.accentText }}
                                                     className="vt-badge-xs vt-text-10 vt-font-extrabold vt-uppercase"
                                                 >
-                                                    ★ Stretch Priority
+                                                    ★ V-Taper Priority
+                                                </span>
+                                            )}
+                                            {allSetsDone && (
+                                                <span
+                                                    style={{
+                                                        backgroundColor: colors.accentSurface,
+                                                        borderColor: colors.accentBorder,
+                                                        color: isDark ? colors.accent : colors.text
+                                                    }}
+                                                    className="vt-badge-xs vt-border vt-text-10 vt-font-extrabold vt-uppercase"
+                                                >
+                                                    Done ✓
                                                 </span>
                                             )}
                                             <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase vt-tracking-wide vt-leading-tight">
@@ -4320,7 +5295,7 @@ function TodayView({
                                                     }}
                                                     className="vt-badge vt-border vt-text-11 vt-font-extrabold vt-uppercase"
                                                 >
-                                                    Unilateral (Per Leg)
+                                                    Unilateral (Per Side)
                                                 </span>
                                             )}
                                         </div>
@@ -4422,7 +5397,7 @@ function TodayView({
                                                 style={{ color: isDark ? colors.accent : colors.text }}
                                             />
                                             <span>
-                                                <strong style={{ color: colors.text }}>Cue:</strong> {exercise.cue}
+                                                <strong style={{ color: colors.text }}>Quick Cue:</strong> {exercise.cue}
                                             </span>
                                         </p>
                                     </div>
@@ -4440,6 +5415,180 @@ function TodayView({
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Expandable Form, Position, Target Pressure & Direct Photo Chart Bar */}
+                                {exercise.guide && (
+                                    <div className="vt-guide-wrap">
+                                        <div className="vt-guide-action-row">
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleGuide(exercise.id)}
+                                                style={{
+                                                    backgroundColor: isGuideOpen ? colors.accentSurface : colors.elevated,
+                                                    borderColor: isGuideOpen ? colors.accentBorder : colors.border,
+                                                    color: colors.text
+                                                }}
+                                                className="vt-guide-toggle-btn"
+                                            >
+                                                <span className="vt-flex vt-items-center vt-gap-2">
+                                                    <Info
+                                                        size={15}
+                                                        style={{ color: isDark ? colors.accent : colors.text }}
+                                                    />
+                                                    <span>
+                                                        {isGuideOpen
+                                                            ? 'Hide Form & Feel Guide'
+                                                            : 'Form & Feel Guide (Sahi Position + Pressure)'}
+                                                    </span>
+                                                </span>
+                                                <ChevronRight
+                                                    size={16}
+                                                    className={isGuideOpen ? 'vt-chevron-open' : 'vt-chevron'}
+                                                />
+                                            </button>
+
+                                            {activeDayPlan.chartImage && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setChartModalState({
+                                                            dayIndex: activeDayPlan.dayIndex,
+                                                            focusExercise: {
+                                                                number: exIdx + 1,
+                                                                name: displayName
+                                                            }
+                                                        })
+                                                    }
+                                                    style={{
+                                                        backgroundColor: colors.elevated,
+                                                        borderColor: colors.accentBorder,
+                                                        color: isDark ? colors.accent : colors.text
+                                                    }}
+                                                    className="vt-btn vt-h-40 vt-px-3 vt-box-xl vt-text-11 vt-font-extrabold vt-uppercase vt-gap-1-5 vt-nowrap vt-shrink-0"
+                                                >
+                                                    <Sparkles size={14} />
+                                                    <span>Photo #{exIdx + 1}</span>
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {isGuideOpen && (
+                                            <div
+                                                style={{
+                                                    backgroundColor: colors.elevated,
+                                                    borderColor: colors.border
+                                                }}
+                                                className="vt-guide-panel"
+                                            >
+                                                <div
+                                                    style={{
+                                                        backgroundColor: colors.card,
+                                                        borderColor: colors.border
+                                                    }}
+                                                    className="vt-guide-item"
+                                                >
+                                                    <div
+                                                        className="vt-guide-label"
+                                                        style={{ color: isDark ? colors.accent : colors.text }}
+                                                    >
+                                                        1. Sahi Position (Setup)
+                                                    </div>
+                                                    <p className="vt-guide-text" style={{ color: colors.muted }}>
+                                                        {exercise.guide.setup}
+                                                    </p>
+                                                </div>
+
+                                                <div
+                                                    style={{
+                                                        backgroundColor: colors.card,
+                                                        borderColor: colors.border
+                                                    }}
+                                                    className="vt-guide-item"
+                                                >
+                                                    <div
+                                                        className="vt-guide-label"
+                                                        style={{ color: isDark ? colors.accent : colors.text }}
+                                                    >
+                                                        2. Kaise Karein (Execution)
+                                                    </div>
+                                                    <p className="vt-guide-text" style={{ color: colors.muted }}>
+                                                        {exercise.guide.execution}
+                                                    </p>
+                                                </div>
+
+                                                <div
+                                                    style={{
+                                                        backgroundColor: colors.card,
+                                                        borderColor: colors.success
+                                                    }}
+                                                    className="vt-guide-item"
+                                                >
+                                                    <div
+                                                        className="vt-guide-label vt-flex vt-items-center vt-gap-1-5"
+                                                        style={{ color: colors.success }}
+                                                    >
+                                                        <CheckCircle2 size={14} />
+                                                        <span>3. Sahi Pressure Kaha Feel Hoga</span>
+                                                    </div>
+                                                    <p className="vt-guide-text" style={{ color: colors.text }}>
+                                                        {exercise.guide.feelRight}
+                                                    </p>
+                                                </div>
+
+                                                <div
+                                                    style={{
+                                                        backgroundColor: colors.card,
+                                                        borderColor: colors.warning
+                                                    }}
+                                                    className="vt-guide-item"
+                                                >
+                                                    <div
+                                                        className="vt-guide-label vt-flex vt-items-center vt-gap-1-5"
+                                                        style={{ color: colors.warning }}
+                                                    >
+                                                        <AlertTriangle size={14} />
+                                                        <span>4. Galat Pressure Warning</span>
+                                                    </div>
+                                                    <p className="vt-guide-text" style={{ color: colors.muted }}>
+                                                        {exercise.guide.feelWrong}
+                                                    </p>
+                                                </div>
+
+                                                {activeDayPlan.chartImage && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setChartModalState({
+                                                                dayIndex: activeDayPlan.dayIndex,
+                                                                focusExercise: {
+                                                                    number: exIdx + 1,
+                                                                    name: displayName
+                                                                }
+                                                            })
+                                                        }
+                                                        style={{
+                                                            backgroundColor: colors.card,
+                                                            borderColor: colors.accentBorder,
+                                                            color: colors.text
+                                                        }}
+                                                        className="vt-guide-chart-btn"
+                                                    >
+                                                        <span className="vt-flex vt-items-center vt-gap-2">
+                                                            <Sparkles
+                                                                size={14}
+                                                                style={{ color: isDark ? colors.accent : colors.text }}
+                                                            />
+                                                            <span>
+                                                                {activeDayPlan.dayName} Chart Photo Kholein — Panel #{exIdx + 1} ({displayName})
+                                                            </span>
+                                                        </span>
+                                                        <ChevronRight size={15} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* Last Session Numbers + Progressive Overload Banner */}
                                 <div
@@ -4460,7 +5609,7 @@ function TodayView({
                                                                 `${isAssisted ? 'Assist ' : ''}${formatWeight(s.weight)}${appState.unit
                                                                 } × ${s.reps}`
                                                         )
-                                                        .join('  |  ')
+                                                        .join('  |  ')
                                                     : 'First session — log your starting working weights'}
                                             </span>
                                         </div>
@@ -4608,6 +5757,17 @@ function TodayView({
                         );
                     })}
                 </div>
+            )}
+
+            {/* Full-Screen Visual Form Chart Modal */}
+            {chartModalState && (
+                <FormChartModal
+                    initialDayIndex={chartModalState.dayIndex}
+                    focusExercise={chartModalState.focusExercise}
+                    onClose={() => setChartModalState(null)}
+                    colors={colors}
+                    isDark={isDark}
+                />
             )}
         </div>
     );
@@ -6077,209 +7237,209 @@ function ProgressView({
 
                 {/* Advanced Multi-Line Trajectory & Intra-Day Swing Chart */}
                 <div
-  style={{ backgroundColor: colors.card, borderColor: colors.border }}
-  className="vt-col-span-lg-2 vt-card vt-p-card vt-col-between vt-stack-3"
->
-  <div className="vt-between-center vt-flex-wrap vt-gap-2">
-    <div>
-      <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-        {chartMode === 'trajectory'
-          ? `Subah vs Raat + 7-Day True Trend (${appState.unit})`
-          : `Daily Night − Morning Fluctuation (${appState.unit})`}
-      </h3>
-      <p className="vt-text-xs" style={{ color: colors.muted }}>
-        {chartMode === 'trajectory'
-          ? 'Green/Lime = Subah Fasted • Orange = 7-Day Moving Avg • Blue = Raat Bedtime'
-          : 'Shows how much food, water & glycogen weight you carry by bedtime each day'}
-      </p>
-    </div>
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                    className="vt-col-span-lg-2 vt-card vt-p-card vt-col-between vt-stack-3"
+                >
+                    <div className="vt-between-center vt-flex-wrap vt-gap-2">
+                        <div>
+                            <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                                {chartMode === 'trajectory'
+                                    ? `Subah vs Raat + 7-Day True Trend (${appState.unit})`
+                                    : `Daily Night − Morning Fluctuation (${appState.unit})`}
+                            </h3>
+                            <p className="vt-text-xs" style={{ color: colors.muted }}>
+                                {chartMode === 'trajectory'
+                                    ? 'Green/Lime = Subah Fasted • Orange = 7-Day Moving Avg • Blue = Raat Bedtime'
+                                    : 'Shows how much food, water & glycogen weight you carry by bedtime each day'}
+                            </p>
+                        </div>
 
-    <div className="vt-flex vt-items-center vt-gap-1-5">
-      <button
-        type="button"
-        onClick={() => setChartMode('trajectory')}
-        style={{
-          backgroundColor: chartMode === 'trajectory' ? colors.accent : colors.elevated,
-          color: chartMode === 'trajectory' ? colors.accentText : colors.text,
-          borderColor: chartMode === 'trajectory' ? colors.accentBorder : colors.border
-        }}
-        className="vt-btn vt-h-34 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase"
-      >
-        AM/PM Trend
-      </button>
-      <button
-        type="button"
-        onClick={() => setChartMode('fluctuation')}
-        style={{
-          backgroundColor: chartMode === 'fluctuation' ? colors.accent : colors.elevated,
-          color: chartMode === 'fluctuation' ? colors.accentText : colors.text,
-          borderColor: chartMode === 'fluctuation' ? colors.accentBorder : colors.border
-        }}
-        className="vt-btn vt-h-34 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase"
-      >
-        Daily Swing
-      </button>
-    </div>
-  </div>
+                        <div className="vt-flex vt-items-center vt-gap-1-5">
+                            <button
+                                type="button"
+                                onClick={() => setChartMode('trajectory')}
+                                style={{
+                                    backgroundColor: chartMode === 'trajectory' ? colors.accent : colors.elevated,
+                                    color: chartMode === 'trajectory' ? colors.accentText : colors.text,
+                                    borderColor: chartMode === 'trajectory' ? colors.accentBorder : colors.border
+                                }}
+                                className="vt-btn vt-h-34 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase"
+                            >
+                                AM/PM Trend
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setChartMode('fluctuation')}
+                                style={{
+                                    backgroundColor: chartMode === 'fluctuation' ? colors.accent : colors.elevated,
+                                    color: chartMode === 'fluctuation' ? colors.accentText : colors.text,
+                                    borderColor: chartMode === 'fluctuation' ? colors.accentBorder : colors.border
+                                }}
+                                className="vt-btn vt-h-34 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase"
+                            >
+                                Daily Swing
+                            </button>
+                        </div>
+                    </div>
 
-  {/* Color Legend Strip */}
-  {chartMode === 'trajectory' && (
-    <div className="vt-row-wrap vt-gap-3 vt-text-11 vt-font-bold">
-      <span className="vt-flex vt-items-center vt-gap-1-5">
-        <span
-          style={{
-            display: 'inline-block',
-            width: 10,
-            height: 10,
-            borderRadius: '50%',
-            backgroundColor: isDark ? colors.accent : '#16A34A'
-          }}
-        />
-        Subah (AM)
-      </span>
-      <span className="vt-flex vt-items-center vt-gap-1-5">
-        <span
-          style={{
-            display: 'inline-block',
-            width: 10,
-            height: 10,
-            borderRadius: '50%',
-            backgroundColor: '#FF7A1A'
-          }}
-        />
-        7-Day True Trend
-      </span>
-      <span className="vt-flex vt-items-center vt-gap-1-5">
-        <span
-          style={{
-            display: 'inline-block',
-            width: 10,
-            height: 10,
-            borderRadius: '50%',
-            backgroundColor: isDark ? '#38BDF8' : '#2563EB'
-          }}
-        />
-        Raat (PM Blue)
-      </span>
-    </div>
-  )}
+                    {/* Color Legend Strip */}
+                    {chartMode === 'trajectory' && (
+                        <div className="vt-row-wrap vt-gap-3 vt-text-11 vt-font-bold">
+                            <span className="vt-flex vt-items-center vt-gap-1-5">
+                                <span
+                                    style={{
+                                        display: 'inline-block',
+                                        width: 10,
+                                        height: 10,
+                                        borderRadius: '50%',
+                                        backgroundColor: isDark ? colors.accent : '#16A34A'
+                                    }}
+                                />
+                                Subah (AM)
+                            </span>
+                            <span className="vt-flex vt-items-center vt-gap-1-5">
+                                <span
+                                    style={{
+                                        display: 'inline-block',
+                                        width: 10,
+                                        height: 10,
+                                        borderRadius: '50%',
+                                        backgroundColor: '#FF7A1A'
+                                    }}
+                                />
+                                7-Day True Trend
+                            </span>
+                            <span className="vt-flex vt-items-center vt-gap-1-5">
+                                <span
+                                    style={{
+                                        display: 'inline-block',
+                                        width: 10,
+                                        height: 10,
+                                        borderRadius: '50%',
+                                        backgroundColor: isDark ? '#38BDF8' : '#2563EB'
+                                    }}
+                                />
+                                Raat (PM Blue)
+                            </span>
+                        </div>
+                    )}
 
-  <div className="vt-chart-h-60" style={{ width: '100%', height: 260 }}>
-    {chartData.length > 0 ? (
-      chartMode === 'trajectory' ? (
-        (() => {
-          const morningColor = isDark ? colors.accent : '#16A34A';
-          const nightColor = isDark ? '#38BDF8' : '#2563EB';
-          const nightPoints = chartData.filter(
-            (d) => typeof d.night === 'number' && !Number.isNaN(d.night)
-          );
-          const anchorStartForBlue =
-            nightPoints.length === 1 && chartData.length >= 2 && chartData[0].night === null;
+                    <div className="vt-chart-h-60" style={{ width: '100%', height: 260 }}>
+                        {chartData.length > 0 ? (
+                            chartMode === 'trajectory' ? (
+                                (() => {
+                                    const morningColor = isDark ? colors.accent : '#16A34A';
+                                    const nightColor = isDark ? '#38BDF8' : '#2563EB';
+                                    const nightPoints = chartData.filter(
+                                        (d) => typeof d.night === 'number' && !Number.isNaN(d.night)
+                                    );
+                                    const anchorStartForBlue =
+                                        nightPoints.length === 1 && chartData.length >= 2 && chartData[0].night === null;
 
-          const plotData = chartData.map((d, idx) => ({
-            ...d,
-            nightLine:
-              d.night !== null
-                ? d.night
-                : anchorStartForBlue && idx === 0
-                  ? d.morning
-                  : null
-          }));
+                                    const plotData = chartData.map((d, idx) => ({
+                                        ...d,
+                                        nightLine:
+                                            d.night !== null
+                                                ? d.night
+                                                : anchorStartForBlue && idx === 0
+                                                    ? d.morning
+                                                    : null
+                                    }));
 
-          const allVals = plotData
-            .flatMap((d) => [d.morning, d.nightLine, d.trend])
-            .filter((v) => typeof v === 'number' && !Number.isNaN(v));
-          const yMin = allVals.length
-            ? Math.floor((Math.min(...allVals) - 0.8) * 10) / 10
-            : 'auto';
-          const yMax = allVals.length
-            ? Math.ceil((Math.max(...allVals) + 0.8) * 10) / 10
-            : 'auto';
+                                    const allVals = plotData
+                                        .flatMap((d) => [d.morning, d.nightLine, d.trend])
+                                        .filter((v) => typeof v === 'number' && !Number.isNaN(v));
+                                    const yMin = allVals.length
+                                        ? Math.floor((Math.min(...allVals) - 0.8) * 10) / 10
+                                        : 'auto';
+                                    const yMax = allVals.length
+                                        ? Math.ceil((Math.max(...allVals) + 0.8) * 10) / 10
+                                        : 'auto';
 
-          return (
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={plotData} margin={{ top: 12, right: 16, left: -10, bottom: 0 }}>
-                <CartesianGrid stroke={colors.border} strokeDasharray="3 3" />
-                <XAxis dataKey="date" stroke={colors.muted} fontSize={11} />
-                <YAxis stroke={colors.muted} fontSize={11} domain={[yMin, yMax]} />
-                <Tooltip {...tip(colors)} />
-                <ReferenceArea
-                  y1={formatWeight(appState.profile.goalWeightMinKg)}
-                  y2={formatWeight(appState.profile.goalWeightMaxKg)}
-                  fill={colors.accent}
-                  fillOpacity={0.1}
-                />
-                <ReferenceLine
-                  y={formatWeight(appState.profile.goalWeightMinKg)}
-                  stroke={colors.accentBorder}
-                  strokeDasharray="4 4"
-                />
-                {/* Morning Fasted Weight */}
-                <Line
-                  type="monotone"
-                  dataKey="morning"
-                  name={`Subah (AM) ${appState.unit}`}
-                  stroke={morningColor}
-                  strokeWidth={2.75}
-                  isAnimationActive={false}
-                  connectNulls
-                  dot={{ r: 5, fill: morningColor, stroke: colors.card, strokeWidth: 1.5 }}
-                  activeDot={{ r: 7 }}
-                />
-                {/* 7-Day Moving Average Trend */}
-                <Line
-                  type="monotone"
-                  dataKey="trend"
-                  name={`7-Day Avg Trend ${appState.unit}`}
-                  stroke="#FF7A1A"
-                  strokeWidth={2.5}
-                  isAnimationActive={false}
-                  dot={false}
-                />
-                {/* Night Bedtime Weight (Solid Blue Line) */}
-                <Line
-                  type="monotone"
-                  dataKey="nightLine"
-                  name={`Raat (PM) ${appState.unit}`}
-                  stroke={nightColor}
-                  strokeWidth={3}
-                  isAnimationActive={false}
-                  connectNulls
-                  dot={{ r: 5.5, fill: nightColor, stroke: colors.card, strokeWidth: 2 }}
-                  activeDot={{ r: 7.5, fill: nightColor, stroke: colors.text, strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          );
-        })()
-      ) : (
-        <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={chartData} margin={{ top: 12, right: 16, left: -10, bottom: 0 }}>
-            <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="date" stroke={colors.muted} fontSize={11} />
-            <YAxis stroke={colors.muted} fontSize={11} />
-            <Tooltip {...tip(colors)} />
-            <ReferenceLine y={0} stroke={colors.border} />
-            <Bar
-              dataKey="swing"
-              name={`PM − AM Delta (${appState.unit})`}
-              fill={isDark ? '#38BDF8' : '#2563EB'}
-              isAnimationActive={false}
-              radius={[6, 6, 0, 0]}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      )
-    ) : (
-      <div
-        style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-        className="vt-h-full vt-box-xl vt-flex vt-items-center vt-justify-center vt-text-xs vt-font-semibold vt-p-4 vt-text-center"
-      >
-        Left side form mein apna Subah aur Raat ka weight log karein—yahan aapka AM vs PM graph aur 7-Day True Trendline dikhega.
-      </div>
-    )}
-  </div>
-</div>
+                                    return (
+                                        <ResponsiveContainer width="100%" height={260}>
+                                            <LineChart data={plotData} margin={{ top: 12, right: 16, left: -10, bottom: 0 }}>
+                                                <CartesianGrid stroke={colors.border} strokeDasharray="3 3" />
+                                                <XAxis dataKey="date" stroke={colors.muted} fontSize={11} />
+                                                <YAxis stroke={colors.muted} fontSize={11} domain={[yMin, yMax]} />
+                                                <Tooltip {...tip(colors)} />
+                                                <ReferenceArea
+                                                    y1={formatWeight(appState.profile.goalWeightMinKg)}
+                                                    y2={formatWeight(appState.profile.goalWeightMaxKg)}
+                                                    fill={colors.accent}
+                                                    fillOpacity={0.1}
+                                                />
+                                                <ReferenceLine
+                                                    y={formatWeight(appState.profile.goalWeightMinKg)}
+                                                    stroke={colors.accentBorder}
+                                                    strokeDasharray="4 4"
+                                                />
+                                                {/* Morning Fasted Weight */}
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="morning"
+                                                    name={`Subah (AM) ${appState.unit}`}
+                                                    stroke={morningColor}
+                                                    strokeWidth={2.75}
+                                                    isAnimationActive={false}
+                                                    connectNulls
+                                                    dot={{ r: 5, fill: morningColor, stroke: colors.card, strokeWidth: 1.5 }}
+                                                    activeDot={{ r: 7 }}
+                                                />
+                                                {/* 7-Day Moving Average Trend */}
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="trend"
+                                                    name={`7-Day Avg Trend ${appState.unit}`}
+                                                    stroke="#FF7A1A"
+                                                    strokeWidth={2.5}
+                                                    isAnimationActive={false}
+                                                    dot={false}
+                                                />
+                                                {/* Night Bedtime Weight (Solid Blue Line) */}
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="nightLine"
+                                                    name={`Raat (PM) ${appState.unit}`}
+                                                    stroke={nightColor}
+                                                    strokeWidth={3}
+                                                    isAnimationActive={false}
+                                                    connectNulls
+                                                    dot={{ r: 5.5, fill: nightColor, stroke: colors.card, strokeWidth: 2 }}
+                                                    activeDot={{ r: 7.5, fill: nightColor, stroke: colors.text, strokeWidth: 2 }}
+                                                />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    );
+                                })()
+                            ) : (
+                                <ResponsiveContainer width="100%" height={260}>
+                                    <BarChart data={chartData} margin={{ top: 12, right: 16, left: -10, bottom: 0 }}>
+                                        <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="date" stroke={colors.muted} fontSize={11} />
+                                        <YAxis stroke={colors.muted} fontSize={11} />
+                                        <Tooltip {...tip(colors)} />
+                                        <ReferenceLine y={0} stroke={colors.border} />
+                                        <Bar
+                                            dataKey="swing"
+                                            name={`PM − AM Delta (${appState.unit})`}
+                                            fill={isDark ? '#38BDF8' : '#2563EB'}
+                                            isAnimationActive={false}
+                                            radius={[6, 6, 0, 0]}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )
+                        ) : (
+                            <div
+                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                className="vt-h-full vt-box-xl vt-flex vt-items-center vt-justify-center vt-text-xs vt-font-semibold vt-p-4 vt-text-center"
+                            >
+                                Left side form mein apna Subah aur Raat ka weight log karein—yahan aapka AM vs PM graph aur 7-Day True Trendline dikhega.
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* 4. WEEKLY & MONTHLY DETAILED REPORTS SECTION */}
@@ -7518,6 +8678,674 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
                     <strong style={{ color: colors.text }}>Lean-Bulk Cardio Rule:</strong> Perform this 30-min circuit on{' '}
                     <strong style={{ color: colors.text }}>Sunday (Active Recovery)</strong> or 2–3×/week separated by at least 4 hours from lifting. Since it burns ~210 kcal, tap{' '}
                     <strong style={{ color: colors.text }}>+1 Medium Banana + 250 ml Milk (+257 kcal)</strong> in the Nutrition tab on cardio days so your muscle-gain surplus stays intact.
+                </div>
+            </div>
+        </section>
+    );
+}
+
+export function PelvicRehabSection({ colors, isDark, appState, setAppState, showToast }) {
+    const pelvicSide = appState.pelvicSide || 'right';
+    const protocol = useMemo(() => buildPelvicProtocol(pelvicSide), [pelvicSide]);
+    const allExercises = useMemo(
+        () => protocol.phases.flatMap((p) => p.exercises),
+        [protocol]
+    );
+
+    const [activeExIdx, setActiveExIdx] = useState(0);
+    const [activeSetNum, setActiveSetNum] = useState(1);
+    const [timerPhase, setTimerPhase] = useState('work'); // 'work' | 'rest'
+    const [secLeft, setSecLeft] = useState(allExercises[0].workSec);
+    const [timerRunning, setTimerRunning] = useState(false);
+
+    // Track per-set completion: { [exerciseId]: [bool, bool, bool] }
+    const [setChecks, setSetChecks] = useState(() => {
+        const init = {};
+        allExercises.forEach((ex) => {
+            init[ex.id] = Array(ex.sets).fill(false);
+        });
+        return init;
+    });
+
+    const currentEx = allExercises[activeExIdx] || allExercises[0];
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    const pelvicLogs = appState.pelvicLogs || [];
+    const isLoggedToday = pelvicLogs.some((log) => log.date === todayStr);
+    const dailyHabits = appState.pelvicHabits || {};
+
+    // Tick countdown every 1 second
+    useEffect(() => {
+        if (!timerRunning || secLeft <= 0) return;
+        const interval = setInterval(() => {
+            setSecLeft((prev) => Math.max(0, prev - 1));
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [timerRunning, secLeft]);
+
+    // Cleanly handle Work <-> Rest transitions when countdown hits 0 (StrictMode-safe)
+    useEffect(() => {
+        if (!timerRunning || secLeft > 0) return;
+
+        if (timerPhase === 'work') {
+            // Mark active set complete
+            setSetChecks((prev) => {
+                const arr = [...(prev[currentEx.id] || Array(currentEx.sets).fill(false))];
+                arr[activeSetNum - 1] = true;
+                return { ...prev, [currentEx.id]: arr };
+            });
+
+            if (activeSetNum < currentEx.sets) {
+                setTimerPhase('rest');
+                setSecLeft(currentEx.restSec);
+                if (showToast) {
+                    showToast(
+                        `${currentEx.name} — Set ${activeSetNum}/${currentEx.sets} done! Rest ${currentEx.restSec}s.`
+                    );
+                }
+            } else if (activeExIdx < allExercises.length - 1) {
+                const nextIdx = activeExIdx + 1;
+                setActiveExIdx(nextIdx);
+                setActiveSetNum(1);
+                setTimerPhase('rest');
+                setSecLeft(Math.min(30, currentEx.restSec));
+                if (showToast) {
+                    showToast(`Finished ${currentEx.name}! Up next: ${allExercises[nextIdx].name}`);
+                }
+            } else {
+                setTimerRunning(false);
+                if (showToast) {
+                    showToast('All 7 Pelvic Rehab exercises complete! Tap "Complete Session" to log.');
+                }
+            }
+        } else {
+            // Rest ended -> start next work set
+            setTimerPhase('work');
+            setActiveSetNum((prev) => {
+                const currentArr = setChecks[currentEx.id] || [];
+                const nextUnchecked = currentArr.findIndex((done) => !done);
+                if (nextUnchecked !== -1) return nextUnchecked + 1;
+                return Math.min(currentEx.sets, prev + 1);
+            });
+            setSecLeft(currentEx.workSec);
+        }
+    }, [
+        timerRunning,
+        secLeft,
+        timerPhase,
+        currentEx,
+        activeSetNum,
+        activeExIdx,
+        allExercises,
+        setChecks,
+        showToast
+    ]);
+
+    const formatClock = (sec) => {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+
+    const handleSideSwitch = (newSide) => {
+        setTimerRunning(false);
+        setAppState((prev) => ({ ...prev, pelvicSide: newSide }));
+        setActiveExIdx(0);
+        setActiveSetNum(1);
+        setTimerPhase('work');
+        setSecLeft(allExercises[0].workSec);
+        if (showToast) {
+            showToast(
+                `Switched protocol for ${newSide.toUpperCase()} High Pelvis (all cues auto-mirrored).`
+            );
+        }
+    };
+
+    const handleSelectExercise = (idx) => {
+        const target = allExercises[idx];
+        const checks = setChecks[target.id] || [];
+        const firstOpen = checks.findIndex((c) => !c);
+        setActiveExIdx(idx);
+        setActiveSetNum(firstOpen === -1 ? 1 : firstOpen + 1);
+        setTimerPhase('work');
+        setSecLeft(target.workSec);
+        setTimerRunning(false);
+    };
+
+    const handleToggleSetBox = (ex, setIdx) => {
+        setSetChecks((prev) => {
+            const arr = [...(prev[ex.id] || Array(ex.sets).fill(false))];
+            arr[setIdx] = !arr[setIdx];
+            return { ...prev, [ex.id]: arr };
+        });
+    };
+
+    const handleToggleHabit = (habitId) => {
+        setAppState((prev) => ({
+            ...prev,
+            pelvicHabits: {
+                ...(prev.pelvicHabits || {}),
+                [habitId]: !prev.pelvicHabits?.[habitId]
+            }
+        }));
+    };
+
+    const totalSets = useMemo(
+        () => allExercises.reduce((acc, ex) => acc + ex.sets, 0),
+        [allExercises]
+    );
+
+    const completedSets = useMemo(
+        () =>
+            allExercises.reduce((acc, ex) => {
+                const arr = setChecks[ex.id] || [];
+                return acc + arr.filter(Boolean).length;
+            }, 0),
+        [allExercises, setChecks]
+    );
+
+    const progressPct = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
+
+    const handleLogPelvicSession = () => {
+        setAppState((prev) => {
+            const existing = prev.pelvicLogs || [];
+            const filtered = existing.filter((item) => item.date !== todayStr);
+            return {
+                ...prev,
+                pelvicLogs: [
+                    {
+                        id: `pelvic-${Date.now()}`,
+                        date: todayStr,
+                        highSide: pelvicSide,
+                        durationMin: protocol.totalMinutes,
+                        setsCompleted: completedSets || totalSets
+                    },
+                    ...filtered
+                ]
+            };
+        });
+        if (showToast) {
+            showToast(
+                `Logged Pelvic Alignment Session (${protocol.highSide} High Protocol)! Consistency for 4–6 wks is key.`
+            );
+        }
+    };
+
+    return (
+        <section className="vt-cardio-section vt-stack-4">
+            {/* 1. HERO HEADER + HIGH HIP SIDE TOGGLE + GUIDED TIMER */}
+            <div
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                className="vt-card vt-p-card vt-cardio-hero"
+            >
+                <div className="vt-cardio-hero-top">
+                    <div className="vt-stack-1">
+                        <div className="vt-pill-row">
+                            <span
+                                style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                                className="vt-badge-accent"
+                            >
+                                Lateral Pelvic Tilt Rehab
+                            </span>
+                            <span
+                                style={{
+                                    backgroundColor: colors.elevated,
+                                    borderColor: colors.border,
+                                    color: colors.muted
+                                }}
+                                className="vt-meta-pill font-mono-num"
+                            >
+                                <Clock size={14} />
+                                <span>~{protocol.totalMinutes} Min • {protocol.frequency}</span>
+                            </span>
+                            <span
+                                style={{
+                                    backgroundColor: colors.elevated,
+                                    borderColor: colors.border,
+                                    color: isDark ? colors.accent : colors.text
+                                }}
+                                className="vt-meta-pill font-mono-num"
+                            >
+                                <Award size={14} />
+                                <span>Logged: {pelvicLogs.length} sessions</span>
+                            </span>
+                        </div>
+
+                        <h2 className="vt-hero-heading font-display">
+                            Pelvic Alignment & Posture Correction ({protocol.highSide} Hip High)
+                        </h2>
+                        <p className="vt-text-xs" style={{ color: colors.muted }}>
+                            Targeted 3-phase protocol: releases tight {protocol.highSide} waist/adductors & {protocol.lowSide} outer hip, then strengthens weak {protocol.highSide} Glute Medius & {protocol.lowSide} side core.
+                        </p>
+                    </div>
+
+                    <div className="vt-stack-2 vt-shrink-0">
+                        {/* Side Switcher */}
+                        <div className="vt-flex vt-items-center vt-gap-1-5">
+                            {[
+                                { id: 'right', label: 'Right Hip High' },
+                                { id: 'left', label: 'Left Hip High' }
+                            ].map((opt) => {
+                                const active = pelvicSide === opt.id;
+                                return (
+                                    <button
+                                        key={opt.id}
+                                        type="button"
+                                        onClick={() => handleSideSwitch(opt.id)}
+                                        style={{
+                                            backgroundColor: active ? colors.accent : colors.elevated,
+                                            color: active ? colors.accentText : colors.text,
+                                            borderColor: active ? colors.accentBorder : colors.border
+                                        }}
+                                        className="vt-btn vt-h-38 vt-px-3 vt-box-xl vt-text-11 vt-font-extrabold vt-uppercase"
+                                    >
+                                        {opt.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleLogPelvicSession}
+                            style={{
+                                backgroundColor: isLoggedToday ? colors.accentSurface : colors.accent,
+                                color: isLoggedToday ? colors.text : colors.accentText,
+                                borderColor: colors.accentBorder
+                            }}
+                            className="vt-finish-btn"
+                        >
+                            <Check size={16} strokeWidth={2.5} />
+                            <span>{isLoggedToday ? 'Rehab Logged Today ✓' : 'Complete Rehab Session'}</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Live Work + Rest Guided Timer */}
+                <div
+                    style={{
+                        backgroundColor: colors.elevated,
+                        borderColor: timerRunning
+                            ? timerPhase === 'rest'
+                                ? '#38BDF8'
+                                : colors.accentBorder
+                            : colors.border
+                    }}
+                    className="vt-cardio-player"
+                >
+                    <div className="vt-cardio-player-left">
+                        <div
+                            style={{
+                                backgroundColor: timerPhase === 'rest' ? '#38BDF8' : colors.accent,
+                                color: '#0A0A0B'
+                            }}
+                            className="vt-cardio-clock font-display tabular-nums"
+                        >
+                            {formatClock(secLeft)}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                            <div
+                                className="vt-text-10 vt-font-extrabold vt-uppercase font-mono-num"
+                                style={{
+                                    color:
+                                        timerPhase === 'rest'
+                                            ? '#38BDF8'
+                                            : isDark
+                                                ? colors.accent
+                                                : colors.text
+                                }}
+                            >
+                                {timerPhase === 'rest'
+                                    ? `REST PERIOD (${currentEx.restSec}s) • NEXT SET READY`
+                                    : `EXERCISE ${activeExIdx + 1}/${allExercises.length} • SET ${activeSetNum}/${currentEx.sets} • ${currentEx.sideTag}`}
+                            </div>
+                            <div className="vt-cardio-active-name">{currentEx.name}</div>
+                            <div className="vt-text-11" style={{ color: colors.muted }}>
+                                {currentEx.prescription} • {currentEx.tempo}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="vt-cardio-player-controls">
+                        <button
+                            type="button"
+                            onClick={() => setSecLeft((s) => Math.max(5, s - 5))}
+                            style={{
+                                backgroundColor: colors.card,
+                                borderColor: colors.border,
+                                color: colors.text
+                            }}
+                            className="vt-btn vt-h-38 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold font-mono-num"
+                        >
+                            -5s
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSecLeft((s) => s + 5)}
+                            style={{
+                                backgroundColor: colors.card,
+                                borderColor: colors.border,
+                                color: colors.text
+                            }}
+                            className="vt-btn vt-h-38 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold font-mono-num"
+                        >
+                            +5s
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setTimerRunning((prev) => !prev)}
+                            style={{
+                                backgroundColor: colors.accent,
+                                color: colors.accentText,
+                                borderColor: colors.accentBorder
+                            }}
+                            className="vt-cardio-ctrl-btn"
+                        >
+                            {timerRunning ? <Pause size={16} /> : <Play size={16} />}
+                            <span>{timerRunning ? 'Pause' : timerPhase === 'rest' ? 'Resume Rest' : 'Start Set'}</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setTimerRunning(false);
+                                setTimerPhase('work');
+                                setSecLeft(currentEx.workSec);
+                            }}
+                            aria-label="Reset current set timer"
+                            style={{
+                                backgroundColor: colors.card,
+                                borderColor: colors.border,
+                                color: colors.text
+                            }}
+                            className="vt-icon-btn-44"
+                        >
+                            <RotateCcw size={16} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleSelectExercise((activeExIdx + 1) % allExercises.length)}
+                            aria-label="Next pelvic exercise"
+                            style={{
+                                backgroundColor: colors.card,
+                                borderColor: colors.border,
+                                color: colors.text
+                            }}
+                            className="vt-icon-btn-44"
+                        >
+                            <SkipForward size={16} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="vt-stack-1">
+                    <div className="vt-between-center vt-text-11 font-mono-num" style={{ color: colors.muted }}>
+                        <span>
+                            Session Progress: {completedSets} / {totalSets} total sets completed
+                        </span>
+                        <span>{progressPct}%</span>
+                    </div>
+                    <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track-sm">
+                        <div
+                            style={{ width: `${progressPct}%`, backgroundColor: colors.accent }}
+                            className="vt-progress-fill"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* 2. BIOMECHANICS SUMMARY (TIGHT VS WEAK MAP) */}
+            <div className="vt-grid-sm-2 vt-gap-3">
+                <div
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                    className="vt-card vt-p-4 vt-stack-2"
+                >
+                    <div
+                        className="vt-text-xs vt-font-extrabold vt-uppercase vt-tracking-wider"
+                        style={{ color: colors.warning }}
+                    >
+                        Tight / Shortened (Phase 1: Stretch)
+                    </div>
+                    <div className="vt-stack-1-5 vt-text-xs" style={{ color: colors.muted }}>
+                        {protocol.imbalanceMap.tight.map((line, i) => (
+                            <div key={i}>• {line}</div>
+                        ))}
+                    </div>
+                </div>
+
+                <div
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                    className="vt-card vt-p-4 vt-stack-2"
+                >
+                    <div
+                        className="vt-text-xs vt-font-extrabold vt-uppercase vt-tracking-wider"
+                        style={{ color: isDark ? colors.accent : colors.success }}
+                    >
+                        Weak / Lengthened (Phase 2–3: Strengthen)
+                    </div>
+                    <div className="vt-stack-1-5 vt-text-xs" style={{ color: colors.muted }}>
+                        {protocol.imbalanceMap.weak.map((line, i) => (
+                            <div key={i}>• {line}</div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* 3. PHASE-BY-PHASE DETAILED EXERCISE CARDS */}
+            <div className="vt-stack-4">
+                {protocol.phases.map((phase) => (
+                    <div
+                        key={phase.id}
+                        style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                        className="vt-card vt-p-card vt-stack-3"
+                    >
+                        <div className="vt-between-start vt-gap-2">
+                            <div>
+                                <span
+                                    style={{
+                                        backgroundColor: colors.elevated,
+                                        borderColor: colors.border,
+                                        color: isDark ? colors.accent : colors.text
+                                    }}
+                                    className="vt-badge vt-border vt-text-10 vt-font-extrabold vt-uppercase"
+                                >
+                                    {phase.focus}
+                                </span>
+                                <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase vt-mt-1">
+                                    {phase.title}
+                                </h3>
+                            </div>
+                            <span
+                                style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                                className="vt-badge vt-text-xs vt-font-extrabold font-mono-num vt-shrink-0"
+                            >
+                                {phase.durationMin} MIN
+                            </span>
+                        </div>
+
+                        <div className="vt-stack-3">
+                            {phase.exercises.map((ex) => {
+                                const globalIdx = allExercises.findIndex((item) => item.id === ex.id);
+                                const isCurrent = globalIdx === activeExIdx;
+                                const checks = setChecks[ex.id] || Array(ex.sets).fill(false);
+                                const allDone = checks.every(Boolean);
+
+                                return (
+                                    <div
+                                        key={ex.id}
+                                        style={{
+                                            backgroundColor: allDone ? colors.accentSurface : colors.elevated,
+                                            borderColor: allDone || isCurrent ? colors.accentBorder : colors.border
+                                        }}
+                                        className="vt-p-4 vt-box-xl vt-stack-3"
+                                    >
+                                        {/* Top Row: Name, Side Badge, Prescription & Load Timer Button */}
+                                        <div className="vt-between-start vt-flex-wrap vt-gap-2">
+                                            <div className="vt-stack-1 vt-flex-1">
+                                                <div className="vt-row-wrap vt-gap-1-5">
+                                                    <span className="vt-font-extrabold vt-text-sm">
+                                                        {globalIdx + 1}. {ex.name}
+                                                    </span>
+                                                    <span
+                                                        style={{
+                                                            backgroundColor: colors.accent,
+                                                            color: colors.accentText
+                                                        }}
+                                                        className="vt-badge-xs vt-text-10 vt-font-extrabold vt-uppercase"
+                                                    >
+                                                        {ex.sideTag}
+                                                    </span>
+                                                </div>
+                                                <div className="vt-text-11" style={{ color: colors.muted }}>
+                                                    Standard Name: <strong style={{ color: colors.text }}>{ex.standardName}</strong> • Target: {ex.target}
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSelectExercise(globalIdx)}
+                                                style={{
+                                                    backgroundColor: isCurrent ? colors.accent : colors.card,
+                                                    color: isCurrent ? colors.accentText : colors.text,
+                                                    borderColor: isCurrent ? colors.accentBorder : colors.border
+                                                }}
+                                                className="vt-btn vt-h-34 vt-px-3 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase vt-gap-1"
+                                            >
+                                                <Play size={12} />
+                                                <span>{isCurrent ? 'Loaded in Timer' : 'Load Timer'}</span>
+                                            </button>
+                                        </div>
+
+                                        {/* Exact Numbers Strip (Sets, Work/Hold Sec, Rest Sec, Tempo) */}
+                                        <div className="vt-row-wrap vt-gap-2 font-mono-num vt-text-11">
+                                            <span
+                                                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                                                className="vt-badge vt-border vt-font-extrabold"
+                                            >
+                                                {ex.prescription}
+                                            </span>
+                                            <span
+                                                style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.muted }}
+                                                className="vt-badge vt-border"
+                                            >
+                                                Rest: {ex.restSec}s
+                                            </span>
+                                            <span
+                                                style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.muted }}
+                                                className="vt-badge vt-border"
+                                            >
+                                                Tempo: {ex.tempo}
+                                            </span>
+                                        </div>
+
+                                        {/* Form Cue & Mistake to Avoid */}
+                                        <div className="vt-stack-1 vt-text-xs" style={{ color: colors.muted }}>
+                                            <p>
+                                                <strong style={{ color: colors.text }}>How to do it:</strong> {ex.cue}
+                                            </p>
+                                            <p>
+                                                <strong style={{ color: colors.warning }}>Avoid:</strong> {ex.mistake}
+                                            </p>
+                                        </div>
+
+                                        {/* Individual Set Checkboxes */}
+                                        <div
+                                            className="vt-row-wrap vt-gap-2 vt-pt-2 vt-border-t"
+                                            style={{ borderColor: colors.border }}
+                                        >
+                                            <span
+                                                className="vt-text-10 vt-font-extrabold vt-uppercase"
+                                                style={{ color: colors.muted }}
+                                            >
+                                                Track Sets:
+                                            </span>
+                                            {checks.map((done, sIdx) => (
+                                                <button
+                                                    key={sIdx}
+                                                    type="button"
+                                                    onClick={() => handleToggleSetBox(ex, sIdx)}
+                                                    style={{
+                                                        backgroundColor: done ? colors.accent : colors.card,
+                                                        color: done ? colors.accentText : colors.text,
+                                                        borderColor: done ? colors.accentBorder : colors.border
+                                                    }}
+                                                    className="vt-btn vt-h-34 vt-px-3 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-gap-1 font-mono-num"
+                                                >
+                                                    <Check size={13} strokeWidth={2.5} />
+                                                    <span>
+                                                        Set {sIdx + 1} ({ex.workSec}s)
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* 4. DAILY ALIGNMENT HABITS CHECKLIST */}
+            <div
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                className="vt-card vt-p-card vt-stack-3"
+            >
+                <div>
+                    <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                        Daily Posture Habits (Keeps Your Progress Locked In)
+                    </h3>
+                    <p className="vt-text-xs" style={{ color: colors.muted }}>
+                        18 minutes of exercise cannot beat 12 hours of asymmetrical standing or sitting. Check these off daily:
+                    </p>
+                </div>
+
+                <div className="vt-grid-sm-2 vt-gap-2-5">
+                    {protocol.habits.map((hab) => {
+                        const checked = Boolean(dailyHabits[hab.id]);
+                        return (
+                            <button
+                                key={hab.id}
+                                type="button"
+                                onClick={() => handleToggleHabit(hab.id)}
+                                style={{
+                                    backgroundColor: checked ? colors.accentSurface : colors.elevated,
+                                    borderColor: checked ? colors.accentBorder : colors.border,
+                                    color: colors.text,
+                                    textAlign: 'left'
+                                }}
+                                className="vt-p-3 vt-box-xl vt-flex vt-items-center vt-justify-between vt-gap-3 vt-cursor-pointer"
+                            >
+                                <span className="vt-text-xs vt-font-semibold">{hab.label}</span>
+                                <span
+                                    style={{
+                                        backgroundColor: checked ? colors.accent : colors.card,
+                                        color: checked ? colors.accentText : colors.muted,
+                                        borderColor: checked ? colors.accentBorder : colors.border
+                                    }}
+                                    className="vt-btn vt-sq-44 vt-box-xl vt-shrink-0"
+                                >
+                                    <Check size={16} strokeWidth={2.5} />
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* 5. SAFETY & PHYSIOTHERAPIST ADVISORY */}
+            <div
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                className="vt-card vt-p-4 vt-flex vt-items-start vt-gap-3"
+            >
+                <AlertTriangle
+                    size={20}
+                    className="vt-shrink-0 vt-mt-0-5"
+                    style={{ color: colors.warning }}
+                />
+                <div className="vt-text-xs" style={{ color: colors.muted }}>
+                    <strong style={{ color: colors.text }}>Safety & Rehab Rule:</strong> Stop immediately if any drill causes sharp lower-back pain, hip pinching, or leg tingling/numbness. Muscular lateral pelvic tilt typically improves within{' '}
+                    <strong style={{ color: colors.text }}>4–6 weeks</strong> of consistent practice. If asymmetry persists or you notice a rib hump on forward bending, get evaluated by a licensed{' '}
+                    <strong style={{ color: colors.text }}>Physiotherapist or Orthopedic Doctor</strong> to rule out structural scoliosis or leg-length discrepancy.
                 </div>
             </div>
         </section>

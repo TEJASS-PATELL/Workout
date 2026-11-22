@@ -1,6 +1,6 @@
 /* ============================================================================
-   VTAPER — MOBILE-FIRST ATHLETIC PERFORMANCE STYLESHEET (PRO SMOOTH EDITION)
-   Solid Flat Theme • 8px Grid • Zero Gradients • Hardware-Accelerated Motion
+   VTAPER — MOBILE-FIRST ATHLETIC PERFORMANCE STYLESHEET (PRO CLEAN EDITION)
+   Pure Plain CSS (Zero Tailwind) • Solid Flat Theme • 8px Grid • 60fps Motion
    ============================================================================ */
 
 :root {
@@ -32,7 +32,7 @@
 
   /* Crisp Solid-Theme Elevation (Floating Layers Only — Zero Glow) */
   --shadow-float: 0 10px 28px -6px rgba(0, 0, 0, 0.28), 0 4px 10px -4px rgba(0, 0, 0, 0.16);
-  --shadow-modal: 0 24px 56px -12px rgba(0, 0, 0, 0.42), 0 8px 20px -6px rgba(0, 0, 0, 0.22);
+  --shadow-modal: 0 24px 56px -12px rgba(0, 0, 0, 0.45), 0 8px 20px -6px rgba(0, 0, 0, 0.24);
 }
 
 /* ---------- BASE RESET ---------- */
@@ -107,7 +107,7 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
-/* Hide ugly numeric input spinners for clean gym logging */
+/* Hide numeric input spinners for clean gym logging */
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -118,7 +118,7 @@ input[type='number'] {
   appearance: textfield;
 }
 
-/* Custom sleek scrollbars */
+/* Sleek scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -308,7 +308,7 @@ input[type='number'] {
   animation: vtFadeUp 240ms var(--ease-out) both;
 }
 
-/* Mobile Fixed Bottom Navigation (7 Tabs Engineered for 360px+ Screens) */
+/* Mobile Fixed Bottom Navigation — Auto-Fits 7 or 8 Tabs Cleanly */
 .vt-mobile-nav {
   position: fixed;
   left: 0;
@@ -316,13 +316,21 @@ input[type='number'] {
   bottom: 0;
   z-index: 50;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(52px, 1fr);
   height: calc(var(--nav-mobile-h) + var(--safe-bottom));
   padding: 0 2px var(--safe-bottom);
   border-top-width: 1px;
   border-top-style: solid;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
   transform: translateZ(0);
   transition: background-color var(--transition-med), border-color var(--transition-med);
+}
+
+.vt-mobile-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .vt-mobile-nav-btn {
@@ -1039,6 +1047,290 @@ input[type='number'] {
 }
 
 /* ============================================================================
+   VISUAL FORM CHART BANNER, EXERCISE FORM GUIDE & FULL-SCREEN ZOOM MODAL
+   ============================================================================ */
+
+.vt-chart-preview-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vt-chart-preview-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.vt-chart-thumb {
+  width: 66px;
+  height: 86px;
+  object-fit: cover;
+  border-radius: 10px;
+  border-width: 1px;
+  border-style: solid;
+  flex-shrink: 0;
+  cursor: pointer;
+  background-color: #F4F4F0;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.vt-chart-thumb-placeholder {
+  width: 66px;
+  height: 86px;
+  padding: 6px;
+  border-radius: 10px;
+  border-width: 1px;
+  border-style: dashed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  word-break: break-all;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.vt-chart-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.vt-chart-banner-actions > * {
+  flex: 1 1 auto;
+}
+
+/* Exercise Form Guide + Photo Button Row */
+.vt-guide-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vt-guide-action-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vt-guide-toggle-btn {
+  flex: 1 1 220px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-align: left;
+  transition:
+    transform var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.vt-guide-toggle-btn:active {
+  transform: scale(0.985);
+}
+
+.vt-chevron,
+.vt-chevron-open {
+  flex-shrink: 0;
+  transition: transform 200ms var(--ease-out);
+}
+
+.vt-chevron-open {
+  transform: rotate(90deg);
+}
+
+.vt-guide-panel {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 12px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: var(--radius-md);
+  animation: vtFadeUp 200ms var(--ease-out) both;
+}
+
+.vt-guide-item {
+  padding: 12px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vt-guide-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.vt-guide-text {
+  font-size: 0.78rem;
+  line-height: 1.52;
+  font-weight: 500;
+}
+
+.vt-guide-chart-btn {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-align: left;
+  transition:
+    transform var(--transition-fast),
+    opacity var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.vt-guide-chart-btn:active {
+  transform: scale(0.985);
+}
+
+/* Full-screen Zoom Modal */
+.vt-chart-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 10px 10px calc(10px + var(--safe-bottom));
+  overscroll-behavior: contain;
+  animation: vtFadeIn 180ms ease-out both;
+}
+
+.vt-chart-modal-box {
+  width: 100%;
+  max-width: 860px;
+  max-height: 92dvh;
+  border-width: 1.5px;
+  border-style: solid;
+  border-radius: 20px 20px var(--radius-lg) var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-modal);
+  animation: vtSheetUp 260ms var(--ease-out) both;
+}
+
+.vt-chart-modal-header {
+  padding: 14px 16px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.vt-chart-focus-strip {
+  padding: 10px 16px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vt-chart-day-tabs {
+  padding: 10px 16px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.vt-chart-day-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.vt-chart-modal-body {
+  flex: 1 1 auto;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.vt-chart-img-scroll {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.vt-chart-full-img {
+  height: auto;
+  display: block;
+  border-radius: var(--radius-md);
+  transition: width 220ms var(--ease-out);
+}
+
+.vt-chart-missing-box {
+  max-width: 440px;
+  margin: 28px auto;
+  padding: 20px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.vt-chart-modal-footer {
+  padding: 10px 16px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ============================================================================
    VISUALIZATIONS: RINGS, V-TAPER GAUGE, RADAR, HEATMAP, CHARTS
    ============================================================================ */
 
@@ -1180,8 +1472,12 @@ input[type='number'] {
 }
 
 /* ============================================================================
-   HOME 30-MIN CARDIO SECTION
+   HOME 30-MIN CARDIO & PELVIC REHAB SECTION
    ============================================================================ */
+
+.vt-cardio-section {
+  width: 100%;
+}
 
 .vt-cardio-hero {
   display: flex;
@@ -1232,6 +1528,7 @@ input[type='number'] {
 
 .vt-cardio-player-controls {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
@@ -1570,7 +1867,8 @@ input[type='number'] {
   .vt-primary-cta:hover,
   .vt-finish-btn:hover,
   .vt-walk-btn:hover,
-  .vt-cardio-ctrl-btn:hover {
+  .vt-cardio-ctrl-btn:hover,
+  .vt-guide-chart-btn:hover {
     opacity: 0.92;
     transform: translateY(-1px);
   }
@@ -1580,7 +1878,8 @@ input[type='number'] {
   .vt-primary-cta:active,
   .vt-finish-btn:active,
   .vt-walk-btn:active,
-  .vt-cardio-ctrl-btn:active {
+  .vt-cardio-ctrl-btn:active,
+  .vt-guide-chart-btn:active {
     transform: translateY(0) scale(0.975);
   }
 
@@ -1592,7 +1891,8 @@ input[type='number'] {
   .vt-ramp-btn:hover,
   .vt-rest-step-btn:hover,
   .vt-rest-skip-btn:hover,
-  .vt-track-option-btn:hover {
+  .vt-track-option-btn:hover,
+  .vt-guide-toggle-btn:hover {
     opacity: 0.88;
   }
 
@@ -1613,7 +1913,8 @@ input[type='number'] {
     z-index: 2;
   }
 
-  .vt-brand-logo:hover {
+  .vt-brand-logo:hover,
+  .vt-chart-thumb:hover {
     transform: scale(1.04);
   }
 }
@@ -1644,7 +1945,8 @@ input[type='number'] {
   }
 
   .vt-modal-overlay,
-  .vt-summary-overlay {
+  .vt-summary-overlay,
+  .vt-chart-modal-overlay {
     align-items: center;
     padding: 24px;
   }
@@ -1652,6 +1954,11 @@ input[type='number'] {
   .vt-modal-card,
   .vt-summary-card {
     padding: 24px;
+    border-radius: var(--radius-xl);
+    animation: vtModalPop 240ms var(--ease-out) both;
+  }
+
+  .vt-chart-modal-box {
     border-radius: var(--radius-xl);
     animation: vtModalPop 240ms var(--ease-out) both;
   }
@@ -1664,7 +1971,8 @@ input[type='number'] {
     grid-column: span 2 / span 2;
   }
 
-  .vt-grid-sm-2 {
+  .vt-grid-sm-2,
+  .vt-guide-panel {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1731,10 +2039,26 @@ input[type='number'] {
     justify-content: space-between;
   }
 
-  .vt-today-hero-top {
+  .vt-today-hero-top,
+  .vt-cardio-hero-top {
     flex-direction: row;
     align-items: flex-start;
     justify-content: space-between;
+  }
+
+  .vt-chart-preview-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .vt-chart-banner-actions {
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  .vt-chart-banner-actions > * {
+    flex: none;
   }
 
   .vt-workout-actions {
@@ -1746,12 +2070,6 @@ input[type='number'] {
   .vt-finish-btn {
     flex: none;
     padding: 0 16px;
-  }
-
-  .vt-cardio-hero-top {
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
   }
 
   .vt-cardio-player {
