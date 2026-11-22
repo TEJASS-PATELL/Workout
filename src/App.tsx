@@ -2416,7 +2416,7 @@ function BrandLogo({ size = 40 }) {
             aria-label="VTaper Logo"
             className="vt-brand-logo"
         >
-            <rect width="512" height="512" rx="112" fill="#ffffff" />
+            <rect width="512" height="512" rx="112" fill="rgb(0, 0, 0)" />
             <rect x="16" y="16" width="480" height="480" rx="96" stroke="#000000" strokeWidth="14" />
             <rect x="76" y="116" width="360" height="20" rx="6" fill="#000000" />
             <rect x="92" y="96" width="24" height="60" rx="6" fill="rgb(0, 89, 255)" />
@@ -2570,7 +2570,7 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
     const weightLogs = appState.weightLogs || [];
 
     const morningColor = isDark ? colors.accent : '#16A34A';
-    const nightColor = isDark ? '#38BDF8' : '#1D4ED8';
+    const nightColor = isDark ? '#CCFF00' : '#0066ff';
     const trendColor = '#FF7A1A';
 
     // 1. 28-Day Combined Consistency (Workouts + Dual Weigh-Ins)
@@ -3064,15 +3064,15 @@ export default function App() {
             isDark
                 ? {
                     bg: '#000000', card: '#0A0A0B', elevated: '#141416', border: '#2A2A2E',
-                    text: '#F5F5F6', muted: '#A1A1AA',
+                    text: '#ffffff', muted: '#A1A1AA',
                     accent: '#CCFF00', accentText: '#0A0A0B', accentSurface: '#1A2205', accentBorder: '#CCFF00',
-                    danger: '#FF4D4F', warning: '#FBBF24', success: '#4ADE80'
+                    danger: '#CCFF00', warning: '#FBBF24', success: '#4ADE80'
                 }
                 : {
                     bg: '#F4F4F2', card: '#FFFFFF', elevated: '#EDEDEA', border: '#D6D6D1',
                     text: '#000000', muted: '#55555C',
-                    accent: '#0059ff', accentText: '#FFFFFF', accentSurface: '#ECFCCB', accentBorder: '#113fa3',
-                    danger: '#fc1504', warning: '#f46e08', success: '#08e559'
+                    accent: '#0059ff', accentText: '#fff1f1', accentSurface: '#cbe2fc', accentBorder: '#0059ff',
+                    danger: '#0059ff', warning: '#f40808', success: '#0059ff'
                 },
         [isDark]
     );
@@ -3557,7 +3557,7 @@ export default function App() {
                                 }}
                                 className="vt-edit-goals-btn"
                             >
-                                <Edit3 size={12} />
+                                
                                 <span>Edit Goals</span>
                             </button>
                         </div>
@@ -3610,8 +3610,8 @@ export default function App() {
                                 {item.id === 'today' && workoutRunning && (
                                     <span
                                         style={{
-                                            backgroundColor: isActive ? '#0A0A0B' : colors.accent,
-                                            color: isActive ? '#CCFF00' : colors.accentText
+                                            backgroundColor: isActive ? '#000000' : colors.accent,
+                                            color: isActive ? '#0077ff' : colors.accentText
                                         }}
                                         className="vt-nav-timer-badge font-mono-num"
                                     >
@@ -3697,7 +3697,7 @@ export default function App() {
                                 color: colors.accentText,
                                 borderColor: colors.accentBorder
                             }}
-                            className="vt-toast-card"
+                            className="vt-toast-card"colors
                         >
                             <CheckCircle2 size={20} style={{ flexShrink: 0 }} />
                             <span>{toast}</span>
@@ -4620,15 +4620,7 @@ function FormChartModal({
                 </div>
 
                 {/* Footer */}
-                <div
-                    style={{ borderColor: colors.border, color: colors.muted }}
-                    className="vt-chart-modal-footer vt-text-11"
-                >
-                    <span>
-                        <strong style={{ color: isDark ? colors.accent : colors.text }}>Tip:</strong> Photo par tap karke zoom karein (100% → 150% → 200%). Har rep mein 2–3s slow neeche laayein.
-                    </span>
-                    <span className="font-mono-num">{activeChartDay.chartImage}</span>
-                </div>
+                
             </div>
         </div>
     );
@@ -4771,14 +4763,7 @@ function TodayView({
                         >
                             <div className="vt-day-btn-top">
                                 <span className="vt-day-short">{day.shortDay}</span>
-                                {isToday && (
-                                    <span
-                                        style={{
-                                            backgroundColor: isSelected ? '#0A0A0B' : colors.accent
-                                        }}
-                                        className="vt-today-dot"
-                                    />
-                                )}
+                                
                             </div>
                             <span
                                 className="vt-day-sub"
@@ -7154,7 +7139,7 @@ function ProgressView({
                             <div className="vt-flex vt-items-center vt-gap-1-5">
                                 <Sun size={14} style={{ color: isDark ? colors.accent : '#D97706' }} />
                                 <span className="vt-text-10 vt-font-extrabold vt-uppercase">
-                                    Subah (Morning)
+                                    Morning
                                 </span>
                             </div>
                             <input
@@ -7184,7 +7169,7 @@ function ProgressView({
                             <div className="vt-flex vt-items-center vt-gap-1-5">
                                 <Moon size={14} style={{ color: '#38BDF8' }} />
                                 <span className="vt-text-10 vt-font-extrabold vt-uppercase">
-                                    Raat (Bedtime)
+                                 Bedtime
                                 </span>
                             </div>
                             <input
@@ -7221,28 +7206,6 @@ function ProgressView({
                             </span>
                         </div>
                     )}
-
-                    {/* Optional Note */}
-                    <div>
-                        <label
-                            className="vt-block vt-text-10 vt-font-bold vt-uppercase vt-mb-1"
-                            style={{ color: colors.muted }}
-                        >
-                            Optional Note (Cheat meal, high salt, poor sleep, etc.)
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="e.g. Late dinner / high water intake"
-                            value={noteInput}
-                            onChange={(e) => setNoteInput(e.target.value)}
-                            style={{
-                                backgroundColor: colors.elevated,
-                                borderColor: colors.border,
-                                color: colors.text
-                            }}
-                            className="vt-input vt-h-38 vt-px-3 vt-text-xs"
-                        />
-                    </div>
 
                     <button
                         type="submit"
@@ -8076,87 +8039,6 @@ function SettingsView({
 
     return (
         <div className="vt-stack-5">
-            <div
-                style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                className="vt-card vt-p-card vt-stack-4"
-            >
-                <h2 className="font-display vt-text-3xl vt-font-black vt-uppercase">
-                    Profile & App Preferences
-                </h2>
-
-                <div className="vt-grid-sm-2 vt-gap-3">
-                    <button
-                        onClick={() => {
-                            setOnboardingForm(appState.profile);
-                            setShowOnboarding(true);
-                        }}
-                        style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                        className="vt-btn vt-h-48 vt-px-4 vt-rounded-xl vt-font-extrabold vt-text-xs vt-uppercase vt-tracking-wider vt-gap-2"
-                    >
-                        <Edit3 className="vt-icon-4" />
-                        <span>Edit Profile & Goals</span>
-                    </button>
-
-                    <button
-                        onClick={handleDownloadSvgIcon}
-                        style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                        className="vt-btn vt-h-48 vt-px-4 vt-box-xl vt-font-extrabold vt-text-xs vt-uppercase vt-tracking-wider vt-gap-2"
-                    >
-                        <Download className="vt-icon-4" />
-                        <span>Download Brand icon.svg</span>
-                    </button>
-                </div>
-
-                <div className="vt-grid-sm-2 vt-gap-3 vt-pt-2">
-                    <div
-                        style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                        className="vt-p-4 vt-box-xl vt-between-center"
-                    >
-                        <div>
-                            <div className="vt-font-extrabold vt-text-sm">Weight Unit</div>
-                            <div className="vt-text-xs" style={{ color: colors.muted }}>
-                                Switch between kilograms (kg) and pounds (lb)
-                            </div>
-                        </div>
-                        <button
-                            onClick={() =>
-                                setAppState((prev) => ({
-                                    ...prev,
-                                    unit: prev.unit === 'kg' ? 'lb' : 'kg'
-                                }))
-                            }
-                            style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                            className="vt-btn vt-h-42 vt-px-4 vt-rounded-xl vt-font-extrabold vt-text-xs vt-uppercase"
-                        >
-                            {appState.unit.toUpperCase()}
-                        </button>
-                    </div>
-
-                    <div
-                        style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                        className="vt-p-4 vt-box-xl vt-between-center"
-                    >
-                        <div>
-                            <div className="vt-font-extrabold vt-text-sm">Color Theme</div>
-                            <div className="vt-text-xs" style={{ color: colors.muted }}>
-                                Solid flat dark or light mode (electric lime buttons)
-                            </div>
-                        </div>
-                        <button
-                            onClick={() =>
-                                setAppState((prev) => ({
-                                    ...prev,
-                                    theme: prev.theme === 'dark' ? 'light' : 'dark'
-                                }))
-                            }
-                            style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                            className="vt-btn vt-h-42 vt-px-4 vt-rounded-xl vt-font-extrabold vt-text-xs vt-uppercase"
-                        >
-                            {appState.theme.toUpperCase()}
-                        </button>
-                    </div>
-                </div>
-            </div>
 
             {/* Backup & Reset */}
             <div

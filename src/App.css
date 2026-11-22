@@ -158,7 +158,7 @@ html[data-theme='light'] ::selection { color: #FFFFFF; }
 }
 
 .vt-page-main {
-  width: 100%; max-width: 1180px; margin: 0 auto;
+  width: 100%; max-width: 1380px; margin: 0 auto;
   padding: 14px 12px calc(var(--nav-h) + var(--safe-b) + 120px);
 }
 .vt-page-main > * { animation: vtFade 220ms var(--ease-out) backwards; }
