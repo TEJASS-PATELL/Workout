@@ -3072,7 +3072,7 @@ export default function App() {
                     bg: '#F4F4F2', card: '#FFFFFF', elevated: '#EDEDEA', border: '#D6D6D1',
                     text: '#000000', muted: '#55555C',
                     accent: '#0059ff', accentText: '#fff1f1', accentSurface: '#cbe2fc', accentBorder: '#0059ff',
-                    danger: '#0059ff', warning: '#f40808', success: '#0059ff'
+                    danger: '#0059ff', warning: '#f40808', success: '#0059ff' 
                 },
         [isDark]
     );
@@ -6097,7 +6097,7 @@ function NutritionView({
                     {
                         v: appState.waterMl,
                         m: waterTarget,
-                        c: '#38BDF8',
+                        c: '#0059ff',
                         s: 'water',
                         t: `${(appState.waterMl / 1000).toFixed(1)}/${(waterTarget / 1000).toFixed(1)}L`
                     }
@@ -7013,7 +7013,7 @@ function ProgressView({
                         Total Net Gain
                     </div>
                     <div
-                        style={{ color: kpiSummary.totalGainedKg >= 0 ? (isDark ? colors.accent : colors.text) : colors.danger }}
+                        style={{ color: kpiSummary.totalGainedKg >= 0 ? (isDark ? colors.accent : colors.accent) : colors.danger }}
                         className="font-display vt-text-3xl vt-font-black vt-mt-1"
                     >
                         {kpiSummary.totalGainedKg >= 0 ? '+' : ''}
@@ -7047,7 +7047,7 @@ function ProgressView({
                     <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
                         Avg AM→PM Swing
                     </div>
-                    <div className="font-display vt-text-3xl vt-font-black vt-mt-1" style={{ color: '#38BDF8' }}>
+                    <div className="font-display vt-text-3xl vt-font-black vt-mt-1" style={{ color: isDark ? colors.accent : colors.accent }}>
                         {kpiSummary.overallAvgSwingKg !== null
                             ? `${kpiSummary.overallAvgSwingKg >= 0 ? '+' : ''}${formatWeight(
                                 kpiSummary.overallAvgSwingKg
@@ -7137,7 +7137,7 @@ function ProgressView({
                             className="vt-p-2-5 vt-box-xl vt-stack-1-5"
                         >
                             <div className="vt-flex vt-items-center vt-gap-1-5">
-                                <Sun size={14} style={{ color: isDark ? colors.accent : '#D97706' }} />
+                                <Sun size={14} style={{ color: isDark ? colors.accent : '#ff8800' }} />
                                 <span className="vt-text-10 vt-font-extrabold vt-uppercase">
                                     Morning
                                 </span>
@@ -7162,12 +7162,12 @@ function ProgressView({
                         <div
                             style={{
                                 backgroundColor: colors.elevated,
-                                borderColor: nightInput !== '' ? '#38BDF8' : colors.border
+                                borderColor: nightInput !== '' ? '#0059ff' : colors.border
                             }}
                             className="vt-p-2-5 vt-box-xl vt-stack-1-5"
                         >
                             <div className="vt-flex vt-items-center vt-gap-1-5">
-                                <Moon size={14} style={{ color: '#38BDF8' }} />
+                                <Moon size={14} style={{ color: '#0059ff' }} />
                                 <span className="vt-text-10 vt-font-extrabold vt-uppercase">
                                  Bedtime
                                 </span>
@@ -7276,7 +7276,7 @@ function ProgressView({
                                         backgroundColor: isDark ? colors.accent : '#16A34A'
                                     }}
                                 />
-                                Subah (AM)
+                                Morning (AM)
                             </span>
                             <span className="vt-flex vt-items-center vt-gap-1-5">
                                 <span
@@ -7297,10 +7297,10 @@ function ProgressView({
                                         width: 10,
                                         height: 10,
                                         borderRadius: '50%',
-                                        backgroundColor: isDark ? '#38BDF8' : '#2563EB'
+                                        backgroundColor: isDark ? '#CCFF00' : '#0059ff' 
                                     }}
                                 />
-                                Raat (PM Blue)
+                                Night (PM)
                             </span>
                         </div>
                     )}
@@ -7310,7 +7310,7 @@ function ProgressView({
                             chartMode === 'trajectory' ? (
                                 (() => {
                                     const morningColor = isDark ? colors.accent : '#16A34A';
-                                    const nightColor = isDark ? '#38BDF8' : '#2563EB';
+                                    const nightColor = isDark ? '#0059ff' : '#2563EB';
                                     const nightPoints = chartData.filter(
                                         (d) => typeof d.night === 'number' && !Number.isNaN(d.night)
                                     );
@@ -7404,7 +7404,7 @@ function ProgressView({
                                         <Bar
                                             dataKey="swing"
                                             name={`PM − AM Delta (${appState.unit})`}
-                                            fill={isDark ? '#38BDF8' : '#2563EB'}
+                                            fill={isDark ? '#0059ff' : '#2563EB'}
                                             isAnimationActive={false}
                                             radius={[6, 6, 0, 0]}
                                         />
@@ -7551,9 +7551,9 @@ function ProgressView({
 
                                             <div>
                                                 <div className="vt-text-10 vt-uppercase" style={{ color: colors.muted }}>
-                                                    Avg Raat (PM)
+                                                    Average (PM)
                                                 </div>
-                                                <div className="vt-text-sm vt-font-extrabold font-mono-num" style={{ color: '#38BDF8' }}>
+                                                <div className="vt-text-sm vt-font-extrabold font-mono-num" style={{ color: isDark ? colors.accent : colors.accent }}>
                                                     {wk.avgNightKg !== null
                                                         ? `${formatWeight(wk.avgNightKg)} ${appState.unit}`
                                                         : '--'}
@@ -7648,7 +7648,7 @@ function ProgressView({
                                             <div className="vt-text-10 vt-uppercase" style={{ color: colors.muted }}>
                                                 Month Avg PM
                                             </div>
-                                            <div className="vt-text-xs vt-font-extrabold font-mono-num" style={{ color: '#38BDF8' }}>
+                                            <div className="vt-text-xs vt-font-extrabold font-mono-num" style={{ color: '#0059ff' }}>
                                                 {mo.avgNightKg !== null
                                                     ? `${formatWeight(mo.avgNightKg)} ${appState.unit}`
                                                     : '--'}
@@ -7702,7 +7702,7 @@ function ProgressView({
                                                 : '--'}
                                         </span>
                                         <span className="font-mono-num">
-                                            <strong style={{ color: '#38BDF8' }}>Raat:</strong>{' '}
+                                            <strong style={{ color: '#0059ff' }}>Raat:</strong>{' '}
                                             {entry.nightKg !== null
                                                 ? `${formatWeight(entry.nightKg)} ${appState.unit}`
                                                 : '--'}
@@ -8866,7 +8866,7 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                         backgroundColor: colors.elevated,
                         borderColor: timerRunning
                             ? timerPhase === 'rest'
-                                ? '#38BDF8'
+                                ? '#0059ff'
                                 : colors.accentBorder
                             : colors.border
                     }}
@@ -8875,7 +8875,7 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                     <div className="vt-cardio-player-left">
                         <div
                             style={{
-                                backgroundColor: timerPhase === 'rest' ? '#38BDF8' : colors.accent,
+                                backgroundColor: timerPhase === 'rest' ? '#0059ff' : colors.accent,
                                 color: '#0A0A0B'
                             }}
                             className="vt-cardio-clock font-display tabular-nums"
@@ -8888,7 +8888,7 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                                 style={{
                                     color:
                                         timerPhase === 'rest'
-                                            ? '#38BDF8'
+                                            ? '#0059ff'
                                             : isDark
                                                 ? colors.accent
                                                 : colors.text
