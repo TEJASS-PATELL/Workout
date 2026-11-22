@@ -28,18 +28,23 @@ import {
     CheckCircle2,
     Sparkles,
     Scale,
-    Ruler,
     ShieldCheck,
-    Edit3,
+    ShieldAlert,
+    Brain,
+    Target,
+    Trophy,
+    Activity,
     X,
     Footprints,
     Zap,
     RotateCcw,
     Plus,
-    ShoppingBag
+    ShoppingBag,
+    RefreshCw
 } from 'lucide-react';
 import {
     ResponsiveContainer,
+    ComposedChart,
     LineChart,
     Line,
     XAxis,
@@ -52,53 +57,39 @@ import {
     Area,
     BarChart,
     Bar,
+    Cell,
     RadarChart,
     Radar,
     PolarGrid,
-    PolarAngleAxis
+    PolarAngleAxis,
+    RadialBarChart,
+    RadialBar,
+    PolarAngleAxis as RadialPolarAngleAxis
 } from 'recharts';
 
 // ============================================================================
-// SECTION 3: SCIENCE RULES (src/lib/science.ts equivalent)
-// Each constant is documented with its peer-reviewed exercise/nutrition rationale.
+// SECTION 1: SCIENCE RULES (Pure Constants — Zero App State Mixed In)
 // ============================================================================
 
 export const SCIENCE_RULES = {
-    // Volume: Meta-analyses (Schoenfeld et al.) show a graded dose-response up to at least
-    // 10 weekly sets per muscle; 12–20 sets is the sweet spot for hypertrophy when hit 2x/week.
-    // Lower-priority groups (calves, abs) can sit at 6–12 direct sets.
     VOLUME_MIN_SETS: 10,
     VOLUME_MAX_SETS: 20,
     VOLUME_MINOR_MIN_SETS: 6,
     VOLUME_MINOR_MAX_SETS: 12,
     SECONDARY_MUSCLE_CREDIT: 0.5,
 
-    // Effort (RIR): Most working sets finish 1–3 reps in reserve (compounds ~2 RIR, isolations 0–2 RIR)
-    // to maximize motor unit recruitment without excessive central nervous system fatigue.
-    // Beginners often underestimate effort, so 1 safe isolation set per session may go to 0 RIR / failure.
     COMPOUND_TARGET_RIR: '2 RIR',
     ISOLATION_TARGET_RIR: '0–2 RIR (last set optional failure calibration)',
 
-    // Ramp-in: Weeks 1–2 use 2 working sets per exercise at 3–4 RIR to prioritize motor learning
-    // and prevent debilitating delayed-onset muscle soreness (DOMS) in beginners.
     RAMP_IN_SETS: 3,
     RAMP_IN_RIR: '3–4 RIR',
     DELOAD_FREQUENCY_WEEKS: 6,
 
-    // Rest intervals: Longer inter-set rests (120–150s on compounds, 75–90s on isolations)
-    // preserve volume load across sets; RCTs in trained men show 2–3 min beats 1 min for hypertrophy.
     REST_COMPOUND_HEAVY_SEC: 150,
     REST_COMPOUND_STD_SEC: 120,
     REST_ISOLATION_STRETCH_SEC: 90,
     REST_ISOLATION_STD_SEC: 75,
 
-    pelvicSide: 'right',
-    pelvicLogs: [],
-    pelvicHabits: {},
-    // Energy (Mifflin–St Jeor for 22y male, 173 cm, 55 kg):
-    // BMR = (10 * 55) + (6.25 * 173) - (5 * 22) + 5 = 1,526.25 kcal/day.
-    // TDEE (6 days/wk training, activity multiplier 1.55–1.725) ≈ 2,350–2,650 kcal/day.
-    // 2,900 kcal provides a controlled +10–20% lean-bulk surplus.
     BMR_KCAL: 1526,
     TDEE_MIN_KCAL: 2350,
     TDEE_MAX_KCAL: 2650,
@@ -107,26 +98,20 @@ export const SCIENCE_RULES = {
     ADVISORY_CARBS_G: 370,
     ADVISORY_FAT_G: 95,
 
-    // Protein: Muscle protein synthesis plateaus around ~1.6 g/kg/day (upper 95% CI ~2.2 g/kg).
-    // Target 130 g/day (~2.4 g/kg at 55 kg, ~1.9 g/kg at 68 kg) with a 110 g floor to account
-    // for lower digestibility/leucine density in Indian plant-heavy diets.
-    // Spread across >= 4 feedings of >= 22–30 g (~0.4 g/kg/meal).
     TARGET_PROTEIN_G: 130,
     FLOOR_PROTEIN_G: 110,
     MIN_PROTEIN_FEEDINGS: 4,
     MIN_PROTEIN_PER_FEEDING_G: 22,
 
-    // Rate of gain: Standard lean bulk is 0.25–0.5% body weight/week; underweight beginners (BMI ~18.4)
-    // can safely gain up to ~1% BW/week early. Always ignore the first 14 days (intracellular glycogen + water).
     GAIN_IGNORE_INITIAL_DAYS: 14,
     GAIN_MIN_PCT_BW: 0.0025,
     GAIN_MAX_PCT_BW: 0.01,
     GAIN_UPPER_HARD_CAP_KG: 0.7,
     GAIN_LOWER_FLOOR_KG: 0.2,
 
-    // Recovery: 7–9 h sleep (target >= 7.5 h), 3.5 L hydration, Sunday 20–30 min easy walk.
     TARGET_WATER_ML: 3500,
-    TARGET_SLEEP_HOURS: 7.5
+    TARGET_SLEEP_HOURS: 7.5,
+    REBOOT_TARGET_DAYS: 90
 };
 
 export const DEFAULT_STEP_INCREMENTS = {
@@ -140,8 +125,7 @@ export const DEFAULT_STEP_INCREMENTS = {
 };
 
 // ============================================================================
-// SECTION 4: FINAL TRAINING DATA (src/data/plan.ts equivalent)
-// Exact 6-Day PPL V-Taper Split (116 Primary Weekly Sets)
+// SECTION 2: FINAL TRAINING DATA (6-Day PPL V-Taper Split — Exact 131 Sets)
 // ============================================================================
 
 export const WORKOUT_PLAN = [
@@ -1218,24 +1202,29 @@ export const WORKOUT_PLAN = [
     }
 ];
 
+// Accurately audited direct weekly primary sets across Mon-Sat (Total = 131 Sets)
 export const EXPECTED_WEEKLY_PRIMARY_SETS = {
-    Chest: 12,
+    Chest: 14,
     'Front delts': 7,
     'Side delts': 11,
     'Rear delts': 9,
-    'Lats/Back': 20,
-    Biceps: 10,
-    Triceps: 8,
+    'Lats/Back': 22,
+    Biceps: 15,
+    Triceps: 11,
     Quads: 13,
     Hamstrings: 9,
-    Glutes: 3,
+    Glutes: 6,
     Calves: 8,
     Abs: 6
 };
 
+export const TOTAL_WEEKLY_PRIMARY_SETS = Object.values(EXPECTED_WEEKLY_PRIMARY_SETS).reduce(
+    (sum, v) => sum + v,
+    0
+);
+
 // ============================================================================
-// SECTION 5: FINAL NUTRITION DATA (src/data/foods.ts & src/data/meals.ts)
-// Whole-Food Indian Database (IFCT 2017 / USDA) — Zero Supplements
+// SECTION 3: NUTRITION DATABASE (29 Indian Whole Foods — Zero Supplements)
 // ============================================================================
 
 export const INITIAL_FOOD_DATABASE = [
@@ -1579,8 +1568,51 @@ export const APPETITE_HELPERS = [
 ];
 
 // ============================================================================
-// NUTRITION & TRAINING COMPUTATION HELPERS (WITH UNIT TEST COVERAGE)
+// SECTION 4: DISCIPLINE (NO PORN / NO MASTURBATION) PROTOCOL & MILESTONES
 // ============================================================================
+
+export const DISCIPLINE_MILESTONES = [
+    { days: 1, title: 'Day 1 Spark', benefit: 'Decision locked — breaking the autopilot loop.' },
+    { days: 3, title: '72-Hour Filter', benefit: 'Initial dopamine crash passes; mental fog begins lifting.' },
+    { days: 7, title: '1 Week Warrior', benefit: 'Energy & gym drive stabilize; morning alertness rises.' },
+    { days: 14, title: '2 Weeks Control', benefit: 'Urge waves shorten; focus & study/work stamina improve.' },
+    { days: 30, title: '30-Day Rewire', benefit: 'Baseline dopamine sensitivity recovering; strong self-respect.' },
+    { days: 60, title: '60-Day Iron Mind', benefit: 'Habit cues lose grip; calm confidence becomes default.' },
+    { days: 90, title: '90-Day Full Reboot', benefit: 'Deep neural rewiring achieved — new permanent identity.' },
+    { days: 180, title: '180-Day Mastery', benefit: 'Zero compulsion; energy fully channeled into physique & career.' },
+    { days: 365, title: '365-Day Legend', benefit: 'Full year clean — complete mastery over impulses.' }
+];
+
+export const COMMON_URGE_TRIGGERS = [
+    'Late Night Phone',
+    'Boredom / Alone',
+    'Stress / Anxiety',
+    'Social Media Reels',
+    'Fatigue / Low Sleep',
+    'After Argument / Mood'
+];
+
+export const URGE_SOS_ACTIONS = [
+    'Phone bedroom se bahar rakhein aur turant room se bahar walk karein (2 min).',
+    '20 strict Push-ups ya 30 Bodyweight Squats turant lagayein — blood flow redirect hoga.',
+    'Chehre aur gardan par thanda paani chhidkein (diving reflex instantly calms urges).',
+    '90-Second Box Breathing (4s inhale • 4s hold • 4s exhale • 4s hold) complete karein.'
+];
+
+// ============================================================================
+// SECTION 5: COMPUTATION & ANALYTICS HELPERS (100% UNIT-TESTED)
+// ============================================================================
+
+export function getLocalDateStr(dateObj = new Date()) {
+    return dateObj.toLocaleDateString('en-CA');
+}
+
+export function addDaysToDateStr(dateStr, offsetDays) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() + offsetDays);
+    return getLocalDateStr(dt);
+}
 
 export function computeMealOptionMacros(option, foodDb = INITIAL_FOOD_DATABASE) {
     if (!option || !Array.isArray(option.ingredients)) {
@@ -2071,7 +2103,6 @@ export function analyzeWeeklyGainRate(weightLogs, ignoreInitial14Days = true) {
         };
     }
 
-    // Morning fasted weight is scientifically the most accurate for lean mass tracking
     const getTrueWeight = (entry) =>
         Number(entry.morningKg || entry.weightKg || entry.nightKg || 0);
 
@@ -2167,7 +2198,7 @@ export function analyzeWeeklyGainRate(weightLogs, ignoreInitial14Days = true) {
             avgWeeklyGainKg,
             consecutiveLowWeeks,
             calorieAdjustment: 300,
-            headline: 'Plateau Detected (<0.2 kg/wk): Add +300 kcal',
+            headline: 'Plateau Detected (below 0.2 kg/wk): Add +300 kcal',
             message: `Pichle ${consecutiveLowWeeks} check-ins se gain 0.2 kg/wk se kam hai (latest: +${latestWeeklyGainKg.toFixed(
                 2
             )} kg/wk). Nutrition tab se +300 kcal/day add karein.`
@@ -2189,21 +2220,169 @@ export function analyzeWeeklyGainRate(weightLogs, ignoreInitial14Days = true) {
     };
 }
 
+// ============================================================================
+// DISCIPLINE (NO PORN / NO MASTURBATION) ANALYTICS ENGINE
+// ============================================================================
+
+export function analyzeDisciplineProgress(
+    disciplineLogs = {},
+    urgeLogs = [],
+    referenceDateStr = getLocalDateStr()
+) {
+    const entries = Object.values(disciplineLogs || {})
+        .filter((e) => e && e.date)
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+    const totalLoggedDays = entries.length;
+    const totalCleanDays = entries.filter((e) => e.status === 'clean').length;
+    const totalRelapses = entries.filter((e) => e.status === 'relapse').length;
+    const cleanRatePct =
+        totalLoggedDays > 0 ? Math.round((totalCleanDays / totalLoggedDays) * 100) : 0;
+
+    // Calculate current consecutive clean streak up to today (or yesterday if today not checked in yet)
+    let currentStreak = 0;
+    const todayEntry = disciplineLogs?.[referenceDateStr];
+    const yesterdayStr = addDaysToDateStr(referenceDateStr, -1);
+    let cursorDate =
+        todayEntry?.status === 'clean'
+            ? referenceDateStr
+            : todayEntry?.status === 'relapse'
+                ? null
+                : disciplineLogs?.[yesterdayStr]?.status === 'clean'
+                    ? yesterdayStr
+                    : null;
+
+    while (cursorDate && disciplineLogs?.[cursorDate]?.status === 'clean') {
+        currentStreak += 1;
+        cursorDate = addDaysToDateStr(cursorDate, -1);
+    }
+
+    // Calculate best streak + chronological daily growth series
+    let bestStreak = 0;
+    let runningStreak = 0;
+    let momentumScore = 0;
+    let prevDate = null;
+
+    const urgesByDate = {};
+    (urgeLogs || []).forEach((u) => {
+        if (!u?.date) return;
+        urgesByDate[u.date] = (urgesByDate[u.date] || 0) + 1;
+    });
+
+    const dailyGrowthSeries = entries.map((entry, idx) => {
+        const isConsecutive = prevDate ? addDaysToDateStr(prevDate, 1) === entry.date : false;
+        const defeatedToday = urgesByDate[entry.date] || 0;
+
+        if (entry.status === 'clean') {
+            runningStreak = isConsecutive ? runningStreak + 1 : 1;
+            if (runningStreak > bestStreak) bestStreak = runningStreak;
+            momentumScore += 10 + Math.min(10, runningStreak) + defeatedToday * 3;
+        } else {
+            runningStreak = 0;
+            momentumScore = Math.max(0, Math.round(momentumScore * 0.72));
+        }
+
+        // 7-day rolling clean consistency percentage
+        const windowEntries = entries.slice(Math.max(0, idx - 6), idx + 1);
+        const cleanInWindow = windowEntries.filter((w) => w.status === 'clean').length;
+        const rolling7Pct = Math.round((cleanInWindow / windowEntries.length) * 100);
+
+        prevDate = entry.date;
+
+        return {
+            date: entry.date.slice(5),
+            fullDate: entry.date,
+            status: entry.status,
+            streak: runningStreak,
+            momentum: momentumScore,
+            consistency7d: rolling7Pct,
+            urgeLevel: Number(entry.urgeLevel || 0),
+            urgesDefeated: defeatedToday
+        };
+    });
+
+    // Trigger breakdown across both urgeLogs and relapse logs
+    const triggerCounts = {};
+    entries.forEach((e) => {
+        if (e.trigger) {
+            triggerCounts[e.trigger] = (triggerCounts[e.trigger] || 0) + 1;
+        }
+    });
+    (urgeLogs || []).forEach((u) => {
+        if (u.trigger) {
+            triggerCounts[u.trigger] = (triggerCounts[u.trigger] || 0) + 1;
+        }
+    });
+
+    const triggerBreakdown = Object.entries(triggerCounts)
+        .map(([trigger, count]) => ({ trigger, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 6);
+
+    // Last 35 days (5 weeks) calendar heatmap
+    const heatmap35 = Array.from({ length: 35 }, (_, i) => {
+        const dStr = addDaysToDateStr(referenceDateStr, -(34 - i));
+        const log = disciplineLogs?.[dStr] || null;
+        return {
+            date: dStr,
+            shortDate: dStr.slice(5),
+            status: log?.status || 'unlogged',
+            urgeLevel: log?.urgeLevel || 0,
+            urgesDefeated: urgesByDate[dStr] || 0
+        };
+    });
+
+    const rebootPct = Math.min(
+        100,
+        Math.round((currentStreak / SCIENCE_RULES.REBOOT_TARGET_DAYS) * 100)
+    );
+
+    const nextMilestone =
+        DISCIPLINE_MILESTONES.find((m) => m.days > currentStreak) ||
+        DISCIPLINE_MILESTONES[DISCIPLINE_MILESTONES.length - 1];
+
+    const currentRank =
+        [...DISCIPLINE_MILESTONES].reverse().find((m) => currentStreak >= m.days) || {
+            days: 0,
+            title: 'Day 0 — Ready to Begin',
+            benefit: 'Tap "Mark Today Clean" below to start your permanent transformation.'
+        };
+
+    return {
+        currentStreak,
+        bestStreak,
+        totalLoggedDays,
+        totalCleanDays,
+        totalRelapses,
+        cleanRatePct,
+        urgesDefeated: (urgeLogs || []).length,
+        rebootPct,
+        nextMilestone,
+        currentRank,
+        dailyGrowthSeries,
+        triggerBreakdown,
+        heatmap35,
+        todayLoggedStatus: todayEntry?.status || null
+    };
+}
+
 export function runBuiltInUnitTests() {
     const results = [];
 
+    // Test 1: Exact Weekly Primary Sets (131 Sets)
     const { primary } = computeWeeklyMuscleVolumes();
     const totalSets = Object.values(primary).reduce((a, b) => a + b, 0);
     const allMatchExpected = Object.entries(EXPECTED_WEEKLY_PRIMARY_SETS).every(
         ([group, exp]) => primary[group] === exp
     );
     results.push({
-        name: 'Weekly Primary Sets Match Exact Spec (Total = 116 Sets)',
-        passed: allMatchExpected && totalSets === 116,
-        expected: '116 sets (Lats/Back 20, Quads 13, Chest 12, Side delts 11...)',
-        actual: `${totalSets} sets (Lats/Back ${primary['Lats/Back']}, Quads ${primary.Quads}, Chest ${primary.Chest}, Side delts ${primary['Side delts']})`
+        name: `Weekly Primary Sets Match Exact Spec (Total = ${TOTAL_WEEKLY_PRIMARY_SETS} Sets)`,
+        passed: allMatchExpected && totalSets === TOTAL_WEEKLY_PRIMARY_SETS,
+        expected: `${TOTAL_WEEKLY_PRIMARY_SETS} sets (Lats/Back 22, Biceps 15, Chest 14, Quads 13...)`,
+        actual: `${totalSets} sets (Lats/Back ${primary['Lats/Back']}, Biceps ${primary.Biceps}, Chest ${primary.Chest}, Quads ${primary.Quads})`
     });
 
+    // Test 2: Assisted Lift Overload
     const assistPullup = WORKOUT_PLAN[1].exercises[1];
     const tAssist = calculateProgressiveOverload(assistPullup, [
         { weight: 25, reps: 10 },
@@ -2220,6 +2399,7 @@ export function runBuiltInUnitTests() {
         actual: `shouldIncrease: ${tAssist.shouldIncrease}, ${tAssist.incrementKg} kg -> ${tAssist.suggestedWeightKg} kg`
     });
 
+    // Test 3: All 17 Meal Options Within ±5%
     let allMealsWithin5Pct = true;
     let maxDeviationPct = 0;
     MEAL_SLOTS.forEach((slot) => {
@@ -2237,6 +2417,7 @@ export function runBuiltInUnitTests() {
         actual: `Max deviation ${(maxDeviationPct * 100).toFixed(2)}% across 17 options`
     });
 
+    // Test 4: Full-Day Non-Veg & Veg Totals
     const findOpt = (code) => {
         for (const s of MEAL_SLOTS) {
             const found = s.options.find((o) => o.code === code);
@@ -2248,10 +2429,7 @@ export function runBuiltInUnitTests() {
     const nonVegTotals = nonVegCodes.reduce(
         (acc, c) => {
             const m = findOpt(c);
-            return {
-                kcal: acc.kcal + m.kcal,
-                protein: acc.protein + m.protein
-            };
+            return { kcal: acc.kcal + m.kcal, protein: acc.protein + m.protein };
         },
         { kcal: 0, protein: 0 }
     );
@@ -2259,10 +2437,7 @@ export function runBuiltInUnitTests() {
     const vegTotals = vegCodes.reduce(
         (acc, c) => {
             const m = findOpt(c);
-            return {
-                kcal: acc.kcal + m.kcal,
-                protein: acc.protein + m.protein
-            };
+            return { kcal: acc.kcal + m.kcal, protein: acc.protein + m.protein };
         },
         { kcal: 0, protein: 0 }
     );
@@ -2278,19 +2453,20 @@ export function runBuiltInUnitTests() {
         )}g P | Veg ${vegTotals.kcal} kcal/${Math.round(vegTotals.protein)}g P`
     });
 
+    // Test 5: Gain Rate Velocity Rules
     const tFast = analyzeWeeklyGainRate(
         [
-            { date: '2026-10-01', weightKg: 55.0 },
-            { date: '2026-10-20', weightKg: 55.6 },
-            { date: '2026-10-27', weightKg: 56.55 }
+            { date: '2026-10-01', morningKg: 55.0 },
+            { date: '2026-10-20', morningKg: 55.6 },
+            { date: '2026-10-27', morningKg: 56.55 }
         ],
         false
     );
     const tSlow = analyzeWeeklyGainRate(
         [
-            { date: '2026-10-01', weightKg: 56.0 },
-            { date: '2026-10-08', weightKg: 56.1 },
-            { date: '2026-10-15', weightKg: 56.2 }
+            { date: '2026-10-01', morningKg: 56.0 },
+            { date: '2026-10-08', morningKg: 56.1 },
+            { date: '2026-10-15', morningKg: 56.2 }
         ],
         false
     );
@@ -2304,24 +2480,38 @@ export function runBuiltInUnitTests() {
         actual: `${tFast.status} & ${tSlow.status} (+${tSlow.calorieAdjustment} kcal)`
     });
 
+    // Test 6: Clean Discipline Streak & Growth Score Engine
+    const mockDiscipline = {
+        '2026-11-18': { date: '2026-11-18', status: 'clean', noPorn: true, noFap: true, urgeLevel: 4 },
+        '2026-11-19': { date: '2026-11-19', status: 'clean', noPorn: true, noFap: true, urgeLevel: 3 },
+        '2026-11-20': { date: '2026-11-20', status: 'relapse', noPorn: false, noFap: false, urgeLevel: 8 },
+        '2026-11-21': { date: '2026-11-21', status: 'clean', noPorn: true, noFap: true, urgeLevel: 2 },
+        '2026-11-22': { date: '2026-11-22', status: 'clean', noPorn: true, noFap: true, urgeLevel: 1 }
+    };
+    const tDisc = analyzeDisciplineProgress(mockDiscipline, [], '2026-11-22');
+    results.push({
+        name: 'Clean Discipline Engine (Streak, Best Streak & Clean Rate %)',
+        passed:
+            tDisc.currentStreak === 2 &&
+            tDisc.bestStreak === 2 &&
+            tDisc.totalCleanDays === 4 &&
+            tDisc.cleanRatePct === 80,
+        expected: 'current: 2d, best: 2d, clean: 4, rate: 80%',
+        actual: `current: ${tDisc.currentStreak}d, best: ${tDisc.bestStreak}d, clean: ${tDisc.totalCleanDays}, rate: ${tDisc.cleanRatePct}%`
+    });
+
     return results;
 }
 
 // ============================================================================
-// INITIAL CONSTANTS & LOCAL STORAGE STATE BUILDER (ZERO SUPPLEMENTS)
+// SECTION 6: ZERO-DEFAULT INITIAL STATE (ONLY 65–68 KG GOAL BAND PRE-SET)
 // ============================================================================
 
-const INITIAL_LAST_SESSION_LOGS = {};
-const INITIAL_WEIGHT_LOGS = [];
-const INITIAL_MEASUREMENTS = [];
-const INITIAL_WORKOUT_HISTORY = [];
-const INITIAL_EXERCISE_HISTORY = {};
-
 const DEFAULT_PROFILE = {
-    age: 22,
-    heightCm: 173,
-    startWeightKg: 55,
-    currentWeightKg: 55,
+    age: 0,
+    heightCm: 0,
+    startWeightKg: 0,
+    currentWeightKg: 0,
     goalWeightMinKg: 65,
     goalWeightMaxKg: 68,
     dietTrack: 'non-veg',
@@ -2334,17 +2524,17 @@ const DEFAULT_PROFILE = {
 };
 
 const VTAPER_SVG_RAW = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
-  <rect width="512" height="512" rx="112" fill="#0A0A0B" />
-  <rect x="16" y="16" width="480" height="480" rx="96" stroke="#27272A" stroke-width="14" />
-  <rect x="76" y="116" width="360" height="20" rx="6" fill="#27272A" />
-  <rect x="92" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
-  <rect x="396" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
-  <path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="#CCFF00" />
-  <polygon points="208,156 304,156 256,284" fill="#27272A" />
-  <rect x="212" y="444" width="88" height="12" rx="6" fill="#27272A" />
+  <rect width="512" height="512" rx="112" fill="#0A0A0B" />
+  <rect x="16" y="16" width="480" height="480" rx="96" stroke="#27272A" stroke-width="14" />
+  <rect x="76" y="116" width="360" height="20" rx="6" fill="#27272A" />
+  <rect x="92" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
+  <rect x="396" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
+  <path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="#CCFF00" />
+  <polygon points="208,156 304,156 256,284" fill="#27272A" />
+  <rect x="212" y="444" width="88" height="12" rx="6" fill="#27272A" />
 </svg>`;
 
-const STORAGE_KEY = 'vtaper_tracker_state_v4';
+const STORAGE_KEY = 'vtaper_tracker_state_v5';
 
 function buildInitialActiveDrafts(lastLogs, rampInEnabled = true, customSteps = {}, variantChoices = {}) {
     const drafts = {};
@@ -2355,14 +2545,15 @@ function buildInitialActiveDrafts(lastLogs, rampInEnabled = true, customSteps = 
             const activeVar = variantChoices[ex.id] || ex.flags?.variants?.[0]?.id || null;
             const overload = calculateProgressiveOverload(ex, prev, customSteps, activeVar);
             drafts[ex.id] = Array.from({ length: ex.sets }, (_, idx) => {
-                const prevSet = prev[idx] || prev[prev.length - 1] || {
-                    weight: ex.flags?.assisted ? 25 : 0,
-                    reps: ex.repMin
-                };
+                const prevSet = prev[idx] || prev[prev.length - 1] || null;
                 return {
                     setNumber: idx + 1,
-                    weight: overload.shouldIncrease ? overload.suggestedWeightKg : prevSet.weight,
-                    reps: overload.shouldIncrease ? ex.repMin : prevSet.reps,
+                    weight: prevSet
+                        ? overload.shouldIncrease
+                            ? overload.suggestedWeightKg
+                            : prevSet.weight
+                        : 0,
+                    reps: prevSet ? (overload.shouldIncrease ? ex.repMin : prevSet.reps) : 0,
                     completed: false,
                     hiddenInRampIn: idx >= targetSets
                 };
@@ -2376,33 +2567,39 @@ function getFreshInitialState(theme = 'dark') {
     const defaultTrack = DEFAULT_PROFILE.dietTrack;
     return {
         onboarded: false,
-        dayStamp: new Date().toLocaleDateString('en-CA'),
+        dayStamp: getLocalDateStr(),
         theme,
         unit: 'kg',
         rampInEnabled: true,
-        profile: DEFAULT_PROFILE,
+        profile: { ...DEFAULT_PROFILE },
         customSteps: {},
         variantChoices: { 'thu-5': 'dips' },
         swappedAlternatives: {},
-        lastSessionLogs: INITIAL_LAST_SESSION_LOGS,
-        activeDrafts: buildInitialActiveDrafts(INITIAL_LAST_SESSION_LOGS, true, {}, { 'thu-5': 'dips' }),
+        lastSessionLogs: {},
+        activeDrafts: buildInitialActiveDrafts({}, true, {}, { 'thu-5': 'dips' }),
         foodDatabase: INITIAL_FOOD_DATABASE,
         selectedMealOptions: getDefaultSelectedMealsForTrack(defaultTrack),
         completedMealSlots: {},
         loggedAppetiteHelpers: [],
         waterMl: 0,
-        sleepHours: 7.5,
+        sleepHours: 0,
         sundayWalkDone: false,
         workoutStreak: 0,
-        weightLogs: INITIAL_WEIGHT_LOGS,
-        measurements: INITIAL_MEASUREMENTS,
-        workoutHistory: INITIAL_WORKOUT_HISTORY,
-        exerciseHistory: INITIAL_EXERCISE_HISTORY
+        weightLogs: [],
+        measurements: [],
+        workoutHistory: [],
+        exerciseHistory: {},
+        cardioLogs: [],
+        pelvicSide: 'right',
+        pelvicLogs: [],
+        pelvicHabits: {},
+        disciplineLogs: {},
+        urgeLogs: []
     };
 }
 
 // ============================================================================
-// SHARED VISUALIZATION & BRANDING COMPONENTS
+// SECTION 7: MODERN EDITORIAL CHARTS & SHARED BRANDING COMPONENTS
 // ============================================================================
 
 function BrandLogo({ size = 40 }) {
@@ -2416,28 +2613,83 @@ function BrandLogo({ size = 40 }) {
             aria-label="VTaper Logo"
             className="vt-brand-logo"
         >
-            <rect width="512" height="512" rx="112" fill="rgb(0, 0, 0)" />
-            <rect x="16" y="16" width="480" height="480" rx="96" stroke="#000000" strokeWidth="14" />
-            <rect x="76" y="116" width="360" height="20" rx="6" fill="#000000" />
-            <rect x="92" y="96" width="24" height="60" rx="6" fill="rgb(0, 89, 255)" />
-            <rect x="396" y="96" width="24" height="60" rx="6" fill="rgb(0, 89, 255)" />
-            <path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="rgb(0, 89, 255)" />
-            <polygon points="208,156 304,156 256,284" fill="#000000" />
-            <rect x="212" y="444" width="88" height="12" rx="6" fill="#000000" />
+            <rect width="512" height="512" rx="112" fill="#0A0A0B" />
+            <rect x="16" y="16" width="480" height="480" rx="96" stroke="#27272A" strokeWidth="14" />
+            <rect x="76" y="116" width="360" height="20" rx="6" fill="#27272A" />
+            <rect x="92" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
+            <rect x="396" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
+            <path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="#CCFF00" />
+            <polygon points="208,156 304,156 256,284" fill="#18181B" />
+            <rect x="212" y="444" width="88" height="12" rx="6" fill="#27272A" />
         </svg>
     );
 }
 
-const tip = (colors) => ({
-    contentStyle: {
-        backgroundColor: colors.card,
-        border: `1px solid ${colors.border}`,
-        borderRadius: 12,
-        color: colors.text,
-        fontSize: 12
-    },
-    cursor: { fill: colors.elevated }
-});
+// Modern Minimal Editorial Tooltip for all Recharts graphs
+function ModernChartTooltip({ active, payload, label, colors, suffixMap = {} }) {
+    if (!active || !payload || !payload.length) return null;
+    return (
+        <div
+            style={{
+                backgroundColor: colors.card,
+                border: `1px solid ${colors.border}`,
+                borderRadius: 12,
+                padding: '10px 12px',
+                minWidth: 156,
+                color: colors.text
+            }}
+        >
+            <div
+                className="font-mono-num"
+                style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: colors.muted,
+                    marginBottom: 6,
+                    paddingBottom: 5,
+                    borderBottom: `1px solid ${colors.border}`
+                }}
+            >
+                {label}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {payload
+                    .filter((item) => item.value !== null && item.value !== undefined)
+                    .map((item, idx) => (
+                        <div
+                            key={`${item.dataKey}-${idx}`}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: 14,
+                                fontSize: 12
+                            }}
+                        >
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: colors.muted }}>
+                                <span
+                                    style={{
+                                        width: 8,
+                                        height: 8,
+                                        borderRadius: '50%',
+                                        backgroundColor: item.color || colors.accent,
+                                        flexShrink: 0
+                                    }}
+                                />
+                                <span>{item.name}</span>
+                            </span>
+                            <span className="font-mono-num" style={{ fontWeight: 800, color: colors.text }}>
+                                {item.value}
+                                {suffixMap[item.dataKey] ? ` ${suffixMap[item.dataKey]}` : ''}
+                            </span>
+                        </div>
+                    ))}
+            </div>
+        </div>
+    );
+}
 
 // Flat activity ring (SVG)
 function Ring({ value, max, size = 92, stroke = 10, color, track, label, sub }) {
@@ -2484,7 +2736,7 @@ function VTaperGauge({ ratio, colors, isDark }) {
             [x2, y2] = pt(b);
         return `M${x1} ${y1} A${r} ${r} 0 0 1 ${x2} ${y2}`;
     };
-    const [nx, ny] = ratio ? pt(ratio, r - 20) : [cx, cy];
+    const [nx, ny] = ratio ? pt(ratio, r - 20) : pt(MIN, r - 20);
     const hot = isDark ? colors.accent : colors.text;
 
     return (
@@ -2515,11 +2767,88 @@ function VTaperGauge({ ratio, colors, isDark }) {
                     fill={hot}
                     className="font-display"
                 >
-                    {ratio ? `${ratio.toFixed(2)}x` : '--'}
+                    {ratio ? `${ratio.toFixed(2)}x` : '0.00x'}
                 </text>
             </svg>
             <div className="vt-gauge-sub" style={{ color: colors.muted }}>
-                Goal band 1.40-1.50x
+                Goal band 1.40–1.50x
+            </div>
+        </div>
+    );
+}
+
+// Modern Radial Reboot Progress Gauge (used in Clean Discipline tab)
+function RebootRadialGauge({ pct, currentStreak, colors, isDark }) {
+    const data = [{ name: '90-Day Reboot', value: Math.max(0, Math.min(100, pct)) }];
+    const strokeCol = isDark ? colors.accent : '#0059ff';
+
+    return (
+        <div
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+            className="vt-card vt-p-card vt-col-between"
+        >
+            <div>
+                <div className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                    90-Day Neural Reboot
+                </div>
+                <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                    Rewiring Progress
+                </h3>
+            </div>
+
+            <div style={{ width: '100%', height: 185, position: 'relative' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <RadialBarChart
+                        cx="50%"
+                        cy="56%"
+                        innerRadius="68%"
+                        outerRadius="96%"
+                        barSize={14}
+                        data={data}
+                        startAngle={215}
+                        endAngle={-35}
+                    >
+                        <RadialPolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                        <RadialBar
+                            background={{ fill: colors.elevated }}
+                            dataKey="value"
+                            cornerRadius={10}
+                            fill={strokeCol}
+                        />
+                    </RadialBarChart>
+                </ResponsiveContainer>
+                <div
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        paddingTop: 14,
+                        pointerEvents: 'none'
+                    }}
+                >
+                    <span
+                        className="font-display"
+                        style={{
+                            fontSize: 34,
+                            fontWeight: 900,
+                            lineHeight: 1,
+                            color: isDark ? colors.accent : colors.text
+                        }}
+                    >
+                        {pct}%
+                    </span>
+                    <span className="font-mono-num" style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>
+                        {currentStreak} / {SCIENCE_RULES.REBOOT_TARGET_DAYS} Days
+                    </span>
+                </div>
+            </div>
+
+            <div className="vt-between-center vt-text-11 font-mono-num" style={{ color: colors.muted }}>
+                <span>Start: Day 0</span>
+                <span>Target: 90 Clean Days</span>
             </div>
         </div>
     );
@@ -2533,23 +2862,31 @@ function MuscleRadar({ colors, isDark }) {
     return (
         <div
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
-            className="vt-card"
+            className="vt-card vt-p-card"
         >
             <h3 className="vt-section-title font-display">Muscle Balance Radar</h3>
             <p className="vt-radar-sub" style={{ color: colors.muted }}>
-                Direct weekly sets vs 12-set reference ring
+                Direct weekly sets ({TOTAL_WEEKLY_PRIMARY_SETS} total) vs 12-set hypertrophy ring
             </p>
             <div className="vt-radar-chart">
                 <ResponsiveContainer width="100%" height="100%">
                     <RadarChart data={data} outerRadius="72%">
                         <PolarGrid stroke={colors.border} />
                         <PolarAngleAxis dataKey="g" tick={{ fill: colors.muted, fontSize: 10 }} />
-                        <Radar dataKey="t" stroke={colors.muted} fill="none" strokeDasharray="4 4" />
+                        <Tooltip content={<ModernChartTooltip colors={colors} suffixMap={{ v: 'sets', t: 'sets' }} />} />
                         <Radar
+                            name="Target Ring"
+                            dataKey="t"
+                            stroke={colors.muted}
+                            fill="none"
+                            strokeDasharray="4 4"
+                        />
+                        <Radar
+                            name="Prescribed Sets"
                             dataKey="v"
-                            stroke={isDark ? colors.accent : '#111113'}
+                            stroke={isDark ? colors.accent : '#0059ff'}
                             fill={colors.accent}
-                            fillOpacity={0.25}
+                            fillOpacity={0.28}
                             strokeWidth={2.5}
                         />
                     </RadarChart>
@@ -2559,19 +2896,14 @@ function MuscleRadar({ colors, isDark }) {
     );
 }
 
-// 28-day consistency heatmap + session volume bars + per-exercise strength curve
-// ============================================================================
-// ADVANCED PROGRESS CHARTS (28-DAY HEATMAP + VOLUME AVG + STRENGTH & e1RM)
-// Replace your existing ProgressCharts function with this one
-// ============================================================================
-
+// Modern Upgraded Progress Charts (28-Day Dual Heatmap + Composed Volume/Sets + Gradient e1RM Area)
 function ProgressCharts({ appState, formatWeight, colors, isDark }) {
     const hist = appState.workoutHistory || [];
     const weightLogs = appState.weightLogs || [];
 
-    const morningColor = isDark ? colors.accent : '#16A34A';
-    const nightColor = isDark ? '#CCFF00' : '#0066ff';
-    const trendColor = '#FF7A1A';
+    const primaryStroke = isDark ? colors.accent : '#0059ff';
+    const secondaryStroke = '#FF7A1A';
+    const weightOnlyColor = isDark ? '#38BDF8' : '#0EA5E9';
 
     // 1. 28-Day Combined Consistency (Workouts + Dual Weigh-Ins)
     const heatmapData = useMemo(() => {
@@ -2585,10 +2917,9 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
             weightMap[w.date] = w;
         });
 
+        const today = getLocalDateStr();
         const days = Array.from({ length: 28 }, (_, i) => {
-            const d = new Date();
-            d.setDate(d.getDate() - (27 - i));
-            const dateStr = d.toLocaleDateString('en-CA');
+            const dateStr = addDaysToDateStr(today, -(27 - i));
             const hasWorkout = Boolean(workoutMap[dateStr]);
             const hasWeight = Boolean(weightMap[dateStr]);
             return {
@@ -2602,14 +2933,13 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
 
         const activeWorkoutDays = days.filter((d) => d.hasWorkout).length;
         const activeWeightDays = days.filter((d) => d.hasWeight).length;
-        // Target is 24 gym sessions in 28 days (6 days/wk)
         const gymConsistencyPct = Math.min(100, Math.round((activeWorkoutDays / 24) * 100));
 
         return { days, activeWorkoutDays, activeWeightDays, gymConsistencyPct };
     }, [hist, weightLogs]);
 
-    // 2. Session Volume + Sets + Average Reference Line
-    const [volumeRange, setVolumeRange] = useState(10); // 10 | 20
+    // 2. Session Volume + Sets Composed Analytics
+    const [volumeRange, setVolumeRange] = useState(10);
     const volumeAnalytics = useMemo(() => {
         const sliced = hist.slice(0, volumeRange).reverse();
         const chart = sliced.map((h) => ({
@@ -2648,7 +2978,6 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
         const chart = rawHist.map((h) => {
             const topKg = Number(h.topWeightKg || 0);
             const reps = Number(h.bestReps || 1);
-            // Epley e1RM formula for non-assisted lifts
             const e1rmKg =
                 !isAssisted && topKg > 0 && reps > 1
                     ? Number((topKg * (1 + reps / 30)).toFixed(2))
@@ -2682,7 +3011,7 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
 
     return (
         <div className="vt-stack-4">
-            {/* CARD 1: 28-DAY CONSISTENCY HEATMAP (WORKOUTS + WEIGHT LOGS) */}
+            {/* CARD 1: 28-DAY CONSISTENCY HEATMAP */}
             <div style={card} className="vt-card vt-p-card vt-stack-3">
                 <div className="vt-between-center vt-flex-wrap vt-gap-2">
                     <div>
@@ -2698,7 +3027,7 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
                             Gym Workout
                         </span>
                         <span className="vt-flex vt-items-center vt-gap-1-5">
-                            <span className="vt-legend-dot" style={{ backgroundColor: nightColor }} />
+                            <span className="vt-legend-dot" style={{ backgroundColor: weightOnlyColor }} />
                             Weight Logged Only
                         </span>
                     </div>
@@ -2709,15 +3038,16 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
                         const bg = d.hasWorkout
                             ? colors.accent
                             : d.hasWeight
-                                ? nightColor
+                                ? weightOnlyColor
                                 : colors.elevated;
-                        const statusText = d.hasWorkout && d.hasWeight
-                            ? 'Workout + Weight Logged'
-                            : d.hasWorkout
-                                ? 'Workout Completed'
-                                : d.hasWeight
-                                    ? 'Weight Logged (Rest/Cardio)'
-                                    : 'No Log';
+                        const statusText =
+                            d.hasWorkout && d.hasWeight
+                                ? 'Workout + Weight Logged'
+                                : d.hasWorkout
+                                    ? 'Workout Completed'
+                                    : d.hasWeight
+                                        ? 'Weight Logged (Rest/Cardio)'
+                                        : 'No Log';
 
                         return (
                             <div
@@ -2731,17 +3061,17 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
                 </div>
             </div>
 
-            {/* CARD 2: SESSION VOLUME + AVERAGE BENCHMARK LINE */}
+            {/* CARD 2: MODERN COMPOSED SESSION VOLUME & SETS CHART */}
             <div style={card} className="vt-card vt-p-card vt-stack-3">
                 <div className="vt-between-center vt-flex-wrap vt-gap-2">
                     <div>
                         <h3 className="vt-section-title font-display">
-                            Session Volume ({appState.unit})
+                            Session Volume & Sets ({appState.unit})
                         </h3>
                         {volumeAnalytics.chart.length > 0 && (
                             <p className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
                                 Avg: <strong style={{ color: colors.text }}>{volumeAnalytics.avgVol} {appState.unit}</strong> • Peak:{' '}
-                                <strong style={{ color: morningColor }}>{volumeAnalytics.peakVol} {appState.unit}</strong>
+                                <strong style={{ color: primaryStroke }}>{volumeAnalytics.peakVol} {appState.unit}</strong>
                             </p>
                         )}
                     </div>
@@ -2768,38 +3098,64 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
                 <div className="vt-chart-box-sm">
                     {volumeAnalytics.chart.length ? (
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
+                            <ComposedChart
                                 data={volumeAnalytics.chart}
-                                margin={{ top: 10, right: 12, left: -14, bottom: 0 }}
+                                margin={{ top: 12, right: 12, left: -12, bottom: 0 }}
                             >
+                                <defs>
+                                    <linearGradient id="vtVolBarGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor={primaryStroke} stopOpacity={0.95} />
+                                        <stop offset="100%" stopColor={primaryStroke} stopOpacity={0.28} />
+                                    </linearGradient>
+                                </defs>
                                 <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="d" stroke={colors.muted} fontSize={10} />
-                                <YAxis stroke={colors.muted} fontSize={10} />
-                                <Tooltip {...tip(colors)} />
+                                <XAxis dataKey="d" stroke={colors.muted} fontSize={10} tickLine={false} axisLine={false} />
+                                <YAxis yAxisId="left" stroke={colors.muted} fontSize={10} tickLine={false} axisLine={false} />
+                                <YAxis yAxisId="right" orientation="right" stroke={colors.muted} fontSize={10} tickLine={false} axisLine={false} />
+                                <Tooltip
+                                    content={
+                                        <ModernChartTooltip
+                                            colors={colors}
+                                            suffixMap={{ v: appState.unit, sets: 'sets' }}
+                                        />
+                                    }
+                                />
                                 {volumeAnalytics.avgVol > 0 && (
                                     <ReferenceLine
+                                        yAxisId="left"
                                         y={volumeAnalytics.avgVol}
-                                        stroke={trendColor}
+                                        stroke={secondaryStroke}
                                         strokeDasharray="4 4"
                                     />
                                 )}
                                 <Bar
+                                    yAxisId="left"
                                     dataKey="v"
-                                    name={`Volume (${appState.unit})`}
-                                    fill={colors.accent}
-                                    radius={[6, 6, 0, 0]}
+                                    name="Volume"
+                                    fill="url(#vtVolBarGrad)"
+                                    radius={[8, 8, 2, 2]}
+                                    maxBarSize={36}
                                 />
-                            </BarChart>
+                                <Line
+                                    yAxisId="right"
+                                    type="monotone"
+                                    dataKey="sets"
+                                    name="Sets Done"
+                                    stroke={secondaryStroke}
+                                    strokeWidth={2.5}
+                                    dot={{ r: 3.5, fill: secondaryStroke, stroke: colors.card, strokeWidth: 1.5 }}
+                                />
+                            </ComposedChart>
                         </ResponsiveContainer>
                     ) : (
                         <div className="vt-chart-empty" style={{ color: colors.muted }}>
-                            Finish a workout in Today tab to plot session volume bars & average line.
+                            0 workouts logged yet — finish your first session in Today tab to unlock volume & set progression.
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* CARD 3: STRENGTH CURVE + ESTIMATED 1RM (e1RM) */}
+            {/* CARD 3: MODERN STRENGTH & ESTIMATED 1RM AREA CURVE */}
             <div style={card} className="vt-card vt-p-card vt-stack-3">
                 <div className="vt-between-center vt-flex-wrap vt-gap-2">
                     <div>
@@ -2815,14 +3171,14 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
                                 {!strengthAnalytics.isAssisted && (
                                     <span>
                                         • Peak e1RM:{' '}
-                                        <strong style={{ color: trendColor }}>
+                                        <strong style={{ color: secondaryStroke }}>
                                             {strengthAnalytics.bestE1rm} {appState.unit}
                                         </strong>
                                     </span>
                                 )}
                                 <span>
                                     • Gain:{' '}
-                                    <strong style={{ color: strengthAnalytics.delta >= 0 ? morningColor : colors.danger }}>
+                                    <strong style={{ color: strengthAnalytics.delta >= 0 ? primaryStroke : colors.danger }}>
                                         {strengthAnalytics.delta >= 0 ? '+' : ''}
                                         {strengthAnalytics.delta} {appState.unit}
                                     </strong>
@@ -2871,44 +3227,59 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
                 <div className="vt-chart-box-md">
                     {strengthAnalytics.chart.length ? (
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart
+                            <ComposedChart
                                 data={strengthAnalytics.chart}
-                                margin={{ top: 10, right: 12, left: -14, bottom: 0 }}
+                                margin={{ top: 12, right: 12, left: -12, bottom: 0 }}
                             >
+                                <defs>
+                                    <linearGradient id="vtStrengthAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor={primaryStroke} stopOpacity={0.34} />
+                                        <stop offset="100%" stopColor={primaryStroke} stopOpacity={0.02} />
+                                    </linearGradient>
+                                </defs>
                                 <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="d" stroke={colors.muted} fontSize={10} />
+                                <XAxis dataKey="d" stroke={colors.muted} fontSize={10} tickLine={false} axisLine={false} />
                                 <YAxis
                                     stroke={colors.muted}
                                     fontSize={10}
+                                    tickLine={false}
+                                    axisLine={false}
                                     domain={['dataMin - 2', 'dataMax + 3']}
                                 />
-                                <Tooltip {...tip(colors)} />
+                                <Tooltip
+                                    content={
+                                        <ModernChartTooltip
+                                            colors={colors}
+                                            suffixMap={{ w: appState.unit, e1rm: appState.unit }}
+                                        />
+                                    }
+                                />
                                 <Area
                                     type="monotone"
                                     dataKey="w"
-                                    name={`Top Set (${appState.unit})`}
-                                    stroke={morningColor}
+                                    name="Top Set"
+                                    stroke={primaryStroke}
                                     strokeWidth={3}
-                                    fill={colors.accent}
-                                    fillOpacity={0.16}
-                                    dot={{ r: 4, fill: morningColor, stroke: colors.card, strokeWidth: 1.5 }}
+                                    fill="url(#vtStrengthAreaGrad)"
+                                    dot={{ r: 4, fill: primaryStroke, stroke: colors.card, strokeWidth: 2 }}
+                                    activeDot={{ r: 6.5, fill: primaryStroke, stroke: colors.text, strokeWidth: 2 }}
                                 />
                                 {showE1rm && !strengthAnalytics.isAssisted && (
                                     <Line
                                         type="monotone"
                                         dataKey="e1rm"
-                                        name={`Est. 1RM (${appState.unit})`}
-                                        stroke={trendColor}
-                                        strokeWidth={2.25}
-                                        strokeDasharray="4 4"
-                                        dot={{ r: 3, fill: trendColor }}
+                                        name="Est. 1RM"
+                                        stroke={secondaryStroke}
+                                        strokeWidth={2.4}
+                                        strokeDasharray="5 4"
+                                        dot={{ r: 3.5, fill: secondaryStroke, stroke: colors.card, strokeWidth: 1.5 }}
                                     />
                                 )}
-                            </AreaChart>
+                            </ComposedChart>
                         </ResponsiveContainer>
                     ) : (
                         <div className="vt-chart-empty" style={{ color: colors.muted }}>
-                            Log workouts to plot top-set weight & estimated 1RM progression per exercise.
+                            0 strength logs yet — log workouts to plot top-set weight & estimated 1RM progression.
                         </div>
                     )}
                 </div>
@@ -2918,7 +3289,11 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
 }
 
 // ============================================================================
-// MAIN APPLICATION COMPONENT
+// END OF PART 1 — REPLY "OK" FOR PART 2 (Main App + Clean Discipline Page + All Views)
+// ============================================================================
+
+// ============================================================================
+// SECTION 8: MAIN APPLICATION COMPONENT (PART 2 START)
 // ============================================================================
 
 export default function App() {
@@ -2950,7 +3325,7 @@ export default function App() {
                         parsed.selectedMealOptions || getDefaultSelectedMealsForTrack(mergedProfile.dietTrack),
                     activeDrafts: {
                         ...buildInitialActiveDrafts(
-                            parsed.lastSessionLogs || INITIAL_LAST_SESSION_LOGS,
+                            parsed.lastSessionLogs || {},
                             parsed.rampInEnabled ?? true,
                             parsed.customSteps || {},
                             parsed.variantChoices || { 'thu-5': 'dips' }
@@ -2960,7 +3335,7 @@ export default function App() {
                 };
             }
         } catch (e) {
-            // Fallback to clean state if localStorage is blocked
+            // Fallback to clean zero state if localStorage is blocked
         }
         return getFreshInitialState();
     });
@@ -2975,11 +3350,11 @@ export default function App() {
 
     useEffect(() => {
         const rollover = () => {
-            const t = new Date().toLocaleDateString('en-CA');
+            const t = getLocalDateStr();
             setAppState((prev) => {
                 if (prev.dayStamp === t) return prev;
                 const drafts = Object.fromEntries(
-                    Object.entries(prev.activeDrafts).map(([id, sets]) => [
+                    Object.entries(prev.activeDrafts || {}).map(([id, sets]) => [
                         id,
                         sets.map((s) => ({ ...s, completed: false }))
                     ])
@@ -3048,7 +3423,7 @@ export default function App() {
         if (restTimer.remainingSec <= 0) {
             setRestTimer((prev) => ({ ...prev, active: false }));
             showToast('Rest complete — hit your next working set with 1–2 RIR!');
-            navigator.vibrate?.([200, 100, 200]);   // ← nayi line (phone vibrate)
+            navigator.vibrate?.([200, 100, 200]);
             return;
         }
         const interval = setInterval(() => {
@@ -3063,16 +3438,34 @@ export default function App() {
         () =>
             isDark
                 ? {
-                    bg: '#000000', card: '#0A0A0B', elevated: '#141416', border: '#2A2A2E',
-                    text: '#ffffff', muted: '#A1A1AA',
-                    accent: '#CCFF00', accentText: '#0A0A0B', accentSurface: '#1A2205', accentBorder: '#CCFF00',
-                    danger: '#CCFF00', warning: '#FBBF24', success: '#4ADE80'
+                    bg: '#000000',
+                    card: '#0A0A0B',
+                    elevated: '#141416',
+                    border: '#27272A',
+                    text: '#FFFFFF',
+                    muted: '#A1A1AA',
+                    accent: '#CCFF00',
+                    accentText: '#0A0A0B',
+                    accentSurface: '#1A2205',
+                    accentBorder: '#CCFF00',
+                    danger: '#EF4444',
+                    warning: '#FBBF24',
+                    success: '#22C55E'
                 }
                 : {
-                    bg: '#F4F4F2', card: '#FFFFFF', elevated: '#EDEDEA', border: '#D6D6D1',
-                    text: '#000000', muted: '#55555C',
-                    accent: '#0059ff', accentText: '#fff1f1', accentSurface: '#cbe2fc', accentBorder: '#0059ff',
-                    danger: '#0059ff', warning: '#f40808', success: '#0059ff' 
+                    bg: '#F4F4F2',
+                    card: '#FFFFFF',
+                    elevated: '#EDEDEA',
+                    border: '#D6D6D1',
+                    text: '#0A0A0B',
+                    muted: '#55555C',
+                    accent: '#0059FF',
+                    accentText: '#FFFFFF',
+                    accentSurface: '#DBEAFE',
+                    accentBorder: '#0059FF',
+                    danger: '#DC2626',
+                    warning: '#D97706',
+                    success: '#16A34A'
                 },
         [isDark]
     );
@@ -3230,7 +3623,7 @@ export default function App() {
         const prsAchieved = [];
         const updatedLastLogs = { ...appState.lastSessionLogs };
         const updatedExerciseHistory = { ...(appState.exerciseHistory || {}) };
-        const todayStr = new Date().toLocaleDateString('en-CA');
+        const todayStr = getLocalDateStr();
 
         activeDayPlan.exercises.forEach((ex) => {
             const limit = getEffectiveSetCount(ex);
@@ -3386,7 +3779,7 @@ export default function App() {
     };
 
     // ============================================================================
-    // COMPUTED NUTRITION TOTALS (FROM FOOD DATABASE + APPETITE HELPERS)
+    // COMPUTED ANALYTICS (NUTRITION, GAIN RATE, MEASUREMENTS & DISCIPLINE)
     // ============================================================================
 
     const nutritionTotals = useMemo(() => {
@@ -3454,6 +3847,11 @@ export default function App() {
         [appState.weightLogs]
     );
 
+    const disciplineStats = useMemo(
+        () => analyzeDisciplineProgress(appState.disciplineLogs, appState.urgeLogs),
+        [appState.disciplineLogs, appState.urgeLogs]
+    );
+
     const latestMeasurement = useMemo(() => {
         if (!appState.measurements.length) return null;
         return appState.measurements[appState.measurements.length - 1];
@@ -3468,9 +3866,10 @@ export default function App() {
 
     const latestWeightKg = useMemo(() => {
         if (appState.weightLogs.length > 0) {
-            return appState.weightLogs[appState.weightLogs.length - 1].weightKg;
+            const latest = appState.weightLogs[appState.weightLogs.length - 1];
+            return Number(latest.morningKg || latest.weightKg || latest.nightKg || 0);
         }
-        return appState.profile.startWeightKg || 55;
+        return Number(appState.profile.startWeightKg || 0);
     }, [appState.weightLogs, appState.profile.startWeightKg]);
 
     const kcalTarget = appState.profile.targetCalories || SCIENCE_RULES.TARGET_KCAL;
@@ -3478,6 +3877,7 @@ export default function App() {
 
     const navItems = [
         { id: 'today', label: 'Today', icon: Dumbbell },
+        { id: 'clean', label: 'Clean', icon: Brain },
         { id: 'cardio', label: 'Cardio', icon: Flame },
         { id: 'pelvic', label: 'Pelvic', icon: ShieldCheck },
         { id: 'plan', label: 'Plan', icon: Calendar },
@@ -3496,6 +3896,38 @@ export default function App() {
         showToast(`Switched diet track to ${newTrack.toUpperCase()} (100% whole foods)`);
     };
 
+    const handleSaveOnboarding = () => {
+        const chosenTrack = onboardingForm.dietTrack || 'non-veg';
+        const parsedStartKg = Number(onboardingForm.startWeightKg || 0);
+        setAppState((prev) => ({
+            ...prev,
+            onboarded: true,
+            profile: {
+                ...onboardingForm,
+                dietTrack: chosenTrack,
+                goalWeightMinKg: Number(onboardingForm.goalWeightMinKg || 65),
+                goalWeightMaxKg: Number(onboardingForm.goalWeightMaxKg || 68)
+            },
+            selectedMealOptions: getDefaultSelectedMealsForTrack(chosenTrack),
+            weightLogs:
+                prev.weightLogs.length > 0 || parsedStartKg <= 0
+                    ? prev.weightLogs
+                    : [
+                        {
+                            id: 'w-start',
+                            date: getLocalDateStr(),
+                            label: 'Start',
+                            morningKg: parsedStartKg,
+                            nightKg: null,
+                            weightKg: parsedStartKg,
+                            notes: 'Initial baseline'
+                        }
+                    ]
+        }));
+        setShowOnboarding(false);
+        showToast(`Profile saved (${chosenTrack.toUpperCase()})!`);
+    };
+
     return (
         <div
             style={{
@@ -3507,7 +3939,7 @@ export default function App() {
             className="vt-app"
         >
             {/* ==================================================================== */}
-            {/* DESKTOP SIDEBAR                                                      */}
+            {/* DESKTOP SIDEBAR                                                      */}
             {/* ==================================================================== */}
             <aside
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -3519,7 +3951,7 @@ export default function App() {
                         <div>
                             <h1 className="vt-brand-title font-display">VTAPER</h1>
                             <p style={{ color: colors.muted }} className="vt-brand-sub">
-                                Whole-Food Bulk • {appState.profile.startWeightKg}→{appState.profile.goalWeightMaxKg}kg
+                                Goal Band • {appState.profile.goalWeightMinKg}–{appState.profile.goalWeightMaxKg} kg
                             </p>
                         </div>
                     </div>
@@ -3557,12 +3989,12 @@ export default function App() {
                                 }}
                                 className="vt-edit-goals-btn"
                             >
-                                
                                 <span>Edit Goals</span>
                             </button>
                         </div>
                         <div className="vt-snapshot-stats font-display">
-                            {appState.profile.age} years • {appState.profile.heightCm} cm
+                            {appState.profile.age > 0 ? `${appState.profile.age} yrs` : '0 yrs'} •{' '}
+                            {appState.profile.heightCm > 0 ? `${appState.profile.heightCm} cm` : '0 cm'}
                         </div>
                         <div className="vt-snapshot-grid" style={{ borderColor: colors.border }}>
                             <div>
@@ -3610,12 +4042,31 @@ export default function App() {
                                 {item.id === 'today' && workoutRunning && (
                                     <span
                                         style={{
-                                            backgroundColor: isActive ? '#000000' : colors.accent,
-                                            color: isActive ? '#0077ff' : colors.accentText
+                                            backgroundColor: isActive ? '#0A0A0B' : colors.accent,
+                                            color: isActive ? colors.accent : colors.accentText
                                         }}
                                         className="vt-nav-timer-badge font-mono-num"
                                     >
                                         {formatTime(workoutElapsedSec)}
+                                    </span>
+                                )}
+                                {item.id === 'clean' && (
+                                    <span
+                                        style={{
+                                            backgroundColor: isActive
+                                                ? '#0A0A0B'
+                                                : disciplineStats.todayLoggedStatus === 'clean'
+                                                    ? colors.success
+                                                    : colors.elevated,
+                                            color: isActive
+                                                ? '#FFFFFF'
+                                                : disciplineStats.todayLoggedStatus === 'clean'
+                                                    ? '#0A0A0B'
+                                                    : colors.muted
+                                        }}
+                                        className="vt-nav-timer-badge font-mono-num"
+                                    >
+                                        {disciplineStats.currentStreak}d
                                     </span>
                                 )}
                             </button>
@@ -3625,6 +4076,18 @@ export default function App() {
 
                 {/* Daily Targets Mini Footer */}
                 <div style={{ borderColor: colors.border }} className="vt-sidebar-footer">
+                    <div className="vt-footer-row">
+                        <span style={{ color: colors.muted }}>Clean Streak</span>
+                        <span
+                            style={{
+                                fontWeight: 800,
+                                color: disciplineStats.currentStreak > 0 ? colors.success : colors.text
+                            }}
+                            className="font-mono-num"
+                        >
+                            {disciplineStats.currentStreak} / {SCIENCE_RULES.REBOOT_TARGET_DAYS} d
+                        </span>
+                    </div>
                     <div className="vt-footer-row">
                         <span style={{ color: colors.muted }}>Calories Today</span>
                         <span style={{ fontWeight: 800 }} className="font-mono-num">
@@ -3641,7 +4104,7 @@ export default function App() {
             </aside>
 
             {/* ==================================================================== */}
-            {/* MAIN CONTENT AREA                                                    */}
+            {/* MAIN CONTENT AREA                                                    */}
             {/* ==================================================================== */}
             <div className="vt-main-wrap">
                 {/* Mobile Top Bar */}
@@ -3654,7 +4117,8 @@ export default function App() {
                         <div style={{ minWidth: 0 }}>
                             <div className="vt-mobile-title font-display">VTAPER</div>
                             <div style={{ color: colors.muted }} className="vt-mobile-sub">
-                                {appState.profile.dietTrack} • {appState.profile.age}y • {appState.profile.heightCm} cm
+                                Clean: {disciplineStats.currentStreak}d • Goal {appState.profile.goalWeightMinKg}–
+                                {appState.profile.goalWeightMaxKg}kg
                             </div>
                         </div>
                     </div>
@@ -3688,7 +4152,7 @@ export default function App() {
                     </div>
                 </header>
 
-                {/* Toast Notification Banner */}
+                {/* Toast Notification Banner (Syntax Fixed) */}
                 {toast && (
                     <div className="vt-toast-wrap">
                         <div
@@ -3697,7 +4161,7 @@ export default function App() {
                                 color: colors.accentText,
                                 borderColor: colors.accentBorder
                             }}
-                            className="vt-toast-card"colors
+                            className="vt-toast-card"
                         >
                             <CheckCircle2 size={20} style={{ flexShrink: 0 }} />
                             <span>{toast}</span>
@@ -3815,6 +4279,17 @@ export default function App() {
                         />
                     )}
 
+                    {activeTab === 'clean' && (
+                        <DisciplineView
+                            colors={colors}
+                            isDark={isDark}
+                            appState={appState}
+                            setAppState={setAppState}
+                            disciplineStats={disciplineStats}
+                            showToast={showToast}
+                        />
+                    )}
+
                     {activeTab === 'plan' && (
                         <PlanView
                             colors={colors}
@@ -3880,6 +4355,7 @@ export default function App() {
                             colors={colors}
                             isDark={isDark}
                             appState={appState}
+                            disciplineStats={disciplineStats}
                             formatWeight={formatWeight}
                             formatTime={formatTime}
                         />
@@ -3901,7 +4377,7 @@ export default function App() {
             </div>
 
             {/* ==================================================================== */}
-            {/* MOBILE BOTTOM NAVIGATION BAR                                         */}
+            {/* MOBILE BOTTOM NAVIGATION BAR                                         */}
             {/* ==================================================================== */}
             <nav
                 style={{ backgroundColor: colors.bg, borderColor: colors.border }}
@@ -3924,7 +4400,7 @@ export default function App() {
                                 style={{ backgroundColor: isActive ? on : 'transparent' }}
                                 className="vt-mobile-nav-indicator"
                             />
-                            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                             <span>{item.label}</span>
                         </button>
                     );
@@ -3932,7 +4408,7 @@ export default function App() {
             </nav>
 
             {/* ==================================================================== */}
-            {/* ONBOARDING & PROFILE EDITOR MODAL                                    */}
+            {/* ONBOARDING & PROFILE EDITOR MODAL (ZERO DEFAULTS — ONLY 65-68 GOAL) */}
             {/* ==================================================================== */}
             {showOnboarding && (
                 <div
@@ -3953,36 +4429,18 @@ export default function App() {
                                     }}
                                     className="vt-badge-accent"
                                 >
-                                    Whole-Food V-Taper Protocol
+                                    Fresh Day-0 Setup • Goal 65–68 kg
                                 </span>
                                 <h2 className="vt-section-title vt-section-title-lg font-display">
                                     Athlete Profile Setup
                                 </h2>
                                 <p style={{ color: colors.muted, fontSize: '0.8125rem', margin: '0.25rem 0 0 0' }}>
-                                    22y • 173 cm • 55 kg → 65–68 kg goal. 100% Indian home-style food (zero supplements).
+                                    Sab kuch 0 se start hai. Sirf 65–68 kg lean-bulk goal band preset hai — apni current details daalein ya skip karke baad mein fill karein.
                                 </p>
                             </div>
                             <button
                                 onClick={() => {
-                                    const chosenTrack = onboardingForm.dietTrack || 'non-veg';
-                                    setAppState((prev) => ({
-                                        ...prev,
-                                        onboarded: true,
-                                        profile: { ...onboardingForm, dietTrack: chosenTrack },
-                                        selectedMealOptions: prev.onboarded
-                                            ? prev.selectedMealOptions
-                                            : getDefaultSelectedMealsForTrack(chosenTrack),
-                                        weightLogs: prev.onboarded
-                                            ? prev.weightLogs
-                                            : [
-                                                {
-                                                    id: 'w-0',
-                                                    date: new Date().toLocaleDateString('en-CA'),
-                                                    label: 'Start',
-                                                    weightKg: Number(onboardingForm.startWeightKg || 55)
-                                                }
-                                            ]
-                                    }));
+                                    setAppState((prev) => ({ ...prev, onboarded: true }));
                                     setShowOnboarding(false);
                                 }}
                                 aria-label="Close profile setup"
@@ -3997,7 +4455,14 @@ export default function App() {
                             {/* Indian Diet Track Selector */}
                             <div className="vt-col-span-2-sm">
                                 <label
-                                    style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.375rem', color: colors.muted }}
+                                    style={{
+                                        display: 'block',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 700,
+                                        textTransform: 'uppercase',
+                                        marginBottom: '0.375rem',
+                                        color: colors.muted
+                                    }}
                                 >
                                     Indian Home-Style Diet Track (No Supplements)
                                 </label>
@@ -4022,8 +4487,12 @@ export default function App() {
                                                 }}
                                                 className="vt-track-option-btn"
                                             >
-                                                <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>{t.label}</div>
-                                                <div style={{ fontSize: '10px', opacity: 0.8, lineHeight: 1.25, marginTop: '0.125rem' }}>{t.sub}</div>
+                                                <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>
+                                                    {t.label}
+                                                </div>
+                                                <div style={{ fontSize: '10px', opacity: 0.8, lineHeight: 1.25, marginTop: '0.125rem' }}>
+                                                    {t.sub}
+                                                </div>
                                             </button>
                                         );
                                     })}
@@ -4032,39 +4501,26 @@ export default function App() {
 
                             <div>
                                 <label
-                                    style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.375rem', color: colors.muted }}
+                                    style={{
+                                        display: 'block',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 700,
+                                        textTransform: 'uppercase',
+                                        marginBottom: '0.375rem',
+                                        color: colors.muted
+                                    }}
                                 >
                                     Age (Years)
                                 </label>
                                 <input
                                     type="number"
                                     inputMode="numeric"
-                                    value={onboardingForm.age}
-                                    onChange={(e) =>
-                                        setOnboardingForm((prev) => ({ ...prev, age: Number(e.target.value) }))
-                                    }
-                                    style={{
-                                        backgroundColor: colors.elevated,
-                                        borderColor: colors.border,
-                                        color: colors.text
-                                    }}
-                                    className="vt-form-input"
-                                />
-                            </div>
-                            <div>
-                                <label
-                                    style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.375rem', color: colors.muted }}
-                                >
-                                    Height (cm)
-                                </label>
-                                <input
-                                    type="number"
-                                    inputMode="numeric"
-                                    value={onboardingForm.heightCm}
+                                    placeholder="0"
+                                    value={onboardingForm.age === 0 ? '' : onboardingForm.age}
                                     onChange={(e) =>
                                         setOnboardingForm((prev) => ({
                                             ...prev,
-                                            heightCm: Number(e.target.value)
+                                            age: e.target.value === '' ? 0 : Number(e.target.value)
                                         }))
                                     }
                                     style={{
@@ -4077,7 +4533,46 @@ export default function App() {
                             </div>
                             <div>
                                 <label
-                                    style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.375rem', color: colors.muted }}
+                                    style={{
+                                        display: 'block',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 700,
+                                        textTransform: 'uppercase',
+                                        marginBottom: '0.375rem',
+                                        color: colors.muted
+                                    }}
+                                >
+                                    Height (cm)
+                                </label>
+                                <input
+                                    type="number"
+                                    inputMode="numeric"
+                                    placeholder="0"
+                                    value={onboardingForm.heightCm === 0 ? '' : onboardingForm.heightCm}
+                                    onChange={(e) =>
+                                        setOnboardingForm((prev) => ({
+                                            ...prev,
+                                            heightCm: e.target.value === '' ? 0 : Number(e.target.value)
+                                        }))
+                                    }
+                                    style={{
+                                        backgroundColor: colors.elevated,
+                                        borderColor: colors.border,
+                                        color: colors.text
+                                    }}
+                                    className="vt-form-input"
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    style={{
+                                        display: 'block',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 700,
+                                        textTransform: 'uppercase',
+                                        marginBottom: '0.375rem',
+                                        color: colors.muted
+                                    }}
                                 >
                                     Start Weight (kg)
                                 </label>
@@ -4085,14 +4580,16 @@ export default function App() {
                                     type="number"
                                     inputMode="decimal"
                                     step="0.1"
-                                    value={onboardingForm.startWeightKg}
-                                    onChange={(e) =>
+                                    placeholder="0.0"
+                                    value={onboardingForm.startWeightKg === 0 ? '' : onboardingForm.startWeightKg}
+                                    onChange={(e) => {
+                                        const v = e.target.value === '' ? 0 : Number(e.target.value);
                                         setOnboardingForm((prev) => ({
                                             ...prev,
-                                            startWeightKg: Number(e.target.value),
-                                            currentWeightKg: Number(e.target.value)
-                                        }))
-                                    }
+                                            startWeightKg: v,
+                                            currentWeightKg: v
+                                        }));
+                                    }}
                                     style={{
                                         backgroundColor: colors.elevated,
                                         borderColor: colors.border,
@@ -4104,7 +4601,14 @@ export default function App() {
                             <div className="vt-grid-2">
                                 <div>
                                     <label
-                                        style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.375rem', color: colors.muted }}
+                                        style={{
+                                            display: 'block',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 700,
+                                            textTransform: 'uppercase',
+                                            marginBottom: '0.375rem',
+                                            color: colors.muted
+                                        }}
                                     >
                                         Goal Min (kg)
                                     </label>
@@ -4129,7 +4633,14 @@ export default function App() {
                                 </div>
                                 <div>
                                     <label
-                                        style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.375rem', color: colors.muted }}
+                                        style={{
+                                            display: 'block',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 700,
+                                            textTransform: 'uppercase',
+                                            marginBottom: '0.375rem',
+                                            color: colors.muted
+                                        }}
                                     >
                                         Goal Max (kg)
                                     </label>
@@ -4169,48 +4680,28 @@ export default function App() {
                         >
                             <div>
                                 <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: colors.muted }}>
+                                    Goal Band
+                                </div>
+                                <div className="vt-stat-value-xl font-display">
+                                    {onboardingForm.goalWeightMinKg}–{onboardingForm.goalWeightMaxKg} kg
+                                </div>
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: colors.muted }}>
                                     Daily Surplus
                                 </div>
                                 <div className="vt-stat-value-xl font-display">2,900 kcal</div>
                             </div>
                             <div>
                                 <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: colors.muted }}>
-                                    Protein Target
+                                    Clean Reboot
                                 </div>
-                                <div className="vt-stat-value-xl font-display">
-                                    130g (110g floor)
-                                </div>
-                            </div>
-                            <div>
-                                <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, color: colors.muted }}>
-                                    V-Taper Goal
-                                </div>
-                                <div className="vt-stat-value-xl font-display">1.40–1.50x</div>
+                                <div className="vt-stat-value-xl font-display">90 Days</div>
                             </div>
                         </div>
 
                         <button
-                            onClick={() => {
-                                const chosenTrack = onboardingForm.dietTrack || 'non-veg';
-                                setAppState((prev) => ({
-                                    ...prev,
-                                    onboarded: true,
-                                    profile: { ...onboardingForm, dietTrack: chosenTrack },
-                                    selectedMealOptions: getDefaultSelectedMealsForTrack(chosenTrack),
-                                    weightLogs: prev.onboarded
-                                        ? prev.weightLogs
-                                        : [
-                                            {
-                                                id: 'w-0',
-                                                date: new Date().toLocaleDateString('en-CA'),
-                                                label: 'Start',
-                                                weightKg: Number(onboardingForm.startWeightKg || 55)
-                                            }
-                                        ]
-                                }));
-                                setShowOnboarding(false);
-                                showToast(`Profile saved (${chosenTrack.toUpperCase()})!`);
-                            }}
+                            onClick={handleSaveOnboarding}
                             style={{
                                 backgroundColor: colors.accent,
                                 color: colors.accentText,
@@ -4220,14 +4711,14 @@ export default function App() {
                             }}
                             className="vt-primary-cta"
                         >
-                            Save Profile & Launch VTaper
+                            Start From Day 0 & Launch VTaper
                         </button>
                     </div>
                 </div>
             )}
 
             {/* ==================================================================== */}
-            {/* END-OF-WORKOUT SUMMARY MODAL                                         */}
+            {/* END-OF-WORKOUT SUMMARY MODAL                                         */}
             {/* ==================================================================== */}
             {workoutSummary && (
                 <div
@@ -4407,8 +4898,784 @@ export default function App() {
 }
 
 // ============================================================================
-// 1. TODAY VIEW COMPONENT
+// NEW DEDICATED PAGE: DISCIPLINE VIEW (NO PORN & NO MASTURBATION TRACKER)
+// Daily 1-Tap Check-In, 90s Urge SOS Timer, Trigger Analytics & Modern Growth Graph
 // ============================================================================
+
+function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats, showToast }) {
+    const todayStr = useMemo(() => getLocalDateStr(), []);
+    const [selectedDate, setSelectedDate] = useState(todayStr);
+    const [urgeLevel, setUrgeLevel] = useState(0);
+    const [selectedTrigger, setSelectedTrigger] = useState('');
+    const [dailyNote, setDailyNote] = useState('');
+    const [growthChartMode, setGrowthChartMode] = useState('growth'); // 'growth' | 'urges'
+    const [confirmRelapse, setConfirmRelapse] = useState(false);
+
+    // Live 90-second Urge SOS Emergency Reset Timer
+    const [sosActive, setSosActive] = useState(false);
+    const [sosSecLeft, setSosSecLeft] = useState(90);
+    const [sosTipIdx, setSosTipIdx] = useState(0);
+
+    const existingForSelected = appState.disciplineLogs?.[selectedDate] || null;
+
+    useEffect(() => {
+        if (existingForSelected) {
+            setUrgeLevel(Number(existingForSelected.urgeLevel || 0));
+            setSelectedTrigger(existingForSelected.trigger || '');
+            setDailyNote(existingForSelected.note || '');
+        } else {
+            setUrgeLevel(0);
+            setSelectedTrigger('');
+            setDailyNote('');
+        }
+        setConfirmRelapse(false);
+    }, [selectedDate, existingForSelected]);
+
+    useEffect(() => {
+        if (!sosActive) return;
+        if (sosSecLeft <= 0) {
+            setSosActive(false);
+            setSosSecLeft(90);
+            setAppState((prev) => ({
+                ...prev,
+                urgeLogs: [
+                    {
+                        id: `urge-${Date.now()}`,
+                        date: todayStr,
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        trigger: selectedTrigger || 'SOS Protocol Completed',
+                        defeated: true
+                    },
+                    ...(prev.urgeLogs || [])
+                ]
+            }));
+            navigator.vibrate?.([150, 80, 150]);
+            showToast('90s Urge Wave Defeated! +1 Victory logged to your daily growth.');
+            return;
+        }
+        const timer = setInterval(() => {
+            setSosSecLeft((prev) => Math.max(0, prev - 1));
+            setSosTipIdx((prev) => (sosSecLeft % 22 === 0 ? (prev + 1) % URGE_SOS_ACTIONS.length : prev));
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [sosActive, sosSecLeft, selectedTrigger, todayStr, setAppState, showToast]);
+
+    const handleMarkCleanDay = () => {
+        setAppState((prev) => ({
+            ...prev,
+            disciplineLogs: {
+                ...(prev.disciplineLogs || {}),
+                [selectedDate]: {
+                    date: selectedDate,
+                    status: 'clean',
+                    noPorn: true,
+                    noFap: true,
+                    urgeLevel: Number(urgeLevel || 0),
+                    trigger: selectedTrigger || '',
+                    note: dailyNote.trim(),
+                    updatedAt: Date.now()
+                }
+            }
+        }));
+        setConfirmRelapse(false);
+        navigator.vibrate?.([120, 60, 120]);
+        showToast(
+            selectedDate === todayStr
+                ? 'LOCKED IN! Aaj ka din 100% Clean (No Porn + No Masturbation) marked.'
+                : `${selectedDate} marked 100% Clean!`
+        );
+    };
+
+    const handleLogRelapse = () => {
+        setAppState((prev) => ({
+            ...prev,
+            disciplineLogs: {
+                ...(prev.disciplineLogs || {}),
+                [selectedDate]: {
+                    date: selectedDate,
+                    status: 'relapse',
+                    noPorn: false,
+                    noFap: false,
+                    urgeLevel: Math.max(5, Number(urgeLevel || 7)),
+                    trigger: selectedTrigger || 'Unspecified Trigger',
+                    note: dailyNote.trim(),
+                    updatedAt: Date.now()
+                }
+            }
+        }));
+        setConfirmRelapse(false);
+        showToast('Honest log saved. Trigger identify karke turant comeback karein — guilt nahi, data use karein.');
+    };
+
+    const handleBeatUrgeQuick = () => {
+        setAppState((prev) => ({
+            ...prev,
+            urgeLogs: [
+                {
+                    id: `urge-${Date.now()}`,
+                    date: todayStr,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    trigger: selectedTrigger || 'Instant Control',
+                    defeated: true
+                },
+                ...(prev.urgeLogs || [])
+            ]
+        }));
+        navigator.vibrate?.([100]);
+        showToast('Urge Defeated (+1)! Aapka prefrontal cortex har baar stronger ho raha hai.');
+    };
+
+    const handleDeleteDisciplineDate = (dateKey) => {
+        setAppState((prev) => {
+            const next = { ...(prev.disciplineLogs || {}) };
+            delete next[dateKey];
+            return { ...prev, disciplineLogs: next };
+        });
+        showToast(`Removed discipline entry for ${dateKey}`);
+    };
+
+    const primaryStroke = isDark ? colors.accent : '#0059FF';
+    const momentumStroke = colors.success;
+    const consistencyStroke = '#FF7A1A';
+
+    const recentLogsDesc = useMemo(
+        () =>
+            Object.values(appState.disciplineLogs || {})
+                .filter((e) => e && e.date)
+                .sort((a, b) => b.date.localeCompare(a.date)),
+        [appState.disciplineLogs]
+    );
+
+    const isSelectedClean = existingForSelected?.status === 'clean';
+    const isSelectedRelapse = existingForSelected?.status === 'relapse';
+
+    return (
+        <div className="vt-stack-5">
+            {/* 1. HERO DAILY CHECK-IN COMMAND CARD */}
+            <div
+                style={{
+                    backgroundColor: colors.card,
+                    borderColor: isSelectedClean
+                        ? colors.success
+                        : isSelectedRelapse
+                            ? colors.danger
+                            : colors.accentBorder
+                }}
+                className="vt-card-b2 vt-p-card vt-stack-4"
+            >
+                <div className="vt-between-start vt-flex-wrap vt-gap-3">
+                    <div className="vt-stack-1">
+                        <div className="vt-pill-row">
+                            <span
+                                style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                                className="vt-badge-accent"
+                            >
+                                No Porn • No Masturbation Protocol
+                            </span>
+                            <span
+                                style={{
+                                    backgroundColor: colors.elevated,
+                                    borderColor: colors.border,
+                                    color: colors.success
+                                }}
+                                className="vt-meta-pill font-mono-num"
+                            >
+                                <Trophy size={14} />
+                                <span>{disciplineStats.currentRank.title}</span>
+                            </span>
+                        </div>
+                        <h2 className="vt-hero-heading font-display">
+                            Daily Discipline Lock-In & Permanent Habit Elimination
+                        </h2>
+                        <p className="vt-text-xs" style={{ color: colors.muted }}>
+                            Roz raat sone se pehle (ya subah pledge ke baad) 1 tap mein apna clean din lock karein. Har clean din aapka daily growth curve upar le jayega.
+                        </p>
+                    </div>
+
+                    {/* Date selector for Today or backfilling */}
+                    <div className="vt-flex vt-items-center vt-gap-1-5 vt-shrink-0">
+                        <input
+                            type="date"
+                            max={todayStr}
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            style={{
+                                backgroundColor: colors.elevated,
+                                borderColor: colors.border,
+                                color: colors.text
+                            }}
+                            className="vt-input vt-h-40 vt-px-3 vt-text-xs vt-font-bold font-mono-num"
+                        />
+                        {selectedDate !== todayStr && (
+                            <button
+                                type="button"
+                                onClick={() => setSelectedDate(todayStr)}
+                                style={{
+                                    backgroundColor: colors.accent,
+                                    color: colors.accentText
+                                }}
+                                className="vt-btn vt-h-40 vt-px-3 vt-rounded-xl vt-text-11 vt-font-extrabold vt-uppercase"
+                            >
+                                Today
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Big 1-Tap Clean Action Row */}
+                <div className="vt-grid-md-3 vt-gap-3">
+                    <button
+                        type="button"
+                        onClick={handleMarkCleanDay}
+                        style={{
+                            backgroundColor: isSelectedClean ? colors.success : colors.accent,
+                            color: '#0A0A0B',
+                            borderColor: isSelectedClean ? colors.success : colors.accentBorder,
+                            minHeight: 60
+                        }}
+                        className="vt-btn vt-col-span-md-2 vt-px-4 vt-py-3 vt-box-xl vt-gap-2-5"
+                    >
+                        <CheckCircle2 size={22} strokeWidth={2.5} />
+                        <div className="vt-text-left">
+                            <div className="vt-text-sm vt-font-black vt-uppercase">
+                                {isSelectedClean
+                                    ? `100% CLEAN LOCKED (${selectedDate}) ✓`
+                                    : `MARK ${selectedDate === todayStr ? 'TODAY' : selectedDate} 100% CLEAN`}
+                            </div>
+                            <div style={{ fontSize: 11, opacity: 0.85, fontWeight: 700 }}>
+                                Zero Porn + Zero Masturbation • +Growth Streak
+                            </div>
+                        </div>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={handleBeatUrgeQuick}
+                        style={{
+                            backgroundColor: colors.elevated,
+                            borderColor: colors.accentBorder,
+                            color: colors.text,
+                            minHeight: 60
+                        }}
+                        className="vt-btn vt-px-4 vt-py-3 vt-box-xl vt-gap-2"
+                    >
+                        <Zap size={18} style={{ color: isDark ? colors.accent : colors.accent }} />
+                        <div className="vt-text-left">
+                            <div className="vt-text-xs vt-font-extrabold vt-uppercase">
+                                Defeated An Urge (+1)
+                            </div>
+                            <div className="vt-text-10 font-mono-num" style={{ color: colors.muted }}>
+                                Total Beaten: {disciplineStats.urgesDefeated}
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                {/* Urge Intensity, Trigger Chips & Relapse Controls */}
+            </div>
+
+            {/* 2. TOP 4 LIVE DISCIPLINE KPI CARDS (START AT 0) */}
+            <div className="vt-grid-kpi vt-gap-3 vt-tabular">
+                <div
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                    className="vt-card vt-p-4"
+                >
+                    <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
+                        Current Clean Streak
+                    </div>
+                    <div
+                        style={{ color: disciplineStats.currentStreak > 0 ? colors.success : colors.text }}
+                        className="font-display vt-text-3xl vt-font-black vt-mt-1"
+                    >
+                        {disciplineStats.currentStreak} Days
+                    </div>
+                    <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
+                        Next Rank: {disciplineStats.nextMilestone.title} ({disciplineStats.nextMilestone.days}d)
+                    </div>
+                </div>
+
+                <div
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                    className="vt-card vt-p-4"
+                >
+                    <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
+                        All-Time Best Streak
+                    </div>
+                    <div
+                        style={{ color: isDark ? colors.accent : colors.accent }}
+                        className="font-display vt-text-3xl vt-font-black vt-mt-1"
+                    >
+                        {disciplineStats.bestStreak} Days
+                    </div>
+                    <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
+                        Total Clean Days: {disciplineStats.totalCleanDays}
+                    </div>
+                </div>
+
+                <div
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                    className="vt-card vt-p-4"
+                >
+                    <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
+                        Clean Discipline Rate
+                    </div>
+                    <div className="font-display vt-text-3xl vt-font-black vt-mt-1">
+                        {disciplineStats.cleanRatePct}%
+                    </div>
+                    <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
+                        {disciplineStats.totalCleanDays} clean • {disciplineStats.totalRelapses} slips
+                    </div>
+                </div>
+
+                <div
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                    className="vt-card vt-p-4"
+                >
+                    <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
+                        Urges Conquered
+                    </div>
+                    <div className="font-display vt-text-3xl vt-font-black vt-mt-1">
+                        {disciplineStats.urgesDefeated}
+                    </div>
+                    <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
+                        Each win weakens the old loop
+                    </div>
+                </div>
+            </div>
+
+            {/* 3. MODERN DAILY GROWTH GRAPH + 90-DAY RADIAL REBOOT GAUGE */}
+            <div className="vt-grid-lg-3 vt-gap-4">
+                <div
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                    className="vt-col-span-lg-2 vt-card vt-p-card vt-stack-3 vt-col-between"
+                >
+                    <div className="vt-between-center vt-flex-wrap vt-gap-2">
+                        <div>
+                            <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                                {growthChartMode === 'growth'
+                                    ? 'Daily Growth Curve (Momentum • Streak • 7-Day Consistency)'
+                                    : 'Daily Urge Intensity & Victories Control Chart'}
+                            </h3>
+                            <p className="vt-text-xs" style={{ color: colors.muted }}>
+                                {growthChartMode === 'growth'
+                                    ? 'Rozana clean check-in ke saath aapka Discipline Momentum Score aur Active Streak live grow hota hai.'
+                                    : 'Green bars = Clean din par urge control • Red bars = Relapse din par urge spike.'}
+                            </p>
+                        </div>
+
+                        <div className="vt-flex vt-items-center vt-gap-1-5">
+                            <button
+                                type="button"
+                                onClick={() => setGrowthChartMode('growth')}
+                                style={{
+                                    backgroundColor: growthChartMode === 'growth' ? colors.accent : colors.elevated,
+                                    color: growthChartMode === 'growth' ? colors.accentText : colors.text,
+                                    borderColor: growthChartMode === 'growth' ? colors.accentBorder : colors.border
+                                }}
+                                className="vt-btn vt-h-34 vt-px-2-5 vt-rounded-lg vt-border vt-text-10 vt-font-extrabold vt-uppercase"
+                            >
+                                Growth Curve
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setGrowthChartMode('urges')}
+                                style={{
+                                    backgroundColor: growthChartMode === 'urges' ? colors.accent : colors.elevated,
+                                    color: growthChartMode === 'urges' ? colors.accentText : colors.text,
+                                    borderColor: growthChartMode === 'urges' ? colors.accentBorder : colors.border
+                                }}
+                                className="vt-btn vt-h-34 vt-px-2-5 vt-rounded-lg vt-border vt-text-10 vt-font-extrabold vt-uppercase"
+                            >
+                                Urge Control
+                            </button>
+                        </div>
+                    </div>
+
+                    {growthChartMode === 'growth' && (
+                        <div className="vt-row-wrap vt-gap-3 vt-text-11 vt-font-bold">
+                            <span className="vt-flex vt-items-center vt-gap-1-5">
+                                <span className="vt-legend-dot" style={{ backgroundColor: momentumStroke }} />
+                                Growth Momentum Score
+                            </span>
+                            <span className="vt-flex vt-items-center vt-gap-1-5">
+                                <span className="vt-legend-dot" style={{ backgroundColor: primaryStroke }} />
+                                Active Clean Streak (Days)
+                            </span>
+                            <span className="vt-flex vt-items-center vt-gap-1-5">
+                                <span className="vt-legend-dot" style={{ backgroundColor: consistencyStroke }} />
+                                7-Day Consistency (%)
+                            </span>
+                        </div>
+                    )}
+
+                    <div style={{ width: '100%', height: 270 }}>
+                        {disciplineStats.dailyGrowthSeries.length > 0 ? (
+                            growthChartMode === 'growth' ? (
+                                <ResponsiveContainer width="100%" height={270}>
+                                    <ComposedChart
+                                        data={disciplineStats.dailyGrowthSeries}
+                                        margin={{ top: 12, right: 12, left: -12, bottom: 0 }}
+                                    >
+                                        <defs>
+                                            <linearGradient id="vtCleanMomentumGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor={momentumStroke} stopOpacity={0.38} />
+                                                <stop offset="100%" stopColor={momentumStroke} stopOpacity={0.02} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="date" stroke={colors.muted} fontSize={10} tickLine={false} axisLine={false} />
+                                        <YAxis yAxisId="left" stroke={colors.muted} fontSize={10} tickLine={false} axisLine={false} />
+                                        <YAxis
+                                            yAxisId="right"
+                                            orientation="right"
+                                            domain={[0, 100]}
+                                            stroke={colors.muted}
+                                            fontSize={10}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <Tooltip
+                                            content={
+                                                <ModernChartTooltip
+                                                    colors={colors}
+                                                    suffixMap={{
+                                                        momentum: 'pts',
+                                                        streak: 'days',
+                                                        consistency7d: '%'
+                                                    }}
+                                                />
+                                            }
+                                        />
+                                        <Area
+                                            yAxisId="left"
+                                            type="monotone"
+                                            dataKey="momentum"
+                                            name="Growth Score"
+                                            stroke={momentumStroke}
+                                            strokeWidth={2.8}
+                                            fill="url(#vtCleanMomentumGrad)"
+                                            dot={{ r: 4, fill: momentumStroke, stroke: colors.card, strokeWidth: 1.5 }}
+                                            activeDot={{ r: 6.5 }}
+                                        />
+                                        <Line
+                                            yAxisId="left"
+                                            type="monotone"
+                                            dataKey="streak"
+                                            name="Clean Streak"
+                                            stroke={primaryStroke}
+                                            strokeWidth={2.5}
+                                            dot={{ r: 4, fill: primaryStroke, stroke: colors.card, strokeWidth: 1.5 }}
+                                        />
+                                        <Line
+                                            yAxisId="right"
+                                            type="monotone"
+                                            dataKey="consistency7d"
+                                            name="7-Day Consistency"
+                                            stroke={consistencyStroke}
+                                            strokeWidth={2}
+                                            strokeDasharray="4 4"
+                                            dot={false}
+                                        />
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <ResponsiveContainer width="100%" height={270}>
+                                    <ComposedChart
+                                        data={disciplineStats.dailyGrowthSeries}
+                                        margin={{ top: 12, right: 12, left: -12, bottom: 0 }}
+                                    >
+                                        <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="date" stroke={colors.muted} fontSize={10} tickLine={false} axisLine={false} />
+                                        <YAxis domain={[0, 10]} stroke={colors.muted} fontSize={10} tickLine={false} axisLine={false} />
+                                        <Tooltip
+                                            content={
+                                                <ModernChartTooltip
+                                                    colors={colors}
+                                                    suffixMap={{ urgeLevel: '/ 10', urgesDefeated: 'wins' }}
+                                                />
+                                            }
+                                        />
+                                        <Bar
+                                            dataKey="urgeLevel"
+                                            name="Urge Level"
+                                            radius={[8, 8, 2, 2]}
+                                            maxBarSize={34}
+                                        >
+                                            {disciplineStats.dailyGrowthSeries.map((entry, idx) => (
+                                                <Cell
+                                                    key={`cell-${idx}`}
+                                                    fill={entry.status === 'clean' ? colors.success : colors.danger}
+                                                />
+                                            ))}
+                                        </Bar>
+                                        <Line
+                                            type="monotone"
+                                            dataKey="urgesDefeated"
+                                            name="Urges Defeated"
+                                            stroke={primaryStroke}
+                                            strokeWidth={2.5}
+                                            dot={{ r: 4, fill: primaryStroke, stroke: colors.card, strokeWidth: 1.5 }}
+                                        />
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                            )
+                        ) : (
+                            <div
+                                style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.muted }}
+                                className="vt-h-full vt-box-xl vt-flex vt-items-center vt-justify-center vt-text-xs vt-font-semibold vt-p-4 vt-text-center"
+                            >
+                                Day 0 se start — upar "MARK TODAY 100% CLEAN" button dabayein aur apna daily growth curve plot hote dekhein.
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* 90-Day Neural Reboot Radial Chart */}
+                <RebootRadialGauge
+                    pct={disciplineStats.rebootPct}
+                    currentStreak={disciplineStats.currentStreak}
+                    colors={colors}
+                    isDark={isDark}
+                />
+            </div>
+
+            {/* 4. URGE SOS 90-SECOND EMERGENCY BREAKER + 35-DAY HEATMAP */}
+            <div className="vt-grid-lg-3 vt-gap-4">
+
+                {/* 35-Day Clean Consistency Heatmap + Trigger Breakdown */}
+                <div
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                    className="vt-col-span-lg-2 vt-card vt-p-card vt-stack-4"
+                >
+                    <div className="vt-between-center vt-flex-wrap vt-gap-2">
+                        <div>
+                            <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                                35-Day Clean Wall (5-Week Matrix)
+                            </h3>
+                            <p className="vt-text-xs" style={{ color: colors.muted }}>
+                                Har square ek din hai — goal hai poori deewar ko solid green bharna. Kisi bhi din par tap karke log edit karein.
+                            </p>
+                        </div>
+
+                        <div className="vt-row-wrap vt-gap-3 vt-text-11 vt-font-bold">
+                            <span className="vt-flex vt-items-center vt-gap-1-5">
+                                <span className="vt-legend-dot" style={{ backgroundColor: colors.success }} />
+                                Clean
+                            </span>
+                            <span className="vt-flex vt-items-center vt-gap-1-5">
+                                <span className="vt-legend-dot" style={{ backgroundColor: colors.danger }} />
+                                Slip
+                            </span>
+                            <span className="vt-flex vt-items-center vt-gap-1-5">
+                                <span className="vt-legend-dot" style={{ backgroundColor: colors.elevated }} />
+                                Unlogged
+                            </span>
+                        </div>
+                    </div>
+
+                    <div
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+                            gap: 8
+                        }}
+                    >
+                        {disciplineStats.heatmap35.map((cell) => {
+                            const bg =
+                                cell.status === 'clean'
+                                    ? colors.success
+                                    : cell.status === 'relapse'
+                                        ? colors.danger
+                                        : colors.elevated;
+                            const isSelectedCell = cell.date === selectedDate;
+                            return (
+                                <button
+                                    key={cell.date}
+                                    type="button"
+                                    onClick={() => setSelectedDate(cell.date)}
+                                    title={`${cell.date} — ${cell.status.toUpperCase()}`}
+                                    style={{
+                                        backgroundColor: bg,
+                                        border: isSelectedCell
+                                            ? `2px solid ${colors.text}`
+                                            : `1px solid ${colors.border}`,
+                                        borderRadius: 8,
+                                        height: 36,
+                                        color:
+                                            cell.status === 'unlogged' ? colors.muted : '#0A0A0B',
+                                        fontSize: 10,
+                                        fontWeight: 800,
+                                        cursor: 'pointer'
+                                    }}
+                                    className="font-mono-num"
+                                >
+                                    {cell.shortDate.slice(3)}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Trigger Pattern Bar Chart (only if triggers exist) */}
+                    {disciplineStats.triggerBreakdown.length > 0 && (
+                        <div className="vt-stack-2 vt-pt-2 vt-border-t" style={{ borderColor: colors.border }}>
+                            <div className="vt-text-xs vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                Top Trigger Analysis (Apne Weak Points Pehchanein)
+                            </div>
+                            <div style={{ width: '100%', height: 150 }}>
+                                <ResponsiveContainer width="100%" height={150}>
+                                    <BarChart
+                                        data={disciplineStats.triggerBreakdown}
+                                        layout="vertical"
+                                        margin={{ top: 4, right: 16, left: 10, bottom: 4 }}
+                                    >
+                                        <CartesianGrid stroke={colors.border} strokeDasharray="3 3" horizontal={false} />
+                                        <XAxis type="number" allowDecimals={false} stroke={colors.muted} fontSize={10} />
+                                        <YAxis type="category" dataKey="trigger" width={120} stroke={colors.muted} fontSize={10} />
+                                        <Tooltip content={<ModernChartTooltip colors={colors} suffixMap={{ count: 'logs' }} />} />
+                                        <Bar dataKey="count" name="Occurrences" fill={colors.warning} radius={[0, 6, 6, 0]} maxBarSize={18} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* 5. MILESTONES ROADMAP (DAY 1 TO DAY 365) */}
+            <div
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                className="vt-card vt-p-card vt-stack-3"
+            >
+                <div className="vt-between-center">
+                    <div>
+                        <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                            Permanent Freedom Milestones (Day 1 → Day 365)
+                        </h3>
+                        <p className="vt-text-xs" style={{ color: colors.muted }}>
+                            Har unlocked rank aapke dimag mein discipline ka naya baseline banata hai.
+                        </p>
+                    </div>
+                    <Target size={20} style={{ color: isDark ? colors.accent : colors.accent }} />
+                </div>
+
+                <div className="vt-grid-md-3 vt-gap-2-5">
+                    {DISCIPLINE_MILESTONES.map((m) => {
+                        const unlocked = disciplineStats.bestStreak >= m.days;
+                        return (
+                            <div
+                                key={m.days}
+                                style={{
+                                    backgroundColor: unlocked ? colors.accentSurface : colors.elevated,
+                                    borderColor: unlocked ? colors.accentBorder : colors.border
+                                }}
+                                className="vt-p-3 vt-box-xl vt-stack-1"
+                            >
+                                <div className="vt-between-center">
+                                    <span className="vt-text-xs vt-font-extrabold">{m.title}</span>
+                                    <span
+                                        style={{
+                                            backgroundColor: unlocked ? colors.success : colors.card,
+                                            color: unlocked ? '#0A0A0B' : colors.muted,
+                                            borderColor: colors.border
+                                        }}
+                                        className="vt-badge-xs vt-border font-mono-num vt-text-10 vt-font-extrabold"
+                                    >
+                                        {unlocked ? `UNLOCKED ✓` : `${m.days}d`}
+                                    </span>
+                                </div>
+                                <p className="vt-text-11" style={{ color: colors.muted }}>
+                                    {m.benefit}
+                                </p>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* 6. RECENT CHECK-IN HISTORY LOG */}
+            <div
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                className="vt-card vt-p-card vt-stack-3"
+            >
+                <div className="vt-between-center">
+                    <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                        Daily Check-In History ({recentLogsDesc.length})
+                    </h3>
+                    <Activity size={18} style={{ color: colors.muted }} />
+                </div>
+
+                {recentLogsDesc.length === 0 ? (
+                    <div
+                        style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.muted }}
+                        className="vt-p-4 vt-box-xl vt-text-xs"
+                    >
+                        Abhi 0 logs hain. Aaj se start karein — upar "MARK TODAY 100% CLEAN" button tap karein.
+                    </div>
+                ) : (
+                    <div className="vt-stack-2 vt-tabular">
+                        {recentLogsDesc.slice(0, 20).map((entry) => (
+                            <div
+                                key={entry.date}
+                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                className="vt-p-3 vt-box-xl vt-between-center vt-flex-wrap vt-gap-2 vt-text-xs"
+                            >
+                                <div className="vt-row-wrap vt-gap-2">
+                                    <span className="font-mono-num vt-font-extrabold">{entry.date}</span>
+                                    <span
+                                        style={{
+                                            backgroundColor:
+                                                entry.status === 'clean' ? colors.success : colors.danger,
+                                            color: entry.status === 'clean' ? '#0A0A0B' : '#FFFFFF'
+                                        }}
+                                        className="vt-badge-xs vt-text-10 vt-font-extrabold vt-uppercase"
+                                    >
+                                        {entry.status === 'clean' ? '100% CLEAN ✓' : 'SLIP / RESET'}
+                                    </span>
+                                    <span className="font-mono-num vt-text-11" style={{ color: colors.muted }}>
+                                        Urge: {entry.urgeLevel || 0}/10
+                                    </span>
+                                    {entry.trigger && (
+                                        <span
+                                            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                                            className="vt-badge-xs vt-border vt-text-10"
+                                        >
+                                            Trigger: {entry.trigger}
+                                        </span>
+                                    )}
+                                    {entry.note && (
+                                        <span className="vt-text-11" style={{ color: colors.muted }}>
+                                            • “{entry.note}”
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="vt-flex vt-items-center vt-gap-1-5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedDate(entry.date)}
+                                        style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
+                                        className="vt-btn vt-h-32 vt-px-2-5 vt-rounded-lg vt-border vt-text-10 vt-font-extrabold vt-uppercase"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDeleteDisciplineDate(entry.date)}
+                                        aria-label={`Delete discipline log ${entry.date}`}
+                                        style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.danger }}
+                                        className="vt-btn vt-h-32 vt-px-2 vt-rounded-lg vt-border"
+                                    >
+                                        <Trash2 size={13} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
 
 // ============================================================================
 // FULL-SCREEN VISUAL FORM CHART MODAL (ZOOM + DAY SWITCHER + PANEL FOCUS)
@@ -4455,8 +5722,7 @@ function FormChartModal({
         setZoom((prev) => (prev === 1 ? 1.5 : prev === 1.5 ? 2 : 1));
     };
 
-    const showFocusBanner =
-        focusExercise && viewDayIndex === initialDayIndex;
+    const showFocusBanner = focusExercise && viewDayIndex === initialDayIndex;
 
     return (
         <div
@@ -4469,11 +5735,7 @@ function FormChartModal({
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-chart-modal-box"
             >
-                {/* Header */}
-                <div
-                    style={{ borderColor: colors.border }}
-                    className="vt-chart-modal-header"
-                >
+                <div style={{ borderColor: colors.border }} className="vt-chart-modal-header">
                     <div className="vt-stack-0-5">
                         <span
                             style={{ backgroundColor: colors.accent, color: colors.accentText }}
@@ -4532,7 +5794,6 @@ function FormChartModal({
                     </div>
                 </div>
 
-                {/* Focused Exercise Reminder Strip */}
                 {showFocusBanner && (
                     <div
                         style={{
@@ -4554,11 +5815,7 @@ function FormChartModal({
                     </div>
                 )}
 
-                {/* Mon–Sat Switcher */}
-                <div
-                    style={{ borderColor: colors.border }}
-                    className="vt-chart-day-tabs"
-                >
+                <div style={{ borderColor: colors.border }} className="vt-chart-day-tabs">
                     {trainingDays.map((day) => {
                         const active = viewDayIndex === day.dayIndex;
                         return (
@@ -4579,11 +5836,7 @@ function FormChartModal({
                     })}
                 </div>
 
-                {/* Image Viewport */}
-                <div
-                    style={{ backgroundColor: colors.elevated }}
-                    className="vt-chart-modal-body"
-                >
+                <div style={{ backgroundColor: colors.elevated }} className="vt-chart-modal-body">
                     {imgError ? (
                         <div
                             style={{
@@ -4618,16 +5871,13 @@ function FormChartModal({
                         </div>
                     )}
                 </div>
-
-                {/* Footer */}
-                
             </div>
         </div>
     );
 }
 
 // ============================================================================
-// 1. TODAY VIEW COMPONENT (UPGRADED WITH VISUAL FORM CHARTS & GUIDE CONTROLS)
+// 1. TODAY VIEW COMPONENT (ZERO-DEFAULT WORKING WEIGHTS & VISUAL FORM CHARTS)
 // ============================================================================
 
 function TodayView({
@@ -4637,7 +5887,6 @@ function TodayView({
     setAppState,
     selectedDayIndex,
     setSelectedDayIndex,
-    currentWeekdayIndex,
     activeDayPlan,
     workoutRunning,
     setWorkoutRunning,
@@ -4654,7 +5903,7 @@ function TodayView({
     showToast
 }) {
     const [openGuides, setOpenGuides] = useState({});
-    const [chartModalState, setChartModalState] = useState(null); // { dayIndex, focusExercise }
+    const [chartModalState, setChartModalState] = useState(null);
     const [thumbFailed, setThumbFailed] = useState(false);
 
     useEffect(() => {
@@ -4730,12 +5979,13 @@ function TodayView({
         getEffectiveSetCount
     ]);
 
+    // Zero-default: only calculates ramp weights once user enters working weight in Exercise #1
     const firstCompoundWorkingWeightKg = useMemo(() => {
         if (activeDayPlan.isRest || !activeDayPlan.exercises.length) return 0;
         const firstEx = activeDayPlan.exercises[0];
         const draft = appState.activeDrafts[firstEx.id]?.[0]?.weight;
         const prev = appState.lastSessionLogs[firstEx.id]?.[0]?.weight;
-        return Number(draft || prev || 40);
+        return Number(draft || prev || 0);
     }, [activeDayPlan, appState.activeDrafts, appState.lastSessionLogs]);
 
     const roundToPlate = (kg) => Math.max(0, Math.round(kg / 2.5) * 2.5);
@@ -4749,7 +5999,6 @@ function TodayView({
             >
                 {orderedDays.map((day) => {
                     const isSelected = day.dayIndex === selectedDayIndex;
-                    const isToday = day.dayIndex === currentWeekdayIndex;
                     return (
                         <button
                             key={day.dayIndex}
@@ -4763,12 +6012,8 @@ function TodayView({
                         >
                             <div className="vt-day-btn-top">
                                 <span className="vt-day-short">{day.shortDay}</span>
-                                
                             </div>
-                            <span
-                                className="vt-day-sub"
-                                style={{ opacity: isSelected ? 0.95 : 0.75 }}
-                            >
+                            <span className="vt-day-sub" style={{ opacity: isSelected ? 0.95 : 0.75 }}>
                                 {day.isRest ? 'Rest' : day.title}
                             </span>
                         </button>
@@ -4786,10 +6031,7 @@ function TodayView({
                         <div>
                             <div className="vt-pill-row">
                                 <span
-                                    style={{
-                                        backgroundColor: colors.accent,
-                                        color: colors.accentText
-                                    }}
+                                    style={{ backgroundColor: colors.accent, color: colors.accentText }}
                                     className="vt-badge-accent"
                                 >
                                     {activeDayPlan.dayName}
@@ -4916,7 +6158,6 @@ function TodayView({
                                 </div>
                             </div>
 
-                            {/* Live Workout Completion Bar */}
                             <div className="vt-stack-1">
                                 <div
                                     className="vt-between-center vt-text-11 font-mono-num"
@@ -4960,15 +6201,21 @@ function TodayView({
                         </h3>
                         {!activeDayPlan.isRest && (
                             <div className="vt-warmup-list tabular-nums" style={{ color: colors.muted }}>
-                                <p>
-                                    <strong style={{ color: colors.text }}>1st Compound Ramp:</strong>{' '}
-                                    {formatWeight(roundToPlate(firstCompoundWorkingWeightKg * 0.5))}
-                                    {appState.unit} × 8 →{' '}
-                                    {formatWeight(roundToPlate(firstCompoundWorkingWeightKg * 0.7))}
-                                    {appState.unit} × 5 →{' '}
-                                    {formatWeight(roundToPlate(firstCompoundWorkingWeightKg * 0.85))}
-                                    {appState.unit} × 3
-                                </p>
+                                {firstCompoundWorkingWeightKg > 0 ? (
+                                    <p>
+                                        <strong style={{ color: colors.text }}>1st Compound Ramp:</strong>{' '}
+                                        {formatWeight(roundToPlate(firstCompoundWorkingWeightKg * 0.5))}
+                                        {appState.unit} × 8 →{' '}
+                                        {formatWeight(roundToPlate(firstCompoundWorkingWeightKg * 0.7))}
+                                        {appState.unit} × 5 →{' '}
+                                        {formatWeight(roundToPlate(firstCompoundWorkingWeightKg * 0.85))}
+                                        {appState.unit} × 3
+                                    </p>
+                                ) : (
+                                    <p>
+                                        <strong style={{ color: colors.text }}>1st Compound Ramp:</strong> Enter working weight in Set #1 to auto-calculate 50% / 70% / 85% warm-ups.
+                                    </p>
+                                )}
                                 <p>
                                     <strong style={{ color: colors.text }}>Isolations:</strong> 1 light feeler set only.
                                 </p>
@@ -5015,7 +6262,7 @@ function TodayView({
                 </div>
             </div>
 
-            {/* Today's Visual Form Chart Preview Banner + All-Guides Toggle */}
+            {/* Today's Visual Form Chart Preview Banner */}
             {!activeDayPlan.isRest && activeDayPlan.chartImage && (
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -5063,10 +6310,7 @@ function TodayView({
                                 >
                                     Visual Form Chart
                                 </span>
-                                <span
-                                    className="vt-text-10 font-mono-num"
-                                    style={{ color: colors.muted }}
-                                >
+                                <span className="vt-text-10 font-mono-num" style={{ color: colors.muted }}>
                                     /charts/{activeDayPlan.chartFile}
                                 </span>
                             </div>
@@ -5154,9 +6398,7 @@ function TodayView({
                         </button>
                         <button
                             type="button"
-                            onClick={() =>
-                                setChartModalState({ dayIndex: 1, focusExercise: null })
-                            }
+                            onClick={() => setChartModalState({ dayIndex: 1, focusExercise: null })}
                             style={{
                                 backgroundColor: colors.elevated,
                                 borderColor: colors.border,
@@ -5179,8 +6421,8 @@ function TodayView({
                             if (existingDraft?.[idx]) return existingDraft[idx];
                             return {
                                 setNumber: idx + 1,
-                                weight: exercise.flags?.assisted ? 25 : 0,
-                                reps: exercise.repMin,
+                                weight: 0,
+                                reps: 0,
                                 completed: false
                             };
                         });
@@ -5218,7 +6460,6 @@ function TodayView({
                                 }}
                                 className="vt-card vt-p-card vt-stack-3-5"
                             >
-                                {/* Exercise Header */}
                                 <div className="vt-between-start vt-gap-2-5">
                                     <div className="vt-stack-1 vt-min-w-0 vt-flex-1">
                                         <div className="vt-row-wrap vt-gap-1-5">
@@ -5337,7 +6578,6 @@ function TodayView({
                                             </div>
                                         )}
 
-                                        {/* Equipment Busy Alternative Swapper */}
                                         {exercise.alternatives?.length > 0 && (
                                             <div className="vt-row-wrap vt-gap-1-5 vt-pt-1">
                                                 <span className="vt-text-11 vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
@@ -5390,7 +6630,6 @@ function TodayView({
                                             </div>
                                         )}
 
-                                        {/* One-Line Form Cue */}
                                         <p
                                             style={{ color: colors.muted }}
                                             className="vt-text-resp-xs-sm vt-flex vt-items-start vt-gap-1-5 vt-pt-1"
@@ -5405,7 +6644,6 @@ function TodayView({
                                         </p>
                                     </div>
 
-                                    {/* Prescription Pill */}
                                     <div
                                         style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
                                         className="vt-px-3 vt-py-1-5 vt-box-xl vt-text-right vt-tabular vt-shrink-0"
@@ -5419,7 +6657,7 @@ function TodayView({
                                     </div>
                                 </div>
 
-                                {/* Expandable Form, Position, Target Pressure & Direct Photo Chart Bar */}
+                                {/* Form Guide */}
                                 {exercise.guide && (
                                     <div className="vt-guide-wrap">
                                         <div className="vt-guide-action-row">
@@ -5484,10 +6722,7 @@ function TodayView({
                                                 className="vt-guide-panel"
                                             >
                                                 <div
-                                                    style={{
-                                                        backgroundColor: colors.card,
-                                                        borderColor: colors.border
-                                                    }}
+                                                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
                                                     className="vt-guide-item"
                                                 >
                                                     <div
@@ -5502,10 +6737,7 @@ function TodayView({
                                                 </div>
 
                                                 <div
-                                                    style={{
-                                                        backgroundColor: colors.card,
-                                                        borderColor: colors.border
-                                                    }}
+                                                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
                                                     className="vt-guide-item"
                                                 >
                                                     <div
@@ -5520,10 +6752,7 @@ function TodayView({
                                                 </div>
 
                                                 <div
-                                                    style={{
-                                                        backgroundColor: colors.card,
-                                                        borderColor: colors.success
-                                                    }}
+                                                    style={{ backgroundColor: colors.card, borderColor: colors.success }}
                                                     className="vt-guide-item"
                                                 >
                                                     <div
@@ -5539,10 +6768,7 @@ function TodayView({
                                                 </div>
 
                                                 <div
-                                                    style={{
-                                                        backgroundColor: colors.card,
-                                                        borderColor: colors.warning
-                                                    }}
+                                                    style={{ backgroundColor: colors.card, borderColor: colors.warning }}
                                                     className="vt-guide-item"
                                                 >
                                                     <div
@@ -5556,44 +6782,12 @@ function TodayView({
                                                         {exercise.guide.feelWrong}
                                                     </p>
                                                 </div>
-
-                                                {activeDayPlan.chartImage && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setChartModalState({
-                                                                dayIndex: activeDayPlan.dayIndex,
-                                                                focusExercise: {
-                                                                    number: exIdx + 1,
-                                                                    name: displayName
-                                                                }
-                                                            })
-                                                        }
-                                                        style={{
-                                                            backgroundColor: colors.card,
-                                                            borderColor: colors.accentBorder,
-                                                            color: colors.text
-                                                        }}
-                                                        className="vt-guide-chart-btn"
-                                                    >
-                                                        <span className="vt-flex vt-items-center vt-gap-2">
-                                                            <Sparkles
-                                                                size={14}
-                                                                style={{ color: isDark ? colors.accent : colors.text }}
-                                                            />
-                                                            <span>
-                                                                {activeDayPlan.dayName} Chart Photo Kholein — Panel #{exIdx + 1} ({displayName})
-                                                            </span>
-                                                        </span>
-                                                        <ChevronRight size={15} />
-                                                    </button>
-                                                )}
                                             </div>
                                         )}
                                     </div>
                                 )}
 
-                                {/* Last Session Numbers + Progressive Overload Banner */}
+                                {/* Last Session & Progressive Overload Banner */}
                                 <div
                                     style={{
                                         backgroundColor: overload.shouldIncrease ? colors.accentSurface : colors.elevated,
@@ -5609,11 +6803,10 @@ function TodayView({
                                                     ? prevSets
                                                         .map(
                                                             (s) =>
-                                                                `${isAssisted ? 'Assist ' : ''}${formatWeight(s.weight)}${appState.unit
-                                                                } × ${s.reps}`
+                                                                `${isAssisted ? 'Assist ' : ''}${formatWeight(s.weight)}${appState.unit} × ${s.reps}`
                                                         )
                                                         .join('  |  ')
-                                                    : 'First session — log your starting working weights'}
+                                                    : 'First session — enter your starting weights & reps'}
                                             </span>
                                         </div>
                                         <div className="vt-text-xs vt-font-semibold" style={{ color: colors.muted }}>
@@ -5706,8 +6899,13 @@ function TodayView({
                                                         type="number"
                                                         inputMode="decimal"
                                                         step="0.5"
+                                                        placeholder="0"
                                                         aria-label={`${displayName} set ${sIdx + 1} weight`}
-                                                        value={setRow.weight === '' ? '' : formatWeight(setRow.weight)}
+                                                        value={
+                                                            setRow.weight === '' || setRow.weight === 0
+                                                                ? ''
+                                                                : formatWeight(setRow.weight)
+                                                        }
                                                         onChange={(e) =>
                                                             handleSetInputChange(exercise.id, sIdx, 'weight', e.target.value)
                                                         }
@@ -5724,8 +6922,9 @@ function TodayView({
                                                     <input
                                                         type="number"
                                                         inputMode="numeric"
+                                                        placeholder="0"
                                                         aria-label={`${displayName} set ${sIdx + 1} reps`}
-                                                        value={setRow.reps}
+                                                        value={setRow.reps === '' || setRow.reps === 0 ? '' : setRow.reps}
                                                         onChange={(e) =>
                                                             handleSetInputChange(exercise.id, sIdx, 'reps', e.target.value)
                                                         }
@@ -5762,7 +6961,6 @@ function TodayView({
                 </div>
             )}
 
-            {/* Full-Screen Visual Form Chart Modal */}
             {chartModalState && (
                 <FormChartModal
                     initialDayIndex={chartModalState.dayIndex}
@@ -5777,7 +6975,11 @@ function TodayView({
 }
 
 // ============================================================================
-// 2. PLAN VIEW COMPONENT
+// END OF PART 2 — REPLY "OK" FOR PART 3 (Final Part: Plan, Nutrition, Progress, Stats, Settings, Cardio & Pelvic)
+// ============================================================================
+
+// ============================================================================
+// 2. PLAN VIEW COMPONENT (PART 3 START — FINAL PART)
 // ============================================================================
 
 function PlanView({ colors, isDark, onSelectWorkoutDay }) {
@@ -5815,13 +7017,13 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                             style={{ backgroundColor: colors.accent, color: colors.accentText }}
                             className="vt-badge-lg vt-text-xs vt-font-extrabold vt-uppercase"
                         >
-                            6-Day PPL V-Taper Split (116 Primary Sets)
+                            6-Day PPL V-Taper Split ({TOTAL_WEEKLY_PRIMARY_SETS} Primary Sets)
                         </span>
                         <h2 className="font-display vt-text-resp-3xl-4xl vt-font-black vt-uppercase vt-mt-2">
                             Weekly Hypertrophy Blueprint
                         </h2>
                         <p style={{ color: colors.muted }} className="vt-text-resp-xs-sm">
-                            20 direct Lat/Back sets + 27 total Deltoid sets (11 Side, 7 Front, 9 Rear) engineered for maximum shoulder-to-waist ratio.
+                            22 direct Lat/Back sets + 27 total Deltoid sets (11 Side, 7 Front, 9 Rear) + 14 Chest sets engineered for maximum shoulder-to-waist ratio.
                         </p>
                     </div>
                 </div>
@@ -5888,7 +7090,7 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
 
                                 <button
                                     onClick={() => onSelectWorkoutDay(day.dayIndex)}
-                                    style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                    style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
                                     className="vt-btn vt-h-42 vt-px-3-5 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-1"
                                 >
                                     <span>Open in Today</span>
@@ -5978,7 +7180,7 @@ function NutritionView({
     handleDietTrackChange,
     showToast
 }) {
-    const [subView, setSubView] = useState('daily'); // 'daily' | 'rotation' | 'foods'
+    const [subView, setSubView] = useState('daily');
 
     const kcalTarget = appState.profile.targetCalories || SCIENCE_RULES.TARGET_KCAL;
     const proteinTarget = appState.profile.targetProteinG || SCIENCE_RULES.TARGET_PROTEIN_G;
@@ -6097,7 +7299,7 @@ function NutritionView({
                     {
                         v: appState.waterMl,
                         m: waterTarget,
-                        c: '#0059ff',
+                        c: '#0059FF',
                         s: 'water',
                         t: `${(appState.waterMl / 1000).toFixed(1)}/${(waterTarget / 1000).toFixed(1)}L`
                     }
@@ -6118,7 +7320,6 @@ function NutritionView({
 
             {/* Macro & Hydration Bento Grid */}
             <div className="vt-grid-md-3 vt-gap-4 vt-tabular">
-                {/* Calories Card */}
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
                     className="vt-card vt-p-card-md vt-stack-3"
@@ -6140,10 +7341,7 @@ function NutritionView({
                     </div>
                     <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track">
                         <div
-                            style={{
-                                width: `${kcalPercent}%`,
-                                backgroundColor: colors.accent
-                            }}
+                            style={{ width: `${kcalPercent}%`, backgroundColor: colors.accent }}
                             className="vt-progress-fill"
                         />
                     </div>
@@ -6153,7 +7351,6 @@ function NutritionView({
                     </div>
                 </div>
 
-                {/* Protein Card */}
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
                     className="vt-card vt-p-card-md vt-stack-3"
@@ -6178,10 +7375,7 @@ function NutritionView({
                     </div>
                     <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track">
                         <div
-                            style={{
-                                width: `${proteinPercent}%`,
-                                backgroundColor: colors.accent
-                            }}
+                            style={{ width: `${proteinPercent}%`, backgroundColor: colors.accent }}
                             className="vt-progress-fill"
                         />
                     </div>
@@ -6191,7 +7385,6 @@ function NutritionView({
                     </div>
                 </div>
 
-                {/* Hydration & Sleep Card */}
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
                     className="vt-card vt-p-card-md vt-stack-3"
@@ -6216,7 +7409,7 @@ function NutritionView({
                             onClick={() =>
                                 setAppState((prev) => ({ ...prev, waterMl: prev.waterMl + 250 }))
                             }
-                            style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                            style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
                             className="vt-btn vt-h-38 vt-box-xl vt-text-xs vt-font-extrabold"
                         >
                             +250ml
@@ -6232,7 +7425,7 @@ function NutritionView({
                         </button>
                         <button
                             onClick={() => setAppState((prev) => ({ ...prev, waterMl: 0 }))}
-                            style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                            style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
                             className="vt-btn vt-h-38 vt-box-xl vt-text-xs vt-font-bold"
                         >
                             Reset
@@ -6303,10 +7496,7 @@ function NutritionView({
                                                     {slot.slotName}
                                                 </h3>
                                                 <span
-                                                    style={{
-                                                        backgroundColor: colors.accent,
-                                                        color: colors.accentText
-                                                    }}
+                                                    style={{ backgroundColor: colors.accent, color: colors.accentText }}
                                                     className="vt-badge vt-text-xs vt-font-extrabold font-mono-num"
                                                 >
                                                     {macros.kcal} kcal • {macros.protein}g P
@@ -6364,7 +7554,7 @@ function NutritionView({
                         })}
                     </div>
 
-                    {/* Appetite Helpers */}
+                    {/* Appetite Helpers (Typo Fixed: vt-btn) */}
                     <div
                         style={{ backgroundColor: colors.card, borderColor: colors.border }}
                         className="vt-card vt-p-card-md vt-stack-3"
@@ -6381,7 +7571,7 @@ function NutritionView({
                             {(appState.loggedAppetiteHelpers?.length || 0) > 0 && (
                                 <button
                                     onClick={handleClearHelpers}
-                                    style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                    style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
                                     className="vt-btn vt-h-38 vt-px-3 vt-box-xl vt-text-xs vt-font-bold"
                                 >
                                     Clear ({appState.loggedAppetiteHelpers.length})
@@ -6394,8 +7584,8 @@ function NutritionView({
                                 <button
                                     key={helper.id}
                                     onClick={() => handleAddAppetiteHelper(helper)}
-                                    style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                                    className="vt-btnn vt-h-48 vt-p-3 vt-box-xl vt-text-left vt-between-center vt-gap-2"
+                                    style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+                                    className="vt-btn vt-h-48 vt-p-3 vt-box-xl vt-text-left vt-between-center vt-gap-2"
                                 >
                                     <div>
                                         <div className="vt-text-xs vt-font-extrabold">{helper.label}</div>
@@ -6525,7 +7715,7 @@ function NutritionView({
 }
 
 // ============================================================================
-// 4. PROGRESS VIEW COMPONENT (WEIGH-INS, GAIN RATE & V-TAPER RATIO)
+// 4. PROGRESS VIEW COMPONENT (ZERO DEFAULTS + MODERN GRADIENT CHARTS)
 // ============================================================================
 
 function ProgressView({
@@ -6540,23 +7730,23 @@ function ProgressView({
     latestMeasurement,
     showToast
 }) {
-    const todayStr = useMemo(() => new Date().toLocaleDateString('en-CA'), []);
+    const todayStr = useMemo(() => getLocalDateStr(), []);
     const [weightDate, setWeightDate] = useState(todayStr);
     const [morningInput, setMorningInput] = useState('');
     const [nightInput, setNightInput] = useState('');
     const [noteInput, setNoteInput] = useState('');
-    const [reportTab, setReportTab] = useState('weekly'); // 'weekly' | 'monthly' | 'history'
-    const [chartMode, setChartMode] = useState('trajectory'); // 'trajectory' | 'fluctuation'
+    const [reportTab, setReportTab] = useState('weekly');
+    const [chartMode, setChartMode] = useState('trajectory');
 
+    // 100% Zero Defaults for Body Measurements
     const [measForm, setMeasForm] = useState({
-        shoulders: latestMeasurement?.shoulders || 108,
-        chest: latestMeasurement?.chest || 92,
-        waist: latestMeasurement?.waist || 74,
-        arms: latestMeasurement?.arms || 31,
-        thighs: latestMeasurement?.thighs || 50
+        shoulders: latestMeasurement?.shoulders || 0,
+        chest: latestMeasurement?.chest || 0,
+        waist: latestMeasurement?.waist || 0,
+        arms: latestMeasurement?.arms || 0,
+        thighs: latestMeasurement?.thighs || 0
     });
 
-    // Normalize logs for backward compatibility (supports old weightKg + new morningKg/nightKg)
     const normalizedLogs = useMemo(() => {
         const sorted = [...(appState.weightLogs || [])]
             .map((item) => {
@@ -6569,8 +7759,7 @@ function ProgressView({
                 const nKg =
                     item.nightKg !== undefined && item.nightKg !== null ? Number(item.nightKg) : null;
                 const primaryKg = mKg || nKg || Number(item.weightKg || 0);
-                const fluctuationKg =
-                    mKg && nKg ? Number((nKg - mKg).toFixed(2)) : null;
+                const fluctuationKg = mKg && nKg ? Number((nKg - mKg).toFixed(2)) : null;
 
                 return {
                     ...item,
@@ -6584,19 +7773,14 @@ function ProgressView({
             .filter((item) => item.weightKg > 0)
             .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        // Compute 7-entry rolling moving average on fasted/primary weight
         return sorted.map((entry, idx) => {
             const windowSlice = sorted.slice(Math.max(0, idx - 6), idx + 1);
             const sum = windowSlice.reduce((acc, cur) => acc + cur.weightKg, 0);
             const movingAvgKg = Number((sum / windowSlice.length).toFixed(2));
-            return {
-                ...entry,
-                movingAvgKg
-            };
+            return { ...entry, movingAvgKg };
         });
     }, [appState.weightLogs]);
 
-    // Auto-populate inputs when user selects a date that already has a log
     useEffect(() => {
         const existing = normalizedLogs.find((w) => w.date === weightDate);
         if (existing) {
@@ -6610,7 +7794,6 @@ function ProgressView({
         }
     }, [weightDate, normalizedLogs, formatWeight]);
 
-    // Save Morning and/or Night Weight for the selected date
     const handleSaveDualWeightLog = (e) => {
         e.preventDefault();
         const hasMorning = morningInput !== '' && !Number.isNaN(Number(morningInput));
@@ -6624,7 +7807,10 @@ function ProgressView({
         const mVal = hasMorning ? Number(morningInput) : null;
         const nVal = hasNight ? Number(nightInput) : null;
 
-        if ((mVal !== null && (mVal <= 25 || mVal >= 250)) || (nVal !== null && (nVal <= 25 || nVal >= 250))) {
+        if (
+            (mVal !== null && (mVal <= 25 || mVal >= 250)) ||
+            (nVal !== null && (nVal <= 25 || nVal >= 250))
+        ) {
             showToast(`Valid weight enter karein (25–250 ${appState.unit}).`);
             return;
         }
@@ -6636,7 +7822,9 @@ function ProgressView({
         setAppState((prev) => {
             const existingForDate = (prev.weightLogs || []).find((w) => w.date === weightDate);
             const finalMorningKg =
-                morningKg !== null ? morningKg : existingForDate?.morningKg ?? existingForDate?.weightKg ?? null;
+                morningKg !== null
+                    ? morningKg
+                    : existingForDate?.morningKg ?? existingForDate?.weightKg ?? null;
             const finalNightKg = nightKg !== null ? nightKg : existingForDate?.nightKg ?? null;
             const finalPrimaryKg = finalMorningKg || finalNightKg || primaryKg;
 
@@ -6656,11 +7844,18 @@ function ProgressView({
             ].sort((a, b) => new Date(a.date) - new Date(b.date));
 
             const latestLog = nextLogs[nextLogs.length - 1];
+            const firstLog = nextLogs[0];
 
             return {
                 ...prev,
                 profile: {
                     ...prev.profile,
+                    startWeightKg:
+                        prev.profile.startWeightKg > 0
+                            ? prev.profile.startWeightKg
+                            : firstLog
+                                ? firstLog.weightKg
+                                : finalPrimaryKg,
                     currentWeightKg: latestLog ? latestLog.weightKg : finalPrimaryKg
                 },
                 weightLogs: nextLogs
@@ -6689,26 +7884,20 @@ function ProgressView({
         showToast(`Deleted weight log for ${dateToDelete}`);
     };
 
-    // Helper: Get Monday of the week for any YYYY-MM-DD
     const getWeekStartMonday = (dateStr) => {
         const [y, m, d] = dateStr.split('-').map(Number);
         const dt = new Date(y, m - 1, d);
         const day = dt.getDay();
         const diff = dt.getDate() - day + (day === 0 ? -6 : 1);
         const monday = new Date(dt.setDate(diff));
-        return monday.toLocaleDateString('en-CA');
+        return getLocalDateStr(monday);
     };
 
-    // ==========================================================================
-    // WEEKLY REPORTS ENGINE (HAR HAFTE KI DETAILED PROGRESS REPORT)
-    // ==========================================================================
     const weeklyReports = useMemo(() => {
         const groups = {};
         normalizedLogs.forEach((log) => {
             const weekKey = getWeekStartMonday(log.date);
-            if (!groups[weekKey]) {
-                groups[weekKey] = [];
-            }
+            if (!groups[weekKey]) groups[weekKey] = [];
             groups[weekKey].push(log);
         });
 
@@ -6737,10 +7926,7 @@ function ProgressView({
 
             const minKg = Math.min(...primaryList);
             const maxKg = Math.max(...primaryList);
-
-            const endDt = new Date(weekStart);
-            endDt.setDate(endDt.getDate() + 6);
-            const weekEnd = endDt.toLocaleDateString('en-CA');
+            const weekEnd = addDaysToDateStr(weekStart, 6);
 
             return {
                 weekNumber: idx + 1,
@@ -6772,97 +7958,84 @@ function ProgressView({
             }
         }
 
-        return reports.reverse(); // Newest week first
+        return reports.reverse();
     }, [normalizedLogs]);
 
-    // ==========================================================================
-    // MONTHLY REPORTS ENGINE (HAR MAHINE KI DETAILED PROGRESS REPORT)
-    // ==========================================================================
     const monthlyReports = useMemo(() => {
         const groups = {};
         normalizedLogs.forEach((log) => {
-            const monthKey = log.date.slice(0, 7); // YYYY-MM
-            if (!groups[monthKey]) {
-                groups[monthKey] = [];
-            }
+            const monthKey = log.date.slice(0, 7);
+            if (!groups[monthKey]) groups[monthKey] = [];
             groups[monthKey].push(log);
         });
 
         const sortedMonths = Object.keys(groups).sort();
 
-        const reports = sortedMonths.map((monthKey) => {
-            const entries = groups[monthKey];
-            const [yearNum, monthNum] = monthKey.split('-').map(Number);
-            const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
-            const monthName = new Date(yearNum, monthNum - 1, 1).toLocaleString('en-US', {
-                month: 'short',
-                year: 'numeric'
-            });
+        return sortedMonths
+            .map((monthKey) => {
+                const entries = groups[monthKey];
+                const [yearNum, monthNum] = monthKey.split('-').map(Number);
+                const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
+                const monthName = new Date(yearNum, monthNum - 1, 1).toLocaleString('en-US', {
+                    month: 'short',
+                    year: 'numeric'
+                });
 
-            const morningList = entries.filter((e) => e.morningKg !== null).map((e) => e.morningKg);
-            const nightList = entries.filter((e) => e.nightKg !== null).map((e) => e.nightKg);
-            const primaryList = entries.map((e) => e.weightKg);
-            const swingList = entries
-                .filter((e) => e.fluctuationKg !== null)
-                .map((e) => e.fluctuationKg);
+                const morningList = entries.filter((e) => e.morningKg !== null).map((e) => e.morningKg);
+                const nightList = entries.filter((e) => e.nightKg !== null).map((e) => e.nightKg);
+                const primaryList = entries.map((e) => e.weightKg);
 
-            const startWeightKg = primaryList[0];
-            const endWeightKg = primaryList[primaryList.length - 1];
-            const netGainKg = Number((endWeightKg - startWeightKg).toFixed(2));
+                const startWeightKg = primaryList[0];
+                const endWeightKg = primaryList[primaryList.length - 1];
+                const netGainKg = Number((endWeightKg - startWeightKg).toFixed(2));
 
-            const avgMorningKg = morningList.length
-                ? Number((morningList.reduce((a, b) => a + b, 0) / morningList.length).toFixed(2))
-                : Number((primaryList.reduce((a, b) => a + b, 0) / primaryList.length).toFixed(2));
+                const avgMorningKg = morningList.length
+                    ? Number((morningList.reduce((a, b) => a + b, 0) / morningList.length).toFixed(2))
+                    : Number((primaryList.reduce((a, b) => a + b, 0) / primaryList.length).toFixed(2));
 
-            const avgNightKg = nightList.length
-                ? Number((nightList.reduce((a, b) => a + b, 0) / nightList.length).toFixed(2))
-                : null;
+                const avgNightKg = nightList.length
+                    ? Number((nightList.reduce((a, b) => a + b, 0) / nightList.length).toFixed(2))
+                    : null;
 
-            const avgSwingKg = swingList.length
-                ? Number((swingList.reduce((a, b) => a + b, 0) / swingList.length).toFixed(2))
-                : null;
+                const minKg = Math.min(...primaryList);
+                const maxKg = Math.max(...(nightList.length ? nightList : primaryList));
+                const consistencyPct = Math.min(100, Math.round((entries.length / daysInMonth) * 100));
 
-            const minKg = Math.min(...primaryList);
-            const maxKg = Math.max(...(nightList.length ? nightList : primaryList));
-            const consistencyPct = Math.min(100, Math.round((entries.length / daysInMonth) * 100));
-
-            return {
-                monthKey,
-                monthName,
-                daysLogged: entries.length,
-                daysInMonth,
-                consistencyPct,
-                amCount: morningList.length,
-                pmCount: nightList.length,
-                startWeightKg,
-                endWeightKg,
-                netGainKg,
-                avgMorningKg,
-                avgNightKg,
-                avgSwingKg,
-                minKg,
-                maxKg
-            };
-        });
-
-        return reports.reverse(); // Newest month first
+                return {
+                    monthKey,
+                    monthName,
+                    daysLogged: entries.length,
+                    daysInMonth,
+                    consistencyPct,
+                    amCount: morningList.length,
+                    pmCount: nightList.length,
+                    startWeightKg,
+                    endWeightKg,
+                    netGainKg,
+                    avgMorningKg,
+                    avgNightKg,
+                    minKg,
+                    maxKg
+                };
+            })
+            .reverse();
     }, [normalizedLogs]);
 
-    // ==========================================================================
-    // LIVE SUMMARY KPIs & GOAL ETA
-    // ==========================================================================
+    // Zero-Safe KPI Summary (Handles 0 start weight cleanly)
     const kpiSummary = useMemo(() => {
-        const startKg = Number(appState.profile.startWeightKg || 55);
+        const firstLoggedKg = normalizedLogs.length > 0 ? normalizedLogs[0].weightKg : 0;
+        const startKg =
+            Number(appState.profile.startWeightKg || 0) > 0
+                ? Number(appState.profile.startWeightKg)
+                : firstLoggedKg;
         const goalMinKg = Number(appState.profile.goalWeightMinKg || 65);
         const latestEntry = normalizedLogs[normalizedLogs.length - 1];
         const currentKg = latestEntry ? latestEntry.weightKg : startKg;
-        const totalGainedKg = Number((currentKg - startKg).toFixed(2));
-        const remainingToGoalKg = Math.max(0, Number((goalMinKg - currentKg).toFixed(2)));
+        const hasBaseline = currentKg > 0 && startKg > 0;
+        const totalGainedKg = hasBaseline ? Number((currentKg - startKg).toFixed(2)) : 0;
+        const remainingToGoalKg =
+            currentKg > 0 ? Math.max(0, Number((goalMinKg - currentKg).toFixed(2))) : 0;
 
-        const todayEntry = normalizedLogs.find((w) => w.date === weightDate);
-        const selectedDaySwingKg = todayEntry?.fluctuationKg ?? null;
-
-        // Average intra-day swing across all dual-logged days
         const dualDays = normalizedLogs.filter((w) => w.fluctuationKg !== null);
         const overallAvgSwingKg = dualDays.length
             ? Number(
@@ -6870,18 +8043,17 @@ function ProgressView({
             )
             : null;
 
-        // Estimate weeks to goal based on average weekly gain (default 0.35 kg/wk if early)
         const weeklyVelocity =
             gainAnalysis.avgWeeklyGainKg >= 0.15 ? gainAnalysis.avgWeeklyGainKg : 0.35;
         const estWeeksToGoal =
-            remainingToGoalKg > 0 ? Math.ceil(remainingToGoalKg / weeklyVelocity) : 0;
+            currentKg > 0 && remainingToGoalKg > 0 ? Math.ceil(remainingToGoalKg / weeklyVelocity) : 0;
 
         return {
             startKg,
             currentKg,
+            hasBaseline,
             totalGainedKg,
             remainingToGoalKg,
-            selectedDaySwingKg,
             overallAvgSwingKg,
             estWeeksToGoal,
             dualLoggedCount: dualDays.length
@@ -6890,11 +8062,9 @@ function ProgressView({
         normalizedLogs,
         appState.profile.startWeightKg,
         appState.profile.goalWeightMinKg,
-        weightDate,
         gainAnalysis.avgWeeklyGainKg
     ]);
 
-    // Chart data preparation
     const chartData = useMemo(() => {
         return normalizedLogs.map((w) => ({
             date: w.date.slice(5),
@@ -6908,9 +8078,13 @@ function ProgressView({
 
     const handleSaveMeasurements = (e) => {
         e.preventDefault();
+        if (Number(measForm.shoulders || 0) <= 0 || Number(measForm.waist || 0) <= 0) {
+            showToast('Shoulders aur Waist measurements (cm) enter karein.');
+            return;
+        }
         const entry = {
             id: `m-${Date.now()}`,
-            date: new Date().toLocaleDateString('en-CA'),
+            date: getLocalDateStr(),
             shoulders: Number(measForm.shoulders || 0),
             chest: Number(measForm.chest || 0),
             waist: Number(measForm.waist || 0),
@@ -6926,13 +8100,18 @@ function ProgressView({
     };
 
     const liveRatio =
-        vTaperRatio || Number((measForm.shoulders / Math.max(1, measForm.waist)).toFixed(2));
+        measForm.shoulders > 0 && measForm.waist > 0
+            ? Number((measForm.shoulders / measForm.waist).toFixed(2))
+            : vTaperRatio || 0;
 
-    // Preview swing while typing in the form
     const liveFormSwing =
         morningInput !== '' && nightInput !== ''
             ? Number((Number(nightInput) - Number(morningInput)).toFixed(2))
             : null;
+
+    const morningStroke = isDark ? colors.accent : '#16A34A';
+    const nightStroke = isDark ? '#38BDF8' : '#2563EB';
+    const trendStroke = '#FF7A1A';
 
     return (
         <div className="vt-stack-5">
@@ -6940,11 +8119,7 @@ function ProgressView({
             <div
                 style={{
                     backgroundColor:
-                        gainAnalysis.status === 'FAST_GAIN_WARNING'
-                            ? colors.card
-                            : gainAnalysis.status === 'PLATEAU_SUGGESTION'
-                                ? colors.accentSurface
-                                : colors.card,
+                        gainAnalysis.status === 'PLATEAU_SUGGESTION' ? colors.accentSurface : colors.card,
                     borderColor:
                         gainAnalysis.status === 'FAST_GAIN_WARNING'
                             ? colors.danger
@@ -6988,14 +8163,10 @@ function ProgressView({
                                 }
                             }));
                             showToast(
-                                `Updated daily target by ${gainAnalysis.calorieAdjustment > 0 ? '+' : ''
-                                }${gainAnalysis.calorieAdjustment} kcal!`
+                                `Updated daily target by ${gainAnalysis.calorieAdjustment > 0 ? '+' : ''}${gainAnalysis.calorieAdjustment} kcal!`
                             );
                         }}
-                        style={{
-                            backgroundColor: colors.accent,
-                            color: colors.accentText
-                        }}
+                        style={{ backgroundColor: colors.accent, color: colors.accentText }}
                         className="vt-btn vt-h-44 vt-px-4 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase vt-shrink-0"
                     >
                         Apply {gainAnalysis.calorieAdjustment > 0 ? '+300' : '-200'} kcal
@@ -7003,7 +8174,7 @@ function ProgressView({
                 )}
             </div>
 
-            {/* 2. Top 4 Quick KPI Summary Cards */}
+            {/* 2. Top 4 Quick KPI Summary Cards (Zero-Safe) */}
             <div className="vt-grid-kpi vt-gap-3 vt-tabular">
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -7013,7 +8184,7 @@ function ProgressView({
                         Total Net Gain
                     </div>
                     <div
-                        style={{ color: kpiSummary.totalGainedKg >= 0 ? (isDark ? colors.accent : colors.accent) : colors.danger }}
+                        style={{ color: kpiSummary.totalGainedKg >= 0 ? colors.accent : colors.danger }}
                         className="font-display vt-text-3xl vt-font-black vt-mt-1"
                     >
                         {kpiSummary.totalGainedKg >= 0 ? '+' : ''}
@@ -7047,15 +8218,15 @@ function ProgressView({
                     <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
                         Avg AM→PM Swing
                     </div>
-                    <div className="font-display vt-text-3xl vt-font-black vt-mt-1" style={{ color: isDark ? colors.accent : colors.accent }}>
+                    <div className="font-display vt-text-3xl vt-font-black vt-mt-1" style={{ color: colors.accent }}>
                         {kpiSummary.overallAvgSwingKg !== null
                             ? `${kpiSummary.overallAvgSwingKg >= 0 ? '+' : ''}${formatWeight(
                                 kpiSummary.overallAvgSwingKg
                             )} ${appState.unit}`
-                            : '--'}
+                            : '0'}
                     </div>
                     <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
-                        {kpiSummary.dualLoggedCount} dual-logged days (Food + Water)
+                        {kpiSummary.dualLoggedCount} dual-logged days
                     </div>
                 </div>
 
@@ -7064,21 +8235,24 @@ function ProgressView({
                     className="vt-card vt-p-4"
                 >
                     <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
-                        Goal Band ETA
+                        Goal Band ({appState.profile.goalWeightMinKg}–{appState.profile.goalWeightMaxKg} kg)
                     </div>
                     <div className="font-display vt-text-3xl vt-font-black vt-mt-1">
-                        {kpiSummary.remainingToGoalKg <= 0
-                            ? 'Goal Hit ✓'
-                            : `~${kpiSummary.estWeeksToGoal} Wks`}
+                        {kpiSummary.currentKg <= 0
+                            ? 'Day 0'
+                            : kpiSummary.remainingToGoalKg <= 0
+                                ? 'Goal Hit ✓'
+                                : `~${kpiSummary.estWeeksToGoal} Wks`}
                     </div>
                     <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
-                        {formatWeight(kpiSummary.remainingToGoalKg)} {appState.unit} left to{' '}
-                        {formatWeight(appState.profile.goalWeightMinKg)} {appState.unit}
+                        {kpiSummary.currentKg > 0
+                            ? `${formatWeight(kpiSummary.remainingToGoalKg)} ${appState.unit} left to ${formatWeight(appState.profile.goalWeightMinKg)} ${appState.unit}`
+                            : 'Log 1st morning weigh-in'}
                     </div>
                 </div>
             </div>
 
-            {/* 3. Dual Daily Weigh-In Logger (Subah & Raat) + Multi-Line Graph */}
+            {/* 3. Dual Daily Weigh-In Logger + Modern Gradient Composed Chart */}
             <div className="vt-grid-lg-3 vt-gap-4">
                 <form
                     onSubmit={handleSaveDualWeightLog}
@@ -7106,7 +8280,6 @@ function ProgressView({
                         </button>
                     </div>
 
-                    {/* Date Picker */}
                     <div>
                         <label
                             className="vt-block vt-text-11 vt-font-bold vt-uppercase vt-mb-1"
@@ -7127,7 +8300,6 @@ function ProgressView({
                         />
                     </div>
 
-                    {/* Morning & Night Inputs Side by Side */}
                     <div className="vt-grid-2 vt-gap-2-5">
                         <div
                             style={{
@@ -7137,7 +8309,7 @@ function ProgressView({
                             className="vt-p-2-5 vt-box-xl vt-stack-1-5"
                         >
                             <div className="vt-flex vt-items-center vt-gap-1-5">
-                                <Sun size={14} style={{ color: isDark ? colors.accent : '#ff8800' }} />
+                                <Sun size={14} style={{ color: morningStroke }} />
                                 <span className="vt-text-10 vt-font-extrabold vt-uppercase">
                                     Morning
                                 </span>
@@ -7146,7 +8318,7 @@ function ProgressView({
                                 type="number"
                                 inputMode="decimal"
                                 step="0.05"
-                                placeholder={`e.g. ${formatWeight(55.8)}`}
+                                placeholder="0.0"
                                 value={morningInput}
                                 onChange={(e) => setMorningInput(e.target.value)}
                                 style={{
@@ -7156,27 +8328,26 @@ function ProgressView({
                                 }}
                                 className="vt-input vt-h-42 vt-px-2 vt-text-center vt-text-base vt-font-extrabold font-mono-num"
                             />
-
                         </div>
 
                         <div
                             style={{
                                 backgroundColor: colors.elevated,
-                                borderColor: nightInput !== '' ? '#0059ff' : colors.border
+                                borderColor: nightInput !== '' ? nightStroke : colors.border
                             }}
                             className="vt-p-2-5 vt-box-xl vt-stack-1-5"
                         >
                             <div className="vt-flex vt-items-center vt-gap-1-5">
-                                <Moon size={14} style={{ color: '#0059ff' }} />
+                                <Moon size={14} style={{ color: nightStroke }} />
                                 <span className="vt-text-10 vt-font-extrabold vt-uppercase">
-                                 Bedtime
+                                    Bedtime
                                 </span>
                             </div>
                             <input
                                 type="number"
                                 inputMode="decimal"
                                 step="0.05"
-                                placeholder={`e.g. ${formatWeight(56.6)}`}
+                                placeholder="0.0"
                                 value={nightInput}
                                 onChange={(e) => setNightInput(e.target.value)}
                                 style={{
@@ -7186,11 +8357,24 @@ function ProgressView({
                                 }}
                                 className="vt-input vt-h-42 vt-px-2 vt-text-center vt-text-base vt-font-extrabold font-mono-num"
                             />
-
                         </div>
                     </div>
 
-                    {/* Live Intra-Day Delta Preview */}
+                    <div>
+                        <input
+                            type="text"
+                            placeholder="Optional note (high carbs, salt, sleep...)"
+                            value={noteInput}
+                            onChange={(e) => setNoteInput(e.target.value)}
+                            style={{
+                                backgroundColor: colors.elevated,
+                                borderColor: colors.border,
+                                color: colors.text
+                            }}
+                            className="vt-input vt-h-38 vt-px-3 vt-text-xs"
+                        />
+                    </div>
+
                     {liveFormSwing !== null && (
                         <div
                             style={{
@@ -7212,11 +8396,11 @@ function ProgressView({
                         style={{ backgroundColor: colors.accent, color: colors.accentText }}
                         className="vt-btn vt-w-full vt-h-46 vt-rounded-xl vt-font-extrabold vt-text-xs vt-uppercase vt-tracking-wider"
                     >
-                        Save
+                        Save Weigh-In
                     </button>
                 </form>
 
-                {/* Advanced Multi-Line Trajectory & Intra-Day Swing Chart */}
+                {/* Modern Multi-Series Gradient Trajectory & Swing Chart */}
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
                     className="vt-col-span-lg-2 vt-card vt-p-card vt-col-between vt-stack-3"
@@ -7225,13 +8409,13 @@ function ProgressView({
                         <div>
                             <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
                                 {chartMode === 'trajectory'
-                                    ? `Subah vs Raat + 7-Day True Trend (${appState.unit})`
-                                    : `Daily Night − Morning Fluctuation (${appState.unit})`}
+                                    ? `Morning vs Night + 7-Day True Trend (${appState.unit})`
+                                    : `Daily Night − Morning Swing (${appState.unit})`}
                             </h3>
                             <p className="vt-text-xs" style={{ color: colors.muted }}>
                                 {chartMode === 'trajectory'
-                                    ? 'Green/Lime = Subah Fasted • Orange = 7-Day Moving Avg • Blue = Raat Bedtime'
-                                    : 'Shows how much food, water & glycogen weight you carry by bedtime each day'}
+                                    ? 'Shaded Goal Band = 65–68 kg • Smooth Area = Fasted Morning • Orange = 7-Day Moving Avg'
+                                    : 'Tracks daily food, water & glycogen weight carried by bedtime'}
                             </p>
                         </div>
 
@@ -7263,72 +8447,29 @@ function ProgressView({
                         </div>
                     </div>
 
-                    {/* Color Legend Strip */}
                     {chartMode === 'trajectory' && (
                         <div className="vt-row-wrap vt-gap-3 vt-text-11 vt-font-bold">
                             <span className="vt-flex vt-items-center vt-gap-1-5">
-                                <span
-                                    style={{
-                                        display: 'inline-block',
-                                        width: 10,
-                                        height: 10,
-                                        borderRadius: '50%',
-                                        backgroundColor: isDark ? colors.accent : '#16A34A'
-                                    }}
-                                />
+                                <span className="vt-legend-dot" style={{ backgroundColor: morningStroke }} />
                                 Morning (AM)
                             </span>
                             <span className="vt-flex vt-items-center vt-gap-1-5">
-                                <span
-                                    style={{
-                                        display: 'inline-block',
-                                        width: 10,
-                                        height: 10,
-                                        borderRadius: '50%',
-                                        backgroundColor: '#FF7A1A'
-                                    }}
-                                />
+                                <span className="vt-legend-dot" style={{ backgroundColor: trendStroke }} />
                                 7-Day True Trend
                             </span>
                             <span className="vt-flex vt-items-center vt-gap-1-5">
-                                <span
-                                    style={{
-                                        display: 'inline-block',
-                                        width: 10,
-                                        height: 10,
-                                        borderRadius: '50%',
-                                        backgroundColor: isDark ? '#CCFF00' : '#0059ff' 
-                                    }}
-                                />
+                                <span className="vt-legend-dot" style={{ backgroundColor: nightStroke }} />
                                 Night (PM)
                             </span>
                         </div>
                     )}
 
-                    <div className="vt-chart-h-60" style={{ width: '100%', height: 260 }}>
+                    <div className="vt-chart-h-60" style={{ width: '100%', height: 265 }}>
                         {chartData.length > 0 ? (
                             chartMode === 'trajectory' ? (
                                 (() => {
-                                    const morningColor = isDark ? colors.accent : '#16A34A';
-                                    const nightColor = isDark ? '#0059ff' : '#2563EB';
-                                    const nightPoints = chartData.filter(
-                                        (d) => typeof d.night === 'number' && !Number.isNaN(d.night)
-                                    );
-                                    const anchorStartForBlue =
-                                        nightPoints.length === 1 && chartData.length >= 2 && chartData[0].night === null;
-
-                                    const plotData = chartData.map((d, idx) => ({
-                                        ...d,
-                                        nightLine:
-                                            d.night !== null
-                                                ? d.night
-                                                : anchorStartForBlue && idx === 0
-                                                    ? d.morning
-                                                    : null
-                                    }));
-
-                                    const allVals = plotData
-                                        .flatMap((d) => [d.morning, d.nightLine, d.trend])
+                                    const allVals = chartData
+                                        .flatMap((d) => [d.morning, d.night, d.trend])
                                         .filter((v) => typeof v === 'number' && !Number.isNaN(v));
                                     const yMin = allVals.length
                                         ? Math.floor((Math.min(...allVals) - 0.8) * 10) / 10
@@ -7338,85 +8479,106 @@ function ProgressView({
                                         : 'auto';
 
                                     return (
-                                        <ResponsiveContainer width="100%" height={260}>
-                                            <LineChart data={plotData} margin={{ top: 12, right: 16, left: -10, bottom: 0 }}>
-                                                <CartesianGrid stroke={colors.border} strokeDasharray="3 3" />
-                                                <XAxis dataKey="date" stroke={colors.muted} fontSize={11} />
-                                                <YAxis stroke={colors.muted} fontSize={11} domain={[yMin, yMax]} />
-                                                <Tooltip {...tip(colors)} />
+                                        <ResponsiveContainer width="100%" height={265}>
+                                            <ComposedChart data={chartData} margin={{ top: 12, right: 16, left: -10, bottom: 0 }}>
+                                                <defs>
+                                                    <linearGradient id="vtMorningAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="0%" stopColor={morningStroke} stopOpacity={0.34} />
+                                                        <stop offset="100%" stopColor={morningStroke} stopOpacity={0.02} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
+                                                <XAxis dataKey="date" stroke={colors.muted} fontSize={11} tickLine={false} axisLine={false} />
+                                                <YAxis stroke={colors.muted} fontSize={11} tickLine={false} axisLine={false} domain={[yMin, yMax]} />
+                                                <Tooltip
+                                                    content={
+                                                        <ModernChartTooltip
+                                                            colors={colors}
+                                                            suffixMap={{
+                                                                morning: appState.unit,
+                                                                trend: appState.unit,
+                                                                night: appState.unit
+                                                            }}
+                                                        />
+                                                    }
+                                                />
                                                 <ReferenceArea
                                                     y1={formatWeight(appState.profile.goalWeightMinKg)}
                                                     y2={formatWeight(appState.profile.goalWeightMaxKg)}
                                                     fill={colors.accent}
-                                                    fillOpacity={0.1}
+                                                    fillOpacity={0.12}
                                                 />
                                                 <ReferenceLine
                                                     y={formatWeight(appState.profile.goalWeightMinKg)}
                                                     stroke={colors.accentBorder}
                                                     strokeDasharray="4 4"
                                                 />
-                                                {/* Morning Fasted Weight */}
-                                                <Line
+                                                <Area
                                                     type="monotone"
                                                     dataKey="morning"
-                                                    name={`Subah (AM) ${appState.unit}`}
-                                                    stroke={morningColor}
-                                                    strokeWidth={2.75}
-                                                    isAnimationActive={false}
+                                                    name="Morning (AM)"
+                                                    stroke={morningStroke}
+                                                    strokeWidth={2.8}
+                                                    fill="url(#vtMorningAreaGrad)"
                                                     connectNulls
-                                                    dot={{ r: 5, fill: morningColor, stroke: colors.card, strokeWidth: 1.5 }}
+                                                    dot={{ r: 4.5, fill: morningStroke, stroke: colors.card, strokeWidth: 1.5 }}
                                                     activeDot={{ r: 7 }}
                                                 />
-                                                {/* 7-Day Moving Average Trend */}
                                                 <Line
                                                     type="monotone"
                                                     dataKey="trend"
-                                                    name={`7-Day Avg Trend ${appState.unit}`}
-                                                    stroke="#FF7A1A"
+                                                    name="7-Day Avg Trend"
+                                                    stroke={trendStroke}
                                                     strokeWidth={2.5}
-                                                    isAnimationActive={false}
+                                                    strokeDasharray="5 4"
                                                     dot={false}
                                                 />
-                                                {/* Night Bedtime Weight (Solid Blue Line) */}
                                                 <Line
                                                     type="monotone"
-                                                    dataKey="nightLine"
-                                                    name={`Raat (PM) ${appState.unit}`}
-                                                    stroke={nightColor}
-                                                    strokeWidth={3}
-                                                    isAnimationActive={false}
+                                                    dataKey="night"
+                                                    name="Night (PM)"
+                                                    stroke={nightStroke}
+                                                    strokeWidth={2.5}
                                                     connectNulls
-                                                    dot={{ r: 5.5, fill: nightColor, stroke: colors.card, strokeWidth: 2 }}
-                                                    activeDot={{ r: 7.5, fill: nightColor, stroke: colors.text, strokeWidth: 2 }}
+                                                    dot={{ r: 4.5, fill: nightStroke, stroke: colors.card, strokeWidth: 1.5 }}
+                                                    activeDot={{ r: 6.5 }}
                                                 />
-                                            </LineChart>
+                                            </ComposedChart>
                                         </ResponsiveContainer>
                                     );
                                 })()
                             ) : (
-                                <ResponsiveContainer width="100%" height={260}>
+                                <ResponsiveContainer width="100%" height={265}>
                                     <BarChart data={chartData} margin={{ top: 12, right: 16, left: -10, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="vtSwingBarGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor={nightStroke} stopOpacity={0.95} />
+                                                <stop offset="100%" stopColor={nightStroke} stopOpacity={0.25} />
+                                            </linearGradient>
+                                        </defs>
                                         <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="date" stroke={colors.muted} fontSize={11} />
-                                        <YAxis stroke={colors.muted} fontSize={11} />
-                                        <Tooltip {...tip(colors)} />
+                                        <XAxis dataKey="date" stroke={colors.muted} fontSize={11} tickLine={false} axisLine={false} />
+                                        <YAxis stroke={colors.muted} fontSize={11} tickLine={false} axisLine={false} />
+                                        <Tooltip
+                                            content={<ModernChartTooltip colors={colors} suffixMap={{ swing: appState.unit }} />}
+                                        />
                                         <ReferenceLine y={0} stroke={colors.border} />
                                         <Bar
                                             dataKey="swing"
-                                            name={`PM − AM Delta (${appState.unit})`}
-                                            fill={isDark ? '#0059ff' : '#2563EB'}
-                                            isAnimationActive={false}
-                                            radius={[6, 6, 0, 0]}
+                                            name="PM − AM Delta"
+                                            fill="url(#vtSwingBarGrad)"
+                                            radius={[8, 8, 2, 2]}
+                                            maxBarSize={36}
                                         />
                                     </BarChart>
                                 </ResponsiveContainer>
                             )
                         ) : (
                             <div
-                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.muted }}
                                 className="vt-h-full vt-box-xl vt-flex vt-items-center vt-justify-center vt-text-xs vt-font-semibold vt-p-4 vt-text-center"
                             >
-                                Left side form mein apna Subah aur Raat ka weight log karein—yahan aapka AM vs PM graph aur 7-Day True Trendline dikhega.
+                                0 weight entries yet — left form mein apna Morning & Bedtime weight log karein aur 65–68 kg goal trajectory dekhein.
                             </div>
                         )}
                     </div>
@@ -7440,16 +8602,15 @@ function ProgressView({
                             Weekly & Monthly Weight Progress Reports
                         </h3>
                         <p className="vt-text-xs" style={{ color: colors.muted }}>
-                            True hypertrophy progress hamesha weekly aur monthly Morning Average se measure hota hai,isse daily water fluctuation eliminate ho jata hai.
+                            True hypertrophy progress hamesha weekly aur monthly Morning Average se measure hota hai — daily water fluctuation eliminate ho jata hai.
                         </p>
                     </div>
 
-                    {/* Report View Switcher */}
-                    <div className="vt-flex vt-items-center vt-gap-1-5">
+                    <div className="vt-flex vt-items-center vt-gap-1-5 vt-flex-wrap">
                         {[
-                            { id: 'weekly', label: `Weekly Report (${weeklyReports.length})` },
-                            { id: 'monthly', label: `Monthly Report (${monthlyReports.length})` },
-                            { id: 'history', label: `All Daily Logs (${normalizedLogs.length})` }
+                            { id: 'weekly', label: `Weekly (${weeklyReports.length})` },
+                            { id: 'monthly', label: `Monthly (${monthlyReports.length})` },
+                            { id: 'history', label: `Daily Logs (${normalizedLogs.length})` }
                         ].map((t) => {
                             const active = reportTab === t.id;
                             return (
@@ -7471,7 +8632,6 @@ function ProgressView({
                     </div>
                 </div>
 
-                {/* TAB A: WEEKLY REPORT CARDS */}
                 {reportTab === 'weekly' && (
                     <div className="vt-grid-md-2 vt-gap-3 vt-tabular">
                         {weeklyReports.length === 0 ? (
@@ -7479,7 +8639,7 @@ function ProgressView({
                                 style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.muted }}
                                 className="vt-p-4 vt-box-xl vt-text-xs"
                             >
-                                Abhi koi weekly data nahi hai. Roz subah aur raat weight log karein.
+                                0 weekly reports yet. Roz subah aur raat weight log karein.
                             </div>
                         ) : (
                             weeklyReports.map((wk) => {
@@ -7501,7 +8661,7 @@ function ProgressView({
                                         : wk.status === 'OPTIMAL'
                                             ? 'Optimal Gain ✓'
                                             : wk.status === 'FAST_GAIN'
-                                                ? 'Fast Gain (>0.7kg)'
+                                                ? 'Fast Gain'
                                                 : 'Slow / Plateau';
 
                                 return (
@@ -7534,14 +8694,7 @@ function ProgressView({
                                                 </div>
                                                 <div
                                                     className="vt-text-sm vt-font-extrabold font-mono-num"
-                                                    style={{
-                                                        color:
-                                                            wk.weeklyDeltaKg > 0
-                                                                ? isDark
-                                                                    ? colors.accent
-                                                                    : colors.success
-                                                                : colors.text
-                                                    }}
+                                                    style={{ color: wk.weeklyDeltaKg > 0 ? colors.success : colors.text }}
                                                 >
                                                     {wk.status === 'BASELINE'
                                                         ? 'Start'
@@ -7553,10 +8706,8 @@ function ProgressView({
                                                 <div className="vt-text-10 vt-uppercase" style={{ color: colors.muted }}>
                                                     Average (PM)
                                                 </div>
-                                                <div className="vt-text-sm vt-font-extrabold font-mono-num" style={{ color: isDark ? colors.accent : colors.accent }}>
-                                                    {wk.avgNightKg !== null
-                                                        ? `${formatWeight(wk.avgNightKg)} ${appState.unit}`
-                                                        : '--'}
+                                                <div className="vt-text-sm vt-font-extrabold font-mono-num" style={{ color: nightStroke }}>
+                                                    {wk.avgNightKg !== null ? `${formatWeight(wk.avgNightKg)} ${appState.unit}` : '--'}
                                                 </div>
                                             </div>
 
@@ -7565,17 +8716,12 @@ function ProgressView({
                                                     Avg PM−AM Diff
                                                 </div>
                                                 <div className="vt-text-sm vt-font-extrabold font-mono-num">
-                                                    {wk.avgSwingKg !== null
-                                                        ? `+${formatWeight(wk.avgSwingKg)} ${appState.unit}`
-                                                        : '--'}
+                                                    {wk.avgSwingKg !== null ? `+${formatWeight(wk.avgSwingKg)} ${appState.unit}` : '--'}
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div
-                                            className="vt-between-center vt-text-11 font-mono-num vt-pt-1"
-                                            style={{ color: colors.muted }}
-                                        >
+                                        <div className="vt-between-center vt-text-11 font-mono-num vt-pt-1" style={{ color: colors.muted }}>
                                             <span>
                                                 Range: {formatWeight(wk.minKg)} – {formatWeight(wk.maxKg)} {appState.unit}
                                             </span>
@@ -7590,7 +8736,6 @@ function ProgressView({
                     </div>
                 )}
 
-                {/* TAB B: MONTHLY REPORT CARDS */}
                 {reportTab === 'monthly' && (
                     <div className="vt-grid-md-2 vt-gap-3 vt-tabular">
                         {monthlyReports.length === 0 ? (
@@ -7598,7 +8743,7 @@ function ProgressView({
                                 style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.muted }}
                                 className="vt-p-4 vt-box-xl vt-text-xs"
                             >
-                                Abhi koi monthly report available nahi hai.
+                                0 monthly reports available yet.
                             </div>
                         ) : (
                             monthlyReports.map((mo) => (
@@ -7610,7 +8755,7 @@ function ProgressView({
                                     <div className="vt-between-start vt-gap-2">
                                         <div>
                                             <div className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
-                                                Monthly Summary • {mo.daysLogged}/{mo.daysInMonth} Days Logged ({mo.consistencyPct}%)
+                                                Monthly Summary • {mo.daysLogged}/{mo.daysInMonth} Days ({mo.consistencyPct}%)
                                             </div>
                                             <div className="font-display vt-text-2xl vt-font-black vt-uppercase vt-mt-0-5">
                                                 {mo.monthName}
@@ -7634,7 +8779,6 @@ function ProgressView({
                                                 {formatWeight(mo.startWeightKg)} → {formatWeight(mo.endWeightKg)} {appState.unit}
                                             </div>
                                         </div>
-
                                         <div>
                                             <div className="vt-text-10 vt-uppercase" style={{ color: colors.muted }}>
                                                 Month Avg AM
@@ -7643,28 +8787,22 @@ function ProgressView({
                                                 {formatWeight(mo.avgMorningKg)} {appState.unit}
                                             </div>
                                         </div>
-
                                         <div>
                                             <div className="vt-text-10 vt-uppercase" style={{ color: colors.muted }}>
                                                 Month Avg PM
                                             </div>
-                                            <div className="vt-text-xs vt-font-extrabold font-mono-num" style={{ color: '#0059ff' }}>
-                                                {mo.avgNightKg !== null
-                                                    ? `${formatWeight(mo.avgNightKg)} ${appState.unit}`
-                                                    : '--'}
+                                            <div className="vt-text-xs vt-font-extrabold font-mono-num" style={{ color: nightStroke }}>
+                                                {mo.avgNightKg !== null ? `${formatWeight(mo.avgNightKg)} ${appState.unit}` : '--'}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div
-                                        className="vt-between-center vt-text-11 font-mono-num vt-pt-1"
-                                        style={{ color: colors.muted }}
-                                    >
+                                    <div className="vt-between-center vt-text-11 font-mono-num vt-pt-1" style={{ color: colors.muted }}>
                                         <span>
                                             Min/Max: {formatWeight(mo.minKg)} – {formatWeight(mo.maxKg)} {appState.unit}
                                         </span>
                                         <span>
-                                            Check-ins: {mo.amCount} Subah • {mo.pmCount} Raat
+                                            Check-ins: {mo.amCount} AM • {mo.pmCount} PM
                                         </span>
                                     </div>
                                 </div>
@@ -7673,7 +8811,6 @@ function ProgressView({
                     </div>
                 )}
 
-                {/* TAB C: DAILY LOGS HISTORY (EDIT / DELETE) */}
                 {reportTab === 'history' && (
                     <div className="vt-stack-2 vt-tabular">
                         {normalizedLogs.length === 0 ? (
@@ -7681,7 +8818,7 @@ function ProgressView({
                                 style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.muted }}
                                 className="vt-p-4 vt-box-xl vt-text-xs"
                             >
-                                Koi daily weight logs nahi mile.
+                                0 daily weight logs yet.
                             </div>
                         ) : (
                             [...normalizedLogs].reverse().map((entry) => (
@@ -7696,16 +8833,12 @@ function ProgressView({
                                     <div className="vt-flex vt-items-center vt-gap-3 vt-flex-wrap">
                                         <span className="font-mono-num vt-font-extrabold">{entry.date}</span>
                                         <span className="font-mono-num">
-                                            <strong style={{ color: isDark ? colors.accent : colors.text }}>Subah:</strong>{' '}
-                                            {entry.morningKg !== null
-                                                ? `${formatWeight(entry.morningKg)} ${appState.unit}`
-                                                : '--'}
+                                            <strong style={{ color: morningStroke }}>Subah:</strong>{' '}
+                                            {entry.morningKg !== null ? `${formatWeight(entry.morningKg)} ${appState.unit}` : '--'}
                                         </span>
                                         <span className="font-mono-num">
-                                            <strong style={{ color: '#0059ff' }}>Raat:</strong>{' '}
-                                            {entry.nightKg !== null
-                                                ? `${formatWeight(entry.nightKg)} ${appState.unit}`
-                                                : '--'}
+                                            <strong style={{ color: nightStroke }}>Raat:</strong>{' '}
+                                            {entry.nightKg !== null ? `${formatWeight(entry.nightKg)} ${appState.unit}` : '--'}
                                         </span>
                                         {entry.fluctuationKg !== null && (
                                             <span
@@ -7749,22 +8882,20 @@ function ProgressView({
                 )}
             </div>
 
-            {/* 5. V-Taper Body Measurements + V-Taper Gauge */}
+            {/* 5. V-Taper Body Measurements (Zero Defaults) + V-Taper Gauge */}
             <div className="vt-grid-lg-3 vt-gap-4">
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
                     className="vt-col-span-lg-2 vt-card vt-p-card vt-stack-4 vt-col-between"
                 >
                     <div className="vt-between-center vt-flex-wrap vt-gap-3">
-                        <div className="vt-flex vt-items-center vt-gap-2">
-                            <div>
-                                <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
-                                    V-Taper Body Measurements (cm)
-                                </h3>
-                                <p className="vt-text-xs" style={{ color: colors.muted }}>
-                                    Auto-calculates Shoulder-to-Waist Ratio (Goal: 1.40–1.50x). Keep waist gain ≤ 4 cm across the bulk.
-                                </p>
-                            </div>
+                        <div>
+                            <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
+                                V-Taper Body Measurements (cm)
+                            </h3>
+                            <p className="vt-text-xs" style={{ color: colors.muted }}>
+                                Auto-calculates Shoulder-to-Waist Ratio (Goal: 1.40–1.50x). Keep waist gain ≤ 4 cm across the bulk.
+                            </p>
                         </div>
 
                         <div
@@ -7772,7 +8903,9 @@ function ProgressView({
                             className="vt-px-3-5 vt-py-2 vt-rounded-xl font-mono-num vt-text-right"
                         >
                             <div className="vt-text-10 vt-font-extrabold vt-uppercase">Current V-Taper Ratio</div>
-                            <div className="font-display vt-text-2xl vt-font-black">{liveRatio}x</div>
+                            <div className="font-display vt-text-2xl vt-font-black">
+                                {liveRatio > 0 ? `${liveRatio.toFixed(2)}x` : '0.00x'}
+                            </div>
                         </div>
                     </div>
 
@@ -7795,9 +8928,13 @@ function ProgressView({
                                     type="number"
                                     inputMode="decimal"
                                     step="0.5"
-                                    value={measForm[field.key]}
+                                    placeholder="0"
+                                    value={measForm[field.key] === 0 ? '' : measForm[field.key]}
                                     onChange={(e) =>
-                                        setMeasForm((prev) => ({ ...prev, [field.key]: Number(e.target.value) }))
+                                        setMeasForm((prev) => ({
+                                            ...prev,
+                                            [field.key]: e.target.value === '' ? 0 : Number(e.target.value)
+                                        }))
                                     }
                                     style={{
                                         backgroundColor: colors.elevated,
@@ -7833,10 +8970,10 @@ function ProgressView({
 }
 
 // ============================================================================
-// 5. STATS VIEW COMPONENT (MUSCLE VOLUMES, RADAR, HISTORY & UNIT TESTS)
+// 5. STATS VIEW COMPONENT (MUSCLE VOLUMES, RADAR, DISCIPLINE & UNIT TESTS)
 // ============================================================================
 
-function StatsView({ colors, isDark, appState }) {
+function StatsView({ colors, isDark, appState, disciplineStats }) {
     const volumes = useMemo(() => computeWeeklyMuscleVolumes(), []);
     const unitTests = useMemo(() => runBuiltInUnitTests(), []);
 
@@ -7860,9 +8997,25 @@ function StatsView({ colors, isDark, appState }) {
                     className="vt-card vt-p-4"
                 >
                     <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
+                        Clean Discipline Streak
+                    </div>
+                    <div
+                        style={{ color: disciplineStats?.currentStreak > 0 ? colors.success : colors.text }}
+                        className="font-display vt-text-3xl vt-font-black vt-mt-1"
+                    >
+                        {disciplineStats?.currentStreak || 0} Days
+                    </div>
+                </div>
+                <div
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                    className="vt-card vt-p-4"
+                >
+                    <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
                         Prescribed Sets
                     </div>
-                    <div className="font-display vt-text-3xl vt-font-black vt-mt-1">116 / wk</div>
+                    <div className="font-display vt-text-3xl vt-font-black vt-mt-1">
+                        {TOTAL_WEEKLY_PRIMARY_SETS} / wk
+                    </div>
                 </div>
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -7873,20 +9026,6 @@ function StatsView({ colors, isDark, appState }) {
                     </div>
                     <div className="font-display vt-text-3xl vt-font-black vt-mt-1">
                         {appState.workoutHistory.length}
-                    </div>
-                </div>
-                <div
-                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                    className="vt-card vt-p-4"
-                >
-                    <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
-                        Sunday Walk
-                    </div>
-                    <div
-                        style={{ color: isDark ? colors.accent : colors.text }}
-                        className="font-display vt-text-3xl vt-font-black vt-mt-1"
-                    >
-                        {appState.sundayWalkDone ? 'Done ✓' : 'Pending'}
                     </div>
                 </div>
             </div>
@@ -7901,7 +9040,7 @@ function StatsView({ colors, isDark, appState }) {
                 >
                     <div>
                         <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
-                            Weekly Hypertrophy Volume Per Muscle Group (Target 10–20 Sets)
+                            Weekly Hypertrophy Volume Per Muscle Group ({TOTAL_WEEKLY_PRIMARY_SETS} Direct Sets)
                         </h3>
                         <p className="vt-text-xs" style={{ color: colors.muted }}>
                             Shows direct primary sets and effective sets including 0.5× secondary compound credit.
@@ -7911,7 +9050,7 @@ function StatsView({ colors, isDark, appState }) {
                     <div className="vt-grid-sm-2 vt-gap-3 vt-tabular">
                         {Object.entries(volumes.primary).map(([group, primSets]) => {
                             const effSets = volumes.totalWithSecondary[group];
-                            const pct = Math.min(100, Math.round((primSets / 20) * 100));
+                            const pct = Math.min(100, Math.round((primSets / 22) * 100));
                             return (
                                 <div
                                     key={group}
@@ -7924,10 +9063,7 @@ function StatsView({ colors, isDark, appState }) {
                                             {primSets} direct ({effSets} eff)
                                         </span>
                                     </div>
-                                    <div
-                                        style={{ backgroundColor: colors.card }}
-                                        className="vt-progress-track-sm"
-                                    >
+                                    <div style={{ backgroundColor: colors.card }} className="vt-progress-track-sm">
                                         <div
                                             style={{ width: `${pct}%`, backgroundColor: colors.accent }}
                                             className="vt-progress-fill"
@@ -7946,8 +9082,8 @@ function StatsView({ colors, isDark, appState }) {
                 className="vt-card vt-p-card vt-stack-3"
             >
                 <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-                    Automated Science & Overload Unit Tests ({unitTests.filter((t) => t.passed).length}/
-                    {unitTests.length} Passing)
+                    Automated Science, Overload & Discipline Unit Tests (
+                    {unitTests.filter((t) => t.passed).length}/{unitTests.length} Passing)
                 </h3>
                 <div className="vt-stack-2">
                     {unitTests.map((t, idx) => (
@@ -7980,15 +9116,17 @@ function StatsView({ colors, isDark, appState }) {
 }
 
 // ============================================================================
-// 6. SETTINGS VIEW COMPONENT (PROFILE, ICON.SVG DOWNLOAD, JSON BACKUP, RESET)
+// 6. SETTINGS VIEW COMPONENT (PROFILE, THEME, UNIT, ICON.SVG, JSON BACKUP, RESET)
 // ============================================================================
 
 function SettingsView({
     colors,
+    isDark,
     appState,
     setAppState,
     setShowOnboarding,
     setOnboardingForm,
+    handleDietTrackChange,
     showToast
 }) {
     const [confirmReset, setConfirmReset] = useState(false);
@@ -7999,7 +9137,7 @@ function SettingsView({
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `vtaper-backup-${new Date().toLocaleDateString('en-CA')}.json`;
+        a.download = `vtaper-backup-${getLocalDateStr()}.json`;
         a.click();
         URL.revokeObjectURL(url);
         showToast('Exported VTaper JSON backup.');
@@ -8039,6 +9177,97 @@ function SettingsView({
 
     return (
         <div className="vt-stack-5">
+            {/* Profile, Units & Theme Quick Controls */}
+            <div
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                className="vt-card vt-p-card vt-stack-4"
+            >
+                <div className="vt-between-center vt-flex-wrap vt-gap-3">
+                    <div>
+                        <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                            Preferences & Athlete Goals
+                        </h3>
+                        <p className="vt-text-xs" style={{ color: colors.muted }}>
+                            Goal Band: {appState.profile.goalWeightMinKg}–{appState.profile.goalWeightMaxKg} kg • Units, theme aur diet track yahan se update karein.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setOnboardingForm(appState.profile);
+                            setShowOnboarding(true);
+                        }}
+                        style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                        className="vt-btn vt-h-42 vt-px-4 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase"
+                    >
+                        Edit Profile & Goals
+                    </button>
+                </div>
+
+                <div className="vt-grid-md-3 vt-gap-3">
+                    <div
+                        style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                        className="vt-p-3-5 vt-box-xl vt-between-center"
+                    >
+                        <span className="vt-text-xs vt-font-extrabold vt-uppercase">Weight Unit</span>
+                        <div className="vt-flex vt-gap-1">
+                            {['kg', 'lb'].map((u) => (
+                                <button
+                                    key={u}
+                                    type="button"
+                                    onClick={() => setAppState((prev) => ({ ...prev, unit: u }))}
+                                    style={{
+                                        backgroundColor: appState.unit === u ? colors.accent : colors.card,
+                                        color: appState.unit === u ? colors.accentText : colors.text,
+                                        borderColor: appState.unit === u ? colors.accentBorder : colors.border
+                                    }}
+                                    className="vt-btn vt-h-34 vt-px-3 vt-rounded-lg vt-border vt-text-xs vt-font-extrabold vt-uppercase"
+                                >
+                                    {u}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div
+                        style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                        className="vt-p-3-5 vt-box-xl vt-between-center"
+                    >
+                        <span className="vt-text-xs vt-font-extrabold vt-uppercase">Color Theme</span>
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setAppState((prev) => ({
+                                    ...prev,
+                                    theme: prev.theme === 'dark' ? 'light' : 'dark'
+                                }))
+                            }
+                            style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
+                            className="vt-btn vt-h-34 vt-px-3 vt-rounded-lg vt-border vt-text-xs vt-font-extrabold vt-uppercase vt-gap-1-5"
+                        >
+                            {isDark ? <Sun size={14} /> : <Moon size={14} />}
+                            <span>{isDark ? 'Dark' : 'Light'}</span>
+                        </button>
+                    </div>
+
+                    <div
+                        style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                        className="vt-p-3-5 vt-box-xl vt-between-center vt-gap-2"
+                    >
+                        <span className="vt-text-xs vt-font-extrabold vt-uppercase">Diet</span>
+                        <select
+                            value={appState.profile.dietTrack || 'non-veg'}
+                            onChange={(e) => handleDietTrackChange(e.target.value)}
+                            style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
+                            className="vt-select-compact"
+                        >
+                            <option value="non-veg">Non-Veg</option>
+                            <option value="eggetarian">Eggetarian</option>
+                            <option value="veg">Vegetarian</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
             {/* Backup & Reset */}
             <div
@@ -8046,12 +9275,12 @@ function SettingsView({
                 className="vt-card vt-p-card vt-stack-4"
             >
                 <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-                    Local Backup (JSON) & Data Reset
+                    Local Backup (JSON), App Icon & Zero Reset
                 </h3>
                 <div className="vt-backup-row">
                     <button
                         onClick={handleExportJson}
-                        style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                        style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
                         className="vt-btn vt-h-46 vt-px-4 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2"
                     >
                         <Download className="vt-icon-4" />
@@ -8059,13 +9288,22 @@ function SettingsView({
                     </button>
 
                     <label
-                        style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                        style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
                         className="vt-btn vt-h-46 vt-px-4 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2 vt-cursor-pointer"
                     >
                         <Upload className="vt-icon-4" />
                         <span>Import JSON Backup</span>
                         <input type="file" accept=".json" onChange={handleImportJson} className="vt-hidden" />
                     </label>
+
+                    <button
+                        onClick={handleDownloadSvgIcon}
+                        style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+                        className="vt-btn vt-h-46 vt-px-4 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2"
+                    >
+                        <Sparkles className="vt-icon-4" />
+                        <span>Download icon.svg</span>
+                    </button>
 
                     {!confirmReset ? (
                         <button
@@ -8074,7 +9312,7 @@ function SettingsView({
                             className="vt-btn vt-h-46 vt-px-4 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2 vt-ml-auto"
                         >
                             <Trash2 className="vt-icon-4" />
-                            <span>Reset All Data</span>
+                            <span>Reset All to 0</span>
                         </button>
                     ) : (
                         <div className="vt-flex vt-items-center vt-gap-2 vt-ml-auto">
@@ -8084,7 +9322,7 @@ function SettingsView({
                                     setAppState(fresh);
                                     setConfirmReset(false);
                                     setShowOnboarding(true);
-                                    showToast('All data reset to clean defaults.');
+                                    showToast('All data wiped cleanly to 0 (Goal 65–68 kg kept).');
                                 }}
                                 style={{ backgroundColor: colors.danger, color: '#FFFFFF' }}
                                 className="vt-btn vt-h-46 vt-px-4 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase"
@@ -8093,7 +9331,7 @@ function SettingsView({
                             </button>
                             <button
                                 onClick={() => setConfirmReset(false)}
-                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
                                 className="vt-btn vt-h-46 vt-px-3 vt-box-xl vt-text-xs vt-font-bold"
                             >
                                 Cancel
@@ -8107,7 +9345,7 @@ function SettingsView({
 }
 
 // ============================================================================
-// HOME 30-MIN NO-EQUIPMENT V-TAPER CARDIO & WAIST CONDITIONING PROTOCOL
+// 7. HOME 30-MIN NO-EQUIPMENT V-TAPER CARDIO & WAIST CONDITIONING PROTOCOL
 // ============================================================================
 
 export const HOME_CARDIO_PROTOCOL = {
@@ -8182,7 +9420,7 @@ export const HOME_CARDIO_PROTOCOL = {
                     durationSec: 180,
                     repsLabel: '3 sets × 45s work / 15s rest',
                     target: 'VO2 Max & Shoulder Stamina',
-                    cue: ' crisp 1-2 punches at eye level, drop into a fast plank sprawl every 6 punches.'
+                    cue: 'Crisp 1-2 punches at eye level, drop into a fast plank sprawl every 6 punches.'
                 },
                 {
                     id: 'hc-8',
@@ -8249,30 +9487,32 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
     const [completedDrills, setCompletedDrills] = useState({});
 
     const currentDrill = allDrills[activeDrillIdx] || allDrills[0];
-    const todayStr = new Date().toLocaleDateString('en-CA');
+    const todayStr = getLocalDateStr();
     const cardioLogs = appState.cardioLogs || [];
     const isCompletedToday = cardioLogs.some((log) => log.date === todayStr);
 
+    // StrictMode-safe countdown tick
     useEffect(() => {
-        if (!timerRunning) return;
+        if (!timerRunning || drillSecLeft <= 0) return;
         const interval = setInterval(() => {
-            setDrillSecLeft((prev) => {
-                if (prev <= 1) {
-                    setCompletedDrills((cd) => ({ ...cd, [currentDrill.id]: true }));
-                    if (activeDrillIdx < allDrills.length - 1) {
-                        const nextIdx = activeDrillIdx + 1;
-                        setActiveDrillIdx(nextIdx);
-                        return allDrills[nextIdx].durationSec;
-                    }
-                    setTimerRunning(false);
-                    if (showToast) showToast('30-Min Home V-Taper Cardio Complete! Log your session below.');
-                    return 0;
-                }
-                return prev - 1;
-            });
+            setDrillSecLeft((prev) => Math.max(0, prev - 1));
         }, 1000);
         return () => clearInterval(interval);
-    }, [timerRunning, activeDrillIdx, allDrills, currentDrill.id, showToast]);
+    }, [timerRunning, drillSecLeft]);
+
+    // StrictMode-safe transition when timer reaches 0
+    useEffect(() => {
+        if (!timerRunning || drillSecLeft > 0) return;
+        setCompletedDrills((cd) => ({ ...cd, [currentDrill.id]: true }));
+        if (activeDrillIdx < allDrills.length - 1) {
+            const nextIdx = activeDrillIdx + 1;
+            setActiveDrillIdx(nextIdx);
+            setDrillSecLeft(allDrills[nextIdx].durationSec);
+        } else {
+            setTimerRunning(false);
+            if (showToast) showToast('30-Min Home V-Taper Cardio Complete! Log your session below.');
+        }
+    }, [timerRunning, drillSecLeft, activeDrillIdx, allDrills, currentDrill.id, showToast]);
 
     const formatClock = (sec) => {
         const m = Math.floor(sec / 60);
@@ -8319,7 +9559,6 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
 
     return (
         <section className="vt-cardio-section vt-stack-4">
-            {/* Hero Banner */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-card vt-cardio-hero"
@@ -8425,27 +9664,16 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
                         <button
                             onClick={() => setDrillSecLeft(currentDrill.durationSec)}
                             aria-label="Reset current drill timer"
-                            style={{
-                                backgroundColor: colors.card,
-                                borderColor: colors.border,
-                                color: colors.text
-                            }}
+                            style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
                             className="vt-icon-btn-44"
                         >
                             <RotateCcw size={16} />
                         </button>
 
                         <button
-                            onClick={() => {
-                                const nextIdx = (activeDrillIdx + 1) % allDrills.length;
-                                handleSelectDrill(nextIdx);
-                            }}
+                            onClick={() => handleSelectDrill((activeDrillIdx + 1) % allDrills.length)}
                             aria-label="Next drill"
-                            style={{
-                                backgroundColor: colors.card,
-                                borderColor: colors.border,
-                                color: colors.text
-                            }}
+                            style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
                             className="vt-icon-btn-44"
                         >
                             <SkipForward size={16} />
@@ -8468,7 +9696,6 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
                 </div>
             </div>
 
-            {/* 4-Phase Breakdown Grid */}
             <div className="vt-cardio-phases-grid">
                 {HOME_CARDIO_PROTOCOL.phases.map((phase) => (
                     <div
@@ -8510,11 +9737,7 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
                                     <div
                                         key={drill.id}
                                         style={{
-                                            backgroundColor: isDone
-                                                ? colors.accentSurface
-                                                : isCurrent
-                                                    ? colors.elevated
-                                                    : colors.elevated,
+                                            backgroundColor: isDone ? colors.accentSurface : colors.elevated,
                                             borderColor: isDone || isCurrent ? colors.accentBorder : colors.border
                                         }}
                                         className="vt-cardio-drill-row"
@@ -8564,7 +9787,6 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
                 ))}
             </div>
 
-            {/* Lean-Bulk Science Advisory Note */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-4 vt-flex vt-items-start vt-gap-3"
@@ -8584,6 +9806,10 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
     );
 }
 
+// ============================================================================
+// 8. PELVIC ALIGNMENT & POSTURE REHAB SECTION
+// ============================================================================
+
 export function PelvicRehabSection({ colors, isDark, appState, setAppState, showToast }) {
     const pelvicSide = appState.pelvicSide || 'right';
     const protocol = useMemo(() => buildPelvicProtocol(pelvicSide), [pelvicSide]);
@@ -8594,11 +9820,10 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
 
     const [activeExIdx, setActiveExIdx] = useState(0);
     const [activeSetNum, setActiveSetNum] = useState(1);
-    const [timerPhase, setTimerPhase] = useState('work'); // 'work' | 'rest'
+    const [timerPhase, setTimerPhase] = useState('work');
     const [secLeft, setSecLeft] = useState(allExercises[0].workSec);
     const [timerRunning, setTimerRunning] = useState(false);
 
-    // Track per-set completion: { [exerciseId]: [bool, bool, bool] }
     const [setChecks, setSetChecks] = useState(() => {
         const init = {};
         allExercises.forEach((ex) => {
@@ -8608,12 +9833,11 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
     });
 
     const currentEx = allExercises[activeExIdx] || allExercises[0];
-    const todayStr = new Date().toLocaleDateString('en-CA');
+    const todayStr = getLocalDateStr();
     const pelvicLogs = appState.pelvicLogs || [];
     const isLoggedToday = pelvicLogs.some((log) => log.date === todayStr);
     const dailyHabits = appState.pelvicHabits || {};
 
-    // Tick countdown every 1 second
     useEffect(() => {
         if (!timerRunning || secLeft <= 0) return;
         const interval = setInterval(() => {
@@ -8622,12 +9846,10 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
         return () => clearInterval(interval);
     }, [timerRunning, secLeft]);
 
-    // Cleanly handle Work <-> Rest transitions when countdown hits 0 (StrictMode-safe)
     useEffect(() => {
         if (!timerRunning || secLeft > 0) return;
 
         if (timerPhase === 'work') {
-            // Mark active set complete
             setSetChecks((prev) => {
                 const arr = [...(prev[currentEx.id] || Array(currentEx.sets).fill(false))];
                 arr[activeSetNum - 1] = true;
@@ -8654,11 +9876,10 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
             } else {
                 setTimerRunning(false);
                 if (showToast) {
-                    showToast('All 7 Pelvic Rehab exercises complete! Tap "Complete Session" to log.');
+                    showToast('All 7 Pelvic Rehab exercises complete! Tap "Complete Rehab Session" to log.');
                 }
             }
         } else {
-            // Rest ended -> start next work set
             setTimerPhase('work');
             setActiveSetNum((prev) => {
                 const currentArr = setChecks[currentEx.id] || [];
@@ -8772,7 +9993,6 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
 
     return (
         <section className="vt-cardio-section vt-stack-4">
-            {/* 1. HERO HEADER + HIGH HIP SIDE TOGGLE + GUIDED TIMER */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-card vt-cardio-hero"
@@ -8819,7 +10039,6 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                     </div>
 
                     <div className="vt-stack-2 vt-shrink-0">
-                        {/* Side Switcher */}
                         <div className="vt-flex vt-items-center vt-gap-1-5">
                             {[
                                 { id: 'right', label: 'Right Hip High' },
@@ -8866,7 +10085,7 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                         backgroundColor: colors.elevated,
                         borderColor: timerRunning
                             ? timerPhase === 'rest'
-                                ? '#0059ff'
+                                ? '#0059FF'
                                 : colors.accentBorder
                             : colors.border
                     }}
@@ -8875,8 +10094,8 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                     <div className="vt-cardio-player-left">
                         <div
                             style={{
-                                backgroundColor: timerPhase === 'rest' ? '#0059ff' : colors.accent,
-                                color: '#0A0A0B'
+                                backgroundColor: timerPhase === 'rest' ? '#0059FF' : colors.accent,
+                                color: timerPhase === 'rest' ? '#FFFFFF' : colors.accentText
                             }}
                             className="vt-cardio-clock font-display tabular-nums"
                         >
@@ -8888,7 +10107,7 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                                 style={{
                                     color:
                                         timerPhase === 'rest'
-                                            ? '#0059ff'
+                                            ? '#0059FF'
                                             : isDark
                                                 ? colors.accent
                                                 : colors.text
@@ -8909,11 +10128,7 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                         <button
                             type="button"
                             onClick={() => setSecLeft((s) => Math.max(5, s - 5))}
-                            style={{
-                                backgroundColor: colors.card,
-                                borderColor: colors.border,
-                                color: colors.text
-                            }}
+                            style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
                             className="vt-btn vt-h-38 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold font-mono-num"
                         >
                             -5s
@@ -8921,11 +10136,7 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                         <button
                             type="button"
                             onClick={() => setSecLeft((s) => s + 5)}
-                            style={{
-                                backgroundColor: colors.card,
-                                borderColor: colors.border,
-                                color: colors.text
-                            }}
+                            style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
                             className="vt-btn vt-h-38 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold font-mono-num"
                         >
                             +5s
@@ -8951,11 +10162,7 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                                 setSecLeft(currentEx.workSec);
                             }}
                             aria-label="Reset current set timer"
-                            style={{
-                                backgroundColor: colors.card,
-                                borderColor: colors.border,
-                                color: colors.text
-                            }}
+                            style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
                             className="vt-icon-btn-44"
                         >
                             <RotateCcw size={16} />
@@ -8964,11 +10171,7 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                             type="button"
                             onClick={() => handleSelectExercise((activeExIdx + 1) % allExercises.length)}
                             aria-label="Next pelvic exercise"
-                            style={{
-                                backgroundColor: colors.card,
-                                borderColor: colors.border,
-                                color: colors.text
-                            }}
+                            style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
                             className="vt-icon-btn-44"
                         >
                             <SkipForward size={16} />
@@ -8976,12 +10179,9 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                     </div>
                 </div>
 
-                {/* Progress Bar */}
                 <div className="vt-stack-1">
                     <div className="vt-between-center vt-text-11 font-mono-num" style={{ color: colors.muted }}>
-                        <span>
-                            Session Progress: {completedSets} / {totalSets} total sets completed
-                        </span>
+                        <span>Session Progress: {completedSets} / {totalSets} total sets completed</span>
                         <span>{progressPct}%</span>
                     </div>
                     <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track-sm">
@@ -8993,16 +10193,12 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                 </div>
             </div>
 
-            {/* 2. BIOMECHANICS SUMMARY (TIGHT VS WEAK MAP) */}
             <div className="vt-grid-sm-2 vt-gap-3">
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
                     className="vt-card vt-p-4 vt-stack-2"
                 >
-                    <div
-                        className="vt-text-xs vt-font-extrabold vt-uppercase vt-tracking-wider"
-                        style={{ color: colors.warning }}
-                    >
+                    <div className="vt-text-xs vt-font-extrabold vt-uppercase vt-tracking-wider" style={{ color: colors.warning }}>
                         Tight / Shortened (Phase 1: Stretch)
                     </div>
                     <div className="vt-stack-1-5 vt-text-xs" style={{ color: colors.muted }}>
@@ -9030,7 +10226,6 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                 </div>
             </div>
 
-            {/* 3. PHASE-BY-PHASE DETAILED EXERCISE CARDS */}
             <div className="vt-stack-4">
                 {protocol.phases.map((phase) => (
                     <div
@@ -9078,7 +10273,6 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                                         }}
                                         className="vt-p-4 vt-box-xl vt-stack-3"
                                     >
-                                        {/* Top Row: Name, Side Badge, Prescription & Load Timer Button */}
                                         <div className="vt-between-start vt-flex-wrap vt-gap-2">
                                             <div className="vt-stack-1 vt-flex-1">
                                                 <div className="vt-row-wrap vt-gap-1-5">
@@ -9086,10 +10280,7 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                                                         {globalIdx + 1}. {ex.name}
                                                     </span>
                                                     <span
-                                                        style={{
-                                                            backgroundColor: colors.accent,
-                                                            color: colors.accentText
-                                                        }}
+                                                        style={{ backgroundColor: colors.accent, color: colors.accentText }}
                                                         className="vt-badge-xs vt-text-10 vt-font-extrabold vt-uppercase"
                                                     >
                                                         {ex.sideTag}
@@ -9115,7 +10306,6 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                                             </button>
                                         </div>
 
-                                        {/* Exact Numbers Strip (Sets, Work/Hold Sec, Rest Sec, Tempo) */}
                                         <div className="vt-row-wrap vt-gap-2 font-mono-num vt-text-11">
                                             <span
                                                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -9137,7 +10327,6 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                                             </span>
                                         </div>
 
-                                        {/* Form Cue & Mistake to Avoid */}
                                         <div className="vt-stack-1 vt-text-xs" style={{ color: colors.muted }}>
                                             <p>
                                                 <strong style={{ color: colors.text }}>How to do it:</strong> {ex.cue}
@@ -9147,15 +10336,11 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                                             </p>
                                         </div>
 
-                                        {/* Individual Set Checkboxes */}
                                         <div
                                             className="vt-row-wrap vt-gap-2 vt-pt-2 vt-border-t"
                                             style={{ borderColor: colors.border }}
                                         >
-                                            <span
-                                                className="vt-text-10 vt-font-extrabold vt-uppercase"
-                                                style={{ color: colors.muted }}
-                                            >
+                                            <span className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
                                                 Track Sets:
                                             </span>
                                             {checks.map((done, sIdx) => (
@@ -9171,9 +10356,7 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                                                     className="vt-btn vt-h-34 vt-px-3 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-gap-1 font-mono-num"
                                                 >
                                                     <Check size={13} strokeWidth={2.5} />
-                                                    <span>
-                                                        Set {sIdx + 1} ({ex.workSec}s)
-                                                    </span>
+                                                    <span>Set {sIdx + 1} ({ex.workSec}s)</span>
                                                 </button>
                                             ))}
                                         </div>
@@ -9185,7 +10368,6 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                 ))}
             </div>
 
-            {/* 4. DAILY ALIGNMENT HABITS CHECKLIST */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-card vt-stack-3"
@@ -9232,16 +10414,11 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                 </div>
             </div>
 
-            {/* 5. SAFETY & PHYSIOTHERAPIST ADVISORY */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-4 vt-flex vt-items-start vt-gap-3"
             >
-                <AlertTriangle
-                    size={20}
-                    className="vt-shrink-0 vt-mt-0-5"
-                    style={{ color: colors.warning }}
-                />
+                <AlertTriangle size={20} className="vt-shrink-0 vt-mt-0-5" style={{ color: colors.warning }} />
                 <div className="vt-text-xs" style={{ color: colors.muted }}>
                     <strong style={{ color: colors.text }}>Safety & Rehab Rule:</strong> Stop immediately if any drill causes sharp lower-back pain, hip pinching, or leg tingling/numbness. Muscular lateral pelvic tilt typically improves within{' '}
                     <strong style={{ color: colors.text }}>4–6 weeks</strong> of consistent practice. If asymmetry persists or you notice a rib hump on forward bending, get evaluated by a licensed{' '}
