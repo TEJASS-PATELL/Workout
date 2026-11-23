@@ -3479,17 +3479,7 @@ export default function App() {
     );
 
     useEffect(() => {
-        const isLight = appState.theme === 'light';
-        const html = document.documentElement;
-        html.dataset.theme = appState.theme;
-        html.classList.toggle('dark', !isLight);
-        html.classList.toggle('light', isLight);
-
-        if (document.body) {
-            document.body.style.backgroundColor = colors.bg;
-            document.body.style.color = colors.text;
-        }
-
+        document.documentElement.dataset.theme = appState.theme;
         let m = document.querySelector('meta[name="theme-color"]');
         if (!m) {
             m = document.createElement('meta');
@@ -3497,21 +3487,7 @@ export default function App() {
             document.head.appendChild(m);
         }
         m.content = colors.bg;
-
-        const faviconSvg = isLight
-            ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none"><rect width="512" height="512" rx="112" fill="#FFFFFF"/><rect x="76" y="116" width="360" height="20" rx="6" fill="#D6D6D1"/><rect x="92" y="96" width="24" height="60" rx="6" fill="#0059FF"/><rect x="396" y="96" width="24" height="60" rx="6" fill="#0059FF"/><path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="#0059FF"/><polygon points="208,156 304,156 256,284" fill="#000000"/><rect x="212" y="444" width="88" height="12" rx="6" fill="#D6D6D1"/></svg>`
-            : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none"><rect width="512" height="512" rx="112" fill="#000000"/><rect x="76" y="116" width="360" height="20" rx="6" fill="#27272A"/><rect x="92" y="96" width="24" height="60" rx="6" fill="#CCFF00"/><rect x="396" y="96" width="24" height="60" rx="6" fill="#CCFF00"/><path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="#CCFF00"/><polygon points="208,156 304,156 256,284" fill="#FFFFFF"/><rect x="212" y="444" width="88" height="12" rx="6" fill="#27272A"/></svg>`;
-
-        let iconLink = document.getElementById('vt-favicon') || document.querySelector("link[rel='icon']");
-        if (!iconLink) {
-            iconLink = document.createElement('link');
-            iconLink.id = 'vt-favicon';
-            iconLink.rel = 'icon';
-            iconLink.type = 'image/svg+xml';
-            document.head.appendChild(iconLink);
-        }
-        iconLink.href = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
-    }, [appState.theme, colors.bg, colors.text]);
+    }, [appState.theme, colors.bg]);
 
     const isLb = appState.unit === 'lb';
     const formatWeight = useCallback(
