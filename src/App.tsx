@@ -4058,25 +4058,6 @@ export default function App() {
                                         {formatTime(workoutElapsedSec)}
                                     </span>
                                 )}
-                                {item.id === 'clean' && (
-                                    <span
-                                        style={{
-                                            backgroundColor: isActive
-                                                ? '#0A0A0B'
-                                                : disciplineStats.todayLoggedStatus === 'clean'
-                                                    ? colors.success
-                                                    : colors.elevated,
-                                            color: isActive
-                                                ? '#FFFFFF'
-                                                : disciplineStats.todayLoggedStatus === 'clean'
-                                                    ? '#0A0A0B'
-                                                    : colors.muted
-                                        }}
-                                        className="vt-nav-timer-badge font-mono-num"
-                                    >
-                                        {disciplineStats.currentStreak}d
-                                    </span>
-                                )}
                             </button>
                         );
                     })}
@@ -4922,7 +4903,6 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
     // Live 90-second Urge SOS Emergency Reset Timer
     const [sosActive, setSosActive] = useState(false);
     const [sosSecLeft, setSosSecLeft] = useState(90);
-    const [sosTipIdx, setSosTipIdx] = useState(0);
 
     const existingForSelected = appState.disciplineLogs?.[selectedDate] || null;
 
@@ -5046,14 +5026,6 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
     const momentumStroke = colors.success;
     const consistencyStroke = '#FF7A1A';
 
-    const recentLogsDesc = useMemo(
-        () =>
-            Object.values(appState.disciplineLogs || {})
-                .filter((e) => e && e.date)
-                .sort((a, b) => b.date.localeCompare(a.date)),
-        [appState.disciplineLogs]
-    );
-
     const isSelectedClean = existingForSelected?.status === 'clean';
     const isSelectedRelapse = existingForSelected?.status === 'relapse';
 
@@ -5063,11 +5035,7 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
             <div
                 style={{
                     backgroundColor: colors.card,
-                    borderColor: isSelectedClean
-                        ? colors.success
-                        : isSelectedRelapse
-                            ? colors.danger
-                            : colors.accentBorder
+
                 }}
                 className="vt-card-b2 vt-p-card vt-stack-4"
             >
@@ -5084,7 +5052,7 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                                 style={{
                                     backgroundColor: colors.elevated,
                                     borderColor: colors.border,
-                                    color: colors.success
+                                    color: colors.accent
                                 }}
                                 className="vt-meta-pill font-mono-num"
                             >
@@ -5136,9 +5104,9 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                         type="button"
                         onClick={handleMarkCleanDay}
                         style={{
-                            backgroundColor: isSelectedClean ? colors.success : colors.accent,
-                            color: '#0A0A0B',
-                            borderColor: isSelectedClean ? colors.success : colors.accentBorder,
+                            backgroundColor: isSelectedClean ? colors.accent : colors.accent,
+                            color: isSelectedClean ? 'white' : 'black',
+                            borderColor: isSelectedClean ? colors.accent : colors.accentBorder,
                             minHeight: 60
                         }}
                         className="vt-btn vt-col-span-md-2 vt-px-4 vt-py-3 vt-box-xl vt-gap-2-5"
@@ -5150,8 +5118,8 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                                     ? `100% CLEAN LOCKED (${selectedDate}) ✓`
                                     : `MARK ${selectedDate === todayStr ? 'TODAY' : selectedDate} 100% CLEAN`}
                             </div>
-                            <div style={{ fontSize: 11, opacity: 0.85, fontWeight: 700 }}>
-                                Zero Porn + Zero Masturbation • +Growth Streak
+                            <div style={{ fontSize: 11, fontWeight: 700 }}>
+                                Zero Porn + Zero Masturbation + Growth Streak
                             </div>
                         </div>
                     </button>
@@ -5192,7 +5160,7 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                         Current Clean Streak
                     </div>
                     <div
-                        style={{ color: disciplineStats.currentStreak > 0 ? colors.success : colors.text }}
+                        style={{ color: disciplineStats.currentStreak > 0 ? colors.accent : colors.text }}
                         className="font-display vt-text-3xl vt-font-black vt-mt-1"
                     >
                         {disciplineStats.currentStreak} Days
@@ -5491,11 +5459,11 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                         {disciplineStats.heatmap35.map((cell) => {
                             const bg =
                                 cell.status === 'clean'
-                                    ? colors.success
+                                    ? colors.accent
                                     : cell.status === 'relapse'
                                         ? colors.danger
                                         : colors.elevated;
-                            const isSelectedCell = cell.date === selectedDate;
+                           
                             return (
                                 <button
                                     key={cell.date}
@@ -5504,13 +5472,9 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                                     title={`${cell.date} — ${cell.status.toUpperCase()}`}
                                     style={{
                                         backgroundColor: bg,
-                                        border: isSelectedCell
-                                            ? `2px solid ${colors.text}`
-                                            : `1px solid ${colors.border}`,
                                         borderRadius: 8,
                                         height: 36,
-                                        color:
-                                            cell.status === 'unlogged' ? colors.muted : '#0A0A0B',
+                                        color: cell.status === 'unlogged' ? 'white' : '#000000',
                                         fontSize: 10,
                                         fontWeight: 800,
                                         cursor: 'pointer'
@@ -5582,7 +5546,7 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                                     <span className="vt-text-xs vt-font-extrabold">{m.title}</span>
                                     <span
                                         style={{
-                                            backgroundColor: unlocked ? colors.success : colors.card,
+                                            backgroundColor: unlocked ? colors.accent : colors.card,
                                             color: unlocked ? '#0A0A0B' : colors.muted,
                                             borderColor: colors.border
                                         }}
@@ -5598,88 +5562,6 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                         );
                     })}
                 </div>
-            </div>
-
-            {/* 6. RECENT CHECK-IN HISTORY LOG */}
-            <div
-                style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                className="vt-card vt-p-card vt-stack-3"
-            >
-                <div className="vt-between-center">
-                    <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-                        Daily Check-In History ({recentLogsDesc.length})
-                    </h3>
-                    <Activity size={18} style={{ color: colors.muted }} />
-                </div>
-
-                {recentLogsDesc.length === 0 ? (
-                    <div
-                        style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.muted }}
-                        className="vt-p-4 vt-box-xl vt-text-xs"
-                    >
-                        Abhi 0 logs hain. Aaj se start karein — upar "MARK TODAY 100% CLEAN" button tap karein.
-                    </div>
-                ) : (
-                    <div className="vt-stack-2 vt-tabular">
-                        {recentLogsDesc.slice(0, 20).map((entry) => (
-                            <div
-                                key={entry.date}
-                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                                className="vt-p-3 vt-box-xl vt-between-center vt-flex-wrap vt-gap-2 vt-text-xs"
-                            >
-                                <div className="vt-row-wrap vt-gap-2">
-                                    <span className="font-mono-num vt-font-extrabold">{entry.date}</span>
-                                    <span
-                                        style={{
-                                            backgroundColor:
-                                                entry.status === 'clean' ? colors.success : colors.danger,
-                                            color: entry.status === 'clean' ? '#0A0A0B' : '#FFFFFF'
-                                        }}
-                                        className="vt-badge-xs vt-text-10 vt-font-extrabold vt-uppercase"
-                                    >
-                                        {entry.status === 'clean' ? '100% CLEAN ✓' : 'SLIP / RESET'}
-                                    </span>
-                                    <span className="font-mono-num vt-text-11" style={{ color: colors.muted }}>
-                                        Urge: {entry.urgeLevel || 0}/10
-                                    </span>
-                                    {entry.trigger && (
-                                        <span
-                                            style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                                            className="vt-badge-xs vt-border vt-text-10"
-                                        >
-                                            Trigger: {entry.trigger}
-                                        </span>
-                                    )}
-                                    {entry.note && (
-                                        <span className="vt-text-11" style={{ color: colors.muted }}>
-                                            • “{entry.note}”
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="vt-flex vt-items-center vt-gap-1-5">
-                                    <button
-                                        type="button"
-                                        onClick={() => setSelectedDate(entry.date)}
-                                        style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
-                                        className="vt-btn vt-h-32 vt-px-2-5 vt-rounded-lg vt-border vt-text-10 vt-font-extrabold vt-uppercase"
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleDeleteDisciplineDate(entry.date)}
-                                        aria-label={`Delete discipline log ${entry.date}`}
-                                        style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.danger }}
-                                        className="vt-btn vt-h-32 vt-px-2 vt-rounded-lg vt-border"
-                                    >
-                                        <Trash2 size={13} />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
             </div>
         </div>
     );
@@ -10404,3 +10286,4 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
         </section>
     );
 }
+
