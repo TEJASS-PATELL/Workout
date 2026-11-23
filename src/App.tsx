@@ -5578,22 +5578,32 @@ function FormChartModal({
     colors,
     isDark
 }) {
-    const trainingDays = useMemo(
-        () =>
-            [1, 2, 3, 4, 5, 6]
-                .map((idx) => WORKOUT_PLAN.find((d) => d.dayIndex === idx))
-                .filter(Boolean),
-        []
-    );
+    const chartTabs = useMemo(() => {
+        const days = [1, 2, 3, 4, 5, 6]
+            .map((idx) => WORKOUT_PLAN.find((d) => d.dayIndex === idx))
+            .filter(Boolean);
+
+        return [
+            ...days,
+            {
+                dayIndex: 'alternative',
+                shortDay: 'Alt',
+                dayName: 'Alternative',
+                title: '17 Non-Default Exercises',
+                chartFile: 'alternative.png',
+                chartImage: '/charts/alternative.png'
+            }
+        ];
+    }, []);
 
     const [viewDayIndex, setViewDayIndex] = useState(
-        trainingDays.some((d) => d.dayIndex === initialDayIndex) ? initialDayIndex : 1
+        chartTabs.some((d) => d.dayIndex === initialDayIndex) ? initialDayIndex : 1
     );
     const [zoom, setZoom] = useState(1);
     const [imgError, setImgError] = useState(false);
 
     const activeChartDay =
-        trainingDays.find((d) => d.dayIndex === viewDayIndex) || trainingDays[0];
+        chartTabs.find((d) => d.dayIndex === viewDayIndex) || chartTabs[0];
 
     useEffect(() => {
         setImgError(false);
@@ -5706,7 +5716,7 @@ function FormChartModal({
                 )}
 
                 <div style={{ borderColor: colors.border }} className="vt-chart-day-tabs">
-                    {trainingDays.map((day) => {
+                    {chartTabs.map((day) => {
                         const active = viewDayIndex === day.dayIndex;
                         return (
                             <button
@@ -5720,7 +5730,9 @@ function FormChartModal({
                                 }}
                                 className="vt-btn vt-h-34 vt-px-3 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase vt-nowrap"
                             >
-                                {day.shortDay} • {day.title}
+                                {day.dayIndex === 'alternative'
+                                    ? 'Alternative'
+                                    : `${day.shortDay} • ${day.title}`}
                             </button>
                         );
                     })}
