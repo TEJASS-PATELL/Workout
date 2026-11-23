@@ -71,6 +71,8 @@ import {
 // SECTION 1: SCIENCE RULES (Pure Constants — Zero App State Mixed In)
 // ============================================================================
 
+
+
 export const SCIENCE_RULES = {
     VOLUME_MIN_SETS: 10,
     VOLUME_MAX_SETS: 20,
@@ -2598,11 +2600,18 @@ function getFreshInitialState(theme = 'dark') {
     };
 }
 
+
+
 // ============================================================================
 // SECTION 7: MODERN EDITORIAL CHARTS & SHARED BRANDING COMPONENTS
 // ============================================================================
 
-function BrandLogo({ size = 40 }) {
+function BrandLogo({ size = 40, isDark = true, colors }) {
+    const bgFill = isDark ? '#000000' : '#FFFFFF';
+    const barFill = isDark ? '#ffffff' : '#000000';
+    const cutoutFill = isDark ? '#FFFFFF' : '#000000';
+    const accentFill = colors?.accent || (isDark ? '#CCFF00' : '#0059FF');
+
     return (
         <svg
             width={size}
@@ -2613,14 +2622,13 @@ function BrandLogo({ size = 40 }) {
             aria-label="VTaper Logo"
             className="vt-brand-logo"
         >
-            <rect width="512" height="512" rx="112" fill="#0A0A0B" />
-            <rect x="16" y="16" width="480" height="480" rx="96" stroke="#27272A" strokeWidth="14" />
-            <rect x="76" y="116" width="360" height="20" rx="6" fill="#27272A" />
-            <rect x="92" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
-            <rect x="396" y="96" width="24" height="60" rx="6" fill="#CCFF00" />
-            <path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="#CCFF00" />
-            <polygon points="208,156 304,156 256,284" fill="#18181B" />
-            <rect x="212" y="444" width="88" height="12" rx="6" fill="#27272A" />
+            <rect width="512" height="512" rx="112" fill={bgFill} />
+            <rect x="76" y="116" width="360" height="20" rx="6" fill={barFill} />
+            <rect x="92" y="96" width="24" height="60" rx="6" fill={accentFill} />
+            <rect x="396" y="96" width="24" height="60" rx="6" fill={accentFill} />
+            <path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill={accentFill} />
+            <polygon points="208,156 304,156 256,284" fill={cutoutFill} />
+            <rect x="212" y="444" width="88" height="12" rx="6" fill={barFill} />
         </svg>
     );
 }
@@ -3471,7 +3479,17 @@ export default function App() {
     );
 
     useEffect(() => {
-        document.documentElement.dataset.theme = appState.theme;
+        const isLight = appState.theme === 'light';
+        const html = document.documentElement;
+        html.dataset.theme = appState.theme;
+        html.classList.toggle('dark', !isLight);
+        html.classList.toggle('light', isLight);
+
+        if (document.body) {
+            document.body.style.backgroundColor = colors.bg;
+            document.body.style.color = colors.text;
+        }
+
         let m = document.querySelector('meta[name="theme-color"]');
         if (!m) {
             m = document.createElement('meta');
@@ -3479,7 +3497,21 @@ export default function App() {
             document.head.appendChild(m);
         }
         m.content = colors.bg;
-    }, [appState.theme, colors.bg]);
+
+        const faviconSvg = isLight
+            ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none"><rect width="512" height="512" rx="112" fill="#FFFFFF"/><rect x="76" y="116" width="360" height="20" rx="6" fill="#D6D6D1"/><rect x="92" y="96" width="24" height="60" rx="6" fill="#0059FF"/><rect x="396" y="96" width="24" height="60" rx="6" fill="#0059FF"/><path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="#0059FF"/><polygon points="208,156 304,156 256,284" fill="#000000"/><rect x="212" y="444" width="88" height="12" rx="6" fill="#D6D6D1"/></svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none"><rect width="512" height="512" rx="112" fill="#000000"/><rect x="76" y="116" width="360" height="20" rx="6" fill="#27272A"/><rect x="92" y="96" width="24" height="60" rx="6" fill="#CCFF00"/><rect x="396" y="96" width="24" height="60" rx="6" fill="#CCFF00"/><path d="M88 156H188L256 348L324 156H424L292 428H220L88 156Z" fill="#CCFF00"/><polygon points="208,156 304,156 256,284" fill="#FFFFFF"/><rect x="212" y="444" width="88" height="12" rx="6" fill="#27272A"/></svg>`;
+
+        let iconLink = document.getElementById('vt-favicon') || document.querySelector("link[rel='icon']");
+        if (!iconLink) {
+            iconLink = document.createElement('link');
+            iconLink.id = 'vt-favicon';
+            iconLink.rel = 'icon';
+            iconLink.type = 'image/svg+xml';
+            document.head.appendChild(iconLink);
+        }
+        iconLink.href = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
+    }, [appState.theme, colors.bg, colors.text]);
 
     const isLb = appState.unit === 'lb';
     const formatWeight = useCallback(
@@ -3947,7 +3979,7 @@ export default function App() {
             >
                 <div style={{ borderColor: colors.border }} className="vt-sidebar-header">
                     <div className="vt-brand-group">
-                        <BrandLogo size={42} />
+                        <BrandLogo size={42} isDark={isDark} colors={colors} />
                         <div>
                             <h1 className="vt-brand-title font-display">VTAPER</h1>
                             <p style={{ color: colors.muted }} className="vt-brand-sub">
@@ -4113,7 +4145,7 @@ export default function App() {
                     className="vt-mobile-header"
                 >
                     <div className="vt-mobile-brand">
-                        <BrandLogo size={36} />
+                        <BrandLogo size={36} isDark={isDark} colors={colors} />
                         <div style={{ minWidth: 0 }}>
                             <div className="vt-mobile-title font-display">VTAPER</div>
                             <div style={{ color: colors.muted }} className="vt-mobile-sub">
@@ -6323,38 +6355,6 @@ function TodayView({
                         </div>
                     </div>
 
-                    <div className="vt-chart-banner-actions">
-                        <button
-                            type="button"
-                            onClick={handleToggleAllGuides}
-                            style={{
-                                backgroundColor: colors.elevated,
-                                borderColor: colors.border,
-                                color: colors.text
-                            }}
-                            className="vt-btn vt-h-44 vt-px-3 vt-box-xl vt-text-11 vt-font-extrabold vt-uppercase vt-nowrap"
-                        >
-                            {allGuidesExpanded ? 'Collapse Guides' : 'Expand All Guides'}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setChartModalState({
-                                    dayIndex: activeDayPlan.dayIndex,
-                                    focusExercise: null
-                                })
-                            }
-                            style={{
-                                backgroundColor: colors.accent,
-                                color: colors.accentText,
-                                borderColor: colors.accentBorder
-                            }}
-                            className="vt-finish-btn vt-shrink-0"
-                        >
-                            <Sparkles size={15} />
-                            <span>Open Form Chart</span>
-                        </button>
-                    </div>
                 </div>
             )}
 
