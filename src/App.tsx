@@ -3446,8 +3446,8 @@ export default function App() {
         () =>
             isDark
                 ? {
-                    bg: '#000000',
-                    card: '#0A0A0B',
+                    bg: '#0A0A0B',
+                    card: '#000000',
                     elevated: '#141416',
                     border: '#27272A',
                     text: '#FFFFFF',
