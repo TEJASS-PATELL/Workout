@@ -11,41 +11,15 @@
   <meta name="description" content="VTaper: Lean bulk and V-taper workout + whole-food Indian nutrition tracker" />
   <title>VTaper — Lean Bulk & V-Taper Tracker</title>
 
-  <!-- PWA Manifest (Electric Blue Theme + Borderless VTaper Logo) -->
+  <!-- PWA Manifest (Electric Blue + White Top/Bottom Bars) -->
   <link rel="manifest"
-    href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22VTaper%22%2C%22short_name%22%3A%22VTaper%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000000%22%2C%22theme_color%22%3A%22%230066FF%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20512%20512%27%20fill%3D%27none%27%3E%3Crect%20width%3D%27512%27%20height%3D%27512%27%20rx%3D%27112%27%20fill%3D%27%2523000000%27%2F%3E%3Crect%20x%3D%2776%27%20y%3D%27116%27%20width%3D%27360%27%20height%3D%2720%27%20rx%3D%276%27%20fill%3D%27%252327272A%27%2F%3E%3Crect%20x%3D%2792%27%20y%3D%2796%27%20width%3D%2724%27%20height%3D%2760%27%20rx%3D%276%27%20fill%3D%27%25230066FF%27%2F%3E%3Crect%20x%3D%27396%27%20y%3D%2796%27%20width%3D%2724%27%20height%3D%2760%27%20rx%3D%276%27%20fill%3D%27%25230066FF%27%2F%3E%3Cpath%20d%3D%27M88%20156H188L256%20348L324%20156H424L292%20428H220L88%20156Z%27%20fill%3D%27%25230066FF%27%2F%3E%3Cpolygon%20points%3D%27208%2C156%20304%2C156%20256%2C284%27%20fill%3D%27%2523FFFFFF%27%2F%3E%3Crect%20x%3D%27212%27%20y%3D%27444%27%20width%3D%2788%27%20height%3D%2712%27%20rx%3D%276%27%20fill%3D%27%252327272A%27%2F%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D" />
+    href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22VTaper%22%2C%22short_name%22%3A%22VTaper%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000000%22%2C%22theme_color%22%3A%22%230066FF%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%2520viewBox%3D%270%25200%2520512%2520512%27%2520fill%3D%27none%27%253E%253Crect%2520width%3D%27512%27%2520height%3D%27512%27%2520rx%3D%27112%27%2520fill%3D%27%2523000000%27%2F%253E%253Crect%2520x%3D%2776%27%2520y%3D%27116%27%2520width%3D%27360%27%2520height%3D%2720%27%2520rx%3D%276%27%2520fill%3D%27%2523FFFFFF%27%2F%253E%253Crect%2520x%3D%2792%27%2520y%3D%2796%27%2520width%3D%2724%27%2520height%3D%2760%27%2520rx%3D%276%27%2520fill%3D%27%25230066FF%27%2F%253E%253Crect%2520x%3D%27396%27%2520y%3D%2796%27%2520width%3D%2724%27%2520height%3D%2760%27%2520rx%3D%276%27%2520fill%3D%27%25230066FF%27%2F%253E%253Cpath%2520d%3D%27M88%2520156H188L256%2520348L324%2520156H424L292%2520428H220L88%2520156Z%27%2520fill%3D%27%25230066FF%27%2F%253E%253Cpolygon%2520points%3D%27208%2C156%2520304%2C156%2520256%2C284%27%2520fill%3D%27%2523FFFFFF%27%2F%253E%253Crect%2520x%3D%27212%27%2520y%3D%27444%27%2520width%3D%2788%27%2520height%3D%2712%27%2520rx%3D%276%27%2520fill%3D%27%2523FFFFFF%27%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D" />
 
   <!-- Electric Blue Favicon & Apple Touch Icon -->
-  <link id="vt-favicon" rel="icon" type="image/svg+xml"
-    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='none'%3E%3Crect width='512' height='512' rx='112' fill='%23000000'/%3E%3Crect x='76' y='116' width='360' height='20' rx='6' fill='%2327272A'/%3E%3Crect x='92' y='96' width='24' height='60' rx='6' fill='%230066FF'/%3E%3Crect x='396' y='96' width='24' height='60' rx='6' fill='%230066FF'/%3E%3Cpath d='M88 156H188L256 348L324 156H424L292 428H220L88 156Z' fill='%230066FF'/%3E%3Cpolygon points='208,156 304,156 256,284' fill='%23FFFFFF'/%3E%3Crect x='212' y='444' width='88' height='12' rx='6' fill='%2327272A'/%3E%3C/svg%3E" />
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='none'%3E%3Crect width='512' height='512' rx='112' fill='%23000000'/%3E%3Crect x='76' y='116' width='360' height='20' rx='6' fill='%23FFFFFF'/%3E%3Crect x='92' y='96' width='24' height='60' rx='6' fill='%230066FF'/%3E%3Crect x='396' y='96' width='24' height='60' rx='6' fill='%230066FF'/%3E%3Cpath d='M88 156H188L256 348L324 156H424L292 428H220L88 156Z' fill='%230066FF'/%3E%3Cpolygon points='208,156 304,156 256,284' fill='%23FFFFFF'/%3E%3Crect x='212' y='444' width='88' height='12' rx='6' fill='%23FFFFFF'/%3E%3C/svg%3E" />
   <link rel="apple-touch-icon"
-    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='none'%3E%3Crect width='512' height='512' rx='112' fill='%23000000'/%3E%3Crect x='76' y='116' width='360' height='20' rx='6' fill='%2327272A'/%3E%3Crect x='92' y='96' width='24' height='60' rx='6' fill='%230066FF'/%3E%3Crect x='396' y='96' width='24' height='60' rx='6' fill='%230066FF'/%3E%3Cpath d='M88 156H188L256 348L324 156H424L292 428H220L88 156Z' fill='%230066FF'/%3E%3Cpolygon points='208,156 304,156 256,284' fill='%23FFFFFF'/%3E%3Crect x='212' y='444' width='88' height='12' rx='6' fill='%2327272A'/%3E%3C/svg%3E" />
-
-  <!-- Instant Dark/Light Electric Blue Favicon & Theme Sync -->
-  <script>
-    (function () {
-      try {
-        var raw = localStorage.getItem('vtaper_tracker_state_v5');
-        var theme = raw ? (JSON.parse(raw).theme || 'dark') : 'dark';
-        var isLight = theme === 'light';
-        var html = document.documentElement;
-        html.dataset.theme = theme;
-        html.classList.toggle('dark', !isLight);
-        html.classList.toggle('light', isLight);
-
-        var bg = isLight ? '#F4F4F2' : '#000000';
-        var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', bg);
-
-        var svg = isLight
-          ? "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='none'><rect width='512' height='512' rx='112' fill='#FFFFFF'/><rect x='76' y='116' width='360' height='20' rx='6' fill='#D6D6D1'/><rect x='92' y='96' width='24' height='60' rx='6' fill='#0059FF'/><rect x='396' y='96' width='24' height='60' rx='6' fill='#0059FF'/><path d='M88 156H188L256 348L324 156H424L292 428H220L88 156Z' fill='#0059FF'/><polygon points='208,156 304,156 256,284' fill='#000000'/><rect x='212' y='444' width='88' height='12' rx='6' fill='#D6D6D1'/></svg>"
-          : "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='none'><rect width='512' height='512' rx='112' fill='#000000'/><rect x='76' y='116' width='360' height='20' rx='6' fill='#27272A'/><rect x='92' y='96' width='24' height='60' rx='6' fill='#0066FF'/><rect x='396' y='96' width='24' height='60' rx='6' fill='#0066FF'/><path d='M88 156H188L256 348L324 156H424L292 428H220L88 156Z' fill='#0066FF'/><polygon points='208,156 304,156 256,284' fill='#FFFFFF'/><rect x='212' y='444' width='88' height='12' rx='6' fill='#27272A'/></svg>";
-
-        var icon = document.getElementById('vt-favicon');
-        if (icon) icon.href = 'data:image/svg+xml,' + encodeURIComponent(svg);
-      } catch (e) {}
-    })();
-  </script>
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='none'%3E%3Crect width='512' height='512' rx='112' fill='%23000000'/%3E%3Crect x='76' y='116' width='360' height='20' rx='6' fill='%23FFFFFF'/%3E%3Crect x='92' y='96' width='24' height='60' rx='6' fill='%230066FF'/%3E%3Crect x='396' y='96' width='24' height='60' rx='6' fill='%230066FF'/%3E%3Cpath d='M88 156H188L256 348L324 156H424L292 428H220L88 156Z' fill='%230066FF'/%3E%3Cpolygon points='208,156 304,156 256,284' fill='%23FFFFFF'/%3E%3Crect x='212' y='444' width='88' height='12' rx='6' fill='%23FFFFFF'/%3E%3C/svg%3E" />
 
   <!-- Google Fonts: Barlow Condensed (Display) + Sora (Body) + JetBrains Mono (Numbers) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -55,7 +29,7 @@
     rel="stylesheet" />
 </head>
 
-<body class="bg-[#000000] text-[#F4F4F5] antialiased selection:bg-[#0066FF] selection:text-white">
+<body class="bg-[#000000] text-[#FFFFFF] antialiased selection:bg-[#0066FF] selection:text-white">
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
