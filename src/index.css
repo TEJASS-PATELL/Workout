@@ -86,8 +86,7 @@ input[type='number']::-webkit-outer-spin-button {
 }
 
 :focus-visible {
-  outline: 2px solid #CCFF00 !important;
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 
 ::selection {

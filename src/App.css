@@ -63,16 +63,16 @@ button {
 }
 button:disabled, input:disabled, select:disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
 
-input, select { caret-color: var(--ring); accent-color: var(--ring); }
+input, select { caret-color: #0059FF; accent-color: #0059FF; }
 button:focus-visible, input:focus-visible, select:focus-visible, label:focus-within {
-  outline: 2px solid var(--ring); outline-offset: 2px;
+  outline: 2px solid #0059FF; 
 }
 
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
 
-::selection { background: var(--ring); color: #0A0A0B; }
+::selection { background: #0059FF; color: #0A0A0B; }
 html[data-theme='light'] ::selection { color: #FFFFFF; }
 
 * { scrollbar-width: thin; scrollbar-color: rgba(161, 161, 170, .35) transparent; }
@@ -293,7 +293,7 @@ input[type='range']::-webkit-slider-thumb {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--ring);
+  background: #0059FF;
   border: 2px solid #0A0A0B;
   cursor: pointer;
   transition: transform var(--t-fast);
@@ -302,7 +302,7 @@ input[type='range']::-moz-range-thumb {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--ring);
+  background: #0059FF;
   border: 2px solid #0A0A0B;
   cursor: pointer;
 }
