@@ -1678,6 +1678,9 @@ input[type='range']:active::-webkit-slider-thumb {
     align-items: flex-start;
     justify-content: space-between;
   }
+  .vt-text-xs{
+    font-size: 0.75px;
+  }
   .vt-chart-preview-bar { flex-direction: row; align-items: center; justify-content: space-between; }
   .vt-chart-banner-actions { width: auto; flex-shrink: 0; }
   .vt-chart-banner-actions > * { flex: none; }
