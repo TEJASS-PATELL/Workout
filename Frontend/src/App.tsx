@@ -8037,16 +8037,16 @@ function NutritionView({
                 >
                     <div className="vt-stack-1">
                         <div className="vt-between-center vt-text-11 font-mono-num">
-                            <span className="vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                            <span className="vt-font-extrabold vt-uppercase" style={{ color: colors.accent }}>
                                 Carbs (5 AM Gym Fuel)
                             </span>
                             <span className="vt-font-extrabold">
                                 {nutritionTotals.consumedCarbs}g / {carbsTarget}g ({carbsPercent}%)
                             </span>
                         </div>
-                        <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track-sm">
+                        <div style={{ backgroundColor: "#FF7A1A" }} className="vt-progress-track-sm">
                             <div
-                                style={{ width: `${carbsPercent}%`, backgroundColor: '#38BDF8' }}
+                                style={{ width: `${carbsPercent}%`, backgroundColor: '#0080ff' }}
                                 className="vt-progress-fill"
                             />
                         </div>
