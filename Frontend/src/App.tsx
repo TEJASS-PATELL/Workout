@@ -5807,7 +5807,7 @@ function DisciplineView({
                             borderColor: isSelectedClean ? colors.success : colors.accentBorder,
                             minHeight: 60
                         }}
-                        className="vt-btn vt-col-span-md-2 vt-px-4 vt-py-3 vt-box-xl vt-gap-2-5"
+                        className="vt-btnnn vt-col-span-md-2 vt-px-4 vt-py-3 vt-box-xl vt-gap-2-5"
                     >
                         
                         <div className="vt-text-left">

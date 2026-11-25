@@ -556,8 +556,15 @@ html[data-theme='light'] ::selection {
               background-color var(--t-fast), color var(--t-fast);
 }
 
-.vt-btn{
+.vt-btnnn{
+    display: inline-flex;
+  align-items: center;
   justify-content: left;
+  border: 1px solid transparent;
+  text-decoration: none;
+  line-height: 1.2;
+  transition: transform var(--t-fast), opacity var(--t-fast), border-color var(--t-fast),
+              background-color var(--t-fast), color var(--t-fast);
 }
 
 .vt-primary-cta {
