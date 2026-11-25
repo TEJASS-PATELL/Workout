@@ -8037,16 +8037,16 @@ function NutritionView({
                 >
                     <div className="vt-stack-1">
                         <div className="vt-between-center vt-text-11 font-mono-num">
-                            <span className="vt-font-extrabold vt-uppercase" style={{ color: colors.accent }}>
+                            <span className="vt-font-extrabold vt-uppercase" style={{ color: '#55555c' }}>
                                 Carbs (5 AM Gym Fuel)
                             </span>
                             <span className="vt-font-extrabold">
                                 {nutritionTotals.consumedCarbs}g / {carbsTarget}g ({carbsPercent}%)
                             </span>
                         </div>
-                        <div style={{ backgroundColor: "#FF7A1A" }} className="vt-progress-track-sm">
+                        <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track-sm">
                             <div
-                                style={{ width: `${carbsPercent}%`, backgroundColor: '#0080ff' }}
+                                style={{ width: `${carbsPercent}%`, backgroundColor: '#0059ff' }}
                                 className="vt-progress-fill"
                             />
                         </div>
@@ -8063,7 +8063,7 @@ function NutritionView({
                         </div>
                         <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track-sm">
                             <div
-                                style={{ width: `${fatPercent}%`, backgroundColor: '#FBBF24' }}
+                                style={{ width: `${fatPercent}%`, backgroundColor: '#ff7a1a' }}
                                 className="vt-progress-fill"
                             />
                         </div>
@@ -8289,7 +8289,7 @@ function NutritionView({
                                                     </span>
                                                     {isNext && !isDone && (
                                                         <span
-                                                            style={{ backgroundColor: colors.warning, color: '#0A0A0B' }}
+                                                            style={{ backgroundColor: '#0048ff', color: '#ffffff' }}
                                                             className="vt-badge-xs vt-text-10 vt-font-extrabold vt-uppercase"
                                                         >
                                                             Next Meal
