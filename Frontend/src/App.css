@@ -1617,9 +1617,6 @@ input[type='range']:active::-webkit-slider-thumb {
   .vt-rest-clock { font-size: 1.4rem; padding: 6px 10px; }
   .vt-cardio-clock { font-size: 1.5rem; }
   .vt-grid-meas, .vt-grid-rotation { gap: 8px; }
-   .vt-text-xs{
-    font-size: 0.7px;
-  }
   .vt-mobile-nav-btn { font-size: .58rem; }
   .vt-mobile-nav-btn svg { width: 18px; height: 18px; }
 }
@@ -1682,7 +1679,7 @@ input[type='range']:active::-webkit-slider-thumb {
     justify-content: space-between;
   }
   .vt-text-xs{
-    font-size: 0.7px;
+    font-size: 0.65px;
   }
   .vt-chart-preview-bar { flex-direction: row; align-items: center; justify-content: space-between; }
   .vt-chart-banner-actions { width: auto; flex-shrink: 0; }
