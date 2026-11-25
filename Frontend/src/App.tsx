@@ -1678,6 +1678,76 @@ export const APPETITE_HELPERS = [
 // SECTION 4: DISCIPLINE (NO PORN / NO MASTURBATION) PROTOCOL & MILESTONES
 // ============================================================================
 
+function ThemeIcon({ isDark, size = 18 }) {
+    const maskId = React.useId();
+    const showSun = Boolean(isDark);
+
+    return (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+            style={{
+                display: 'block',
+                transform: showSun ? 'rotate(0deg)' : 'rotate(-18deg)',
+                transition: 'transform 320ms cubic-bezier(.16, 1, .3, 1)'
+            }}
+        >
+            <defs>
+                <mask id={maskId}>
+                    <rect x="0" y="0" width="24" height="24" fill="white" />
+                    <circle
+                        cx={showSun ? 24 : 16.5}
+                        cy={showSun ? 0 : 7.5}
+                        r={showSun ? 0 : 6.8}
+                        fill="black"
+                        style={{
+                            transition: 'all 320ms cubic-bezier(.16, 1, .3, 1)'
+                        }}
+                    />
+                </mask>
+            </defs>
+
+            {/* Core Sun / Crescent Moon */}
+            <circle
+                cx="12"
+                cy="12"
+                r={showSun ? 5 : 8.5}
+                fill="currentColor"
+                mask={`url(#${maskId})`}
+                style={{
+                    transition: 'r 320ms cubic-bezier(.16, 1, .3, 1)'
+                }}
+            />
+
+            {/* Crisp Geometric Sun Rays */}
+            <g
+                stroke="currentColor"
+                strokeWidth="2.1"
+                strokeLinecap="round"
+                style={{
+                    transformOrigin: '12px 12px',
+                    opacity: showSun ? 1 : 0,
+                    transform: showSun ? 'scale(1)' : 'scale(0.35)',
+                    transition: 'opacity 200ms ease, transform 320ms cubic-bezier(.16, 1, .3, 1)'
+                }}
+            >
+                <line x1="12" y1="1.8" x2="12" y2="4.2" />
+                <line x1="12" y1="19.8" x2="12" y2="22.2" />
+                <line x1="1.8" y1="12" x2="4.2" y2="12" />
+                <line x1="19.8" y1="12" x2="22.2" y2="12" />
+                <line x1="4.8" y1="4.8" x2="6.5" y2="6.5" />
+                <line x1="17.5" y1="17.5" x2="19.2" y2="19.2" />
+                <line x1="19.2" y1="4.8" x2="17.5" y2="6.5" />
+                <line x1="6.5" y1="17.5" x2="4.8" y2="19.2" />
+            </g>
+        </svg>
+    );
+}
+
 export const DISCIPLINE_MILESTONES = [
     { days: 1, title: 'Day 1 Spark', benefit: 'Decision locked — breaking the autopilot loop.' },
     { days: 3, title: '72-Hour Filter', benefit: 'Initial dopamine crash passes; mental fog begins lifting.' },
@@ -3982,7 +4052,7 @@ export default function App() {
                       card: '#FFFFFF',
                       elevated: '#EDEDEA',
                       border: '#D6D6D1',
-                      text: '#0A0A0B',
+                      text: '#000000',
                       muted: '#55555C',
                       accent: '#0059FF',
                       accentText: '#FFFFFF',
@@ -4545,7 +4615,7 @@ export default function App() {
                             }))
                         }
                         aria-label="Toggle color theme"
-                        style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+                        style={{ backgroundColor: 'none', borderColor: 'none', color: colors.text }}
                         className="vt-icon-btn-44"
                     >
                         {isDark ? <Sun size={20} /> : <Moon size={20} />}
@@ -4740,10 +4810,10 @@ export default function App() {
                                 }))
                             }
                             aria-label="Toggle Theme"
-                            style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+                            style={{ backgroundColor: 'none', border: 'none', color: colors.text }}
                             className="vt-icon-btn-44"
                         >
-                            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                            <ThemeIcon isDark={isDark} size={18} />
                         </button>
                     </div>
                 </header>
@@ -7465,42 +7535,6 @@ function TodayView({
                             </div>
                         );
                     })}
-
-                    {/* Bottom Finish & Save Workout Bar (No need to scroll back up) */}
-                    <div
-                        style={{ backgroundColor: colors.card, borderColor: colors.accentBorder }}
-                        className="vt-card-b2 vt-p-4 vt-resp-row-md vt-tabular"
-                    >
-                        <div className="vt-stack-0-5">
-                            <div className="vt-text-xs vt-font-extrabold vt-uppercase">
-                                {sessionProgress.completedSets} / {sessionProgress.totalSets} Sets Done •{' '}
-                                {formatWeight(sessionProgress.volumeKg)} {appState.unit} Volume
-                            </div>
-                            <div className="vt-text-xs" style={{ color: colors.muted }}>
-                                Har ticked set auto-saved hai. Poora workout complete hone par neeche tap karke PostgreSQL mein final save karo.
-                            </div>
-                        </div>
-
-                        <button
-                            type="button"
-                            disabled={savingWorkout || sessionProgress.completedSets === 0}
-                            onClick={handleFinishWorkout}
-                            style={{
-                                backgroundColor: colors.accent,
-                                color: colors.accentText,
-                                borderColor: colors.accentBorder,
-                                opacity: savingWorkout ? 0.7 : 1
-                            }}
-                            className="vt-finish-btn vt-shrink-0"
-                        >
-                            <Check size={16} strokeWidth={2.5} />
-                            <span>
-                                {savingWorkout
-                                    ? 'Saving Workout...'
-                                    : `Finish & Save (${sessionProgress.completedSets}/${sessionProgress.totalSets})`}
-                            </span>
-                        </button>
-                    </div>
                 </div>
             )}
 

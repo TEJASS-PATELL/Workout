@@ -311,7 +311,7 @@ html[data-theme='light'] ::selection {
   width: 100%;
   max-width: 1320px;
   margin: 0 auto;
-  padding: 16px 12px calc(var(--nav-h) + var(--safe-b) + 116px);
+  padding: 16px 12px calc(var(--nav-h) + var(--safe-b) + 60px);
 }
 
 .vt-page-main > * {
@@ -1623,7 +1623,7 @@ input[type='range']:active::-webkit-slider-thumb {
 
 /* Small tablets & large phones (≥ 640px) */
 @media (min-width: 640px) {
-  .vt-page-main { padding: 20px 20px calc(var(--nav-h) + var(--safe-b) + 120px); }
+  .vt-page-main { padding: 20px 20px calc(var(--nav-h) + var(--safe-b) + 60px); }
   .vt-p-card, .vt-p-card-md { padding: 20px; }
 
   .vt-text-resp-10-11 { font-size: .75rem; }
