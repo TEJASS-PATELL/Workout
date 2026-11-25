@@ -5378,7 +5378,7 @@ export default function App() {
                             }}
                             className="vt-primary-cta"
                         >
-                            Save to PostgreSQL & Launch VTaper
+                            Launch V-Taper
                         </button>
                     </div>
                 </div>
