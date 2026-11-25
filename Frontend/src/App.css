@@ -1617,6 +1617,9 @@ input[type='range']:active::-webkit-slider-thumb {
   .vt-rest-clock { font-size: 1.4rem; padding: 6px 10px; }
   .vt-cardio-clock { font-size: 1.5rem; }
   .vt-grid-meas, .vt-grid-rotation { gap: 8px; }
+   .vt-text-xs{
+    font-size: 0.65px;
+  }
   .vt-mobile-nav-btn { font-size: .58rem; }
   .vt-mobile-nav-btn svg { width: 18px; height: 18px; }
 }
@@ -1629,6 +1632,9 @@ input[type='range']:active::-webkit-slider-thumb {
   .vt-text-resp-10-11 { font-size: .75rem; }
   .vt-text-resp-xs-sm { font-size: .875rem; }
   .vt-text-resp-sm-base { font-size: .95rem; }
+   .vt-text-xs{
+    font-size: 0.65px;
+  }
   .vt-text-resp-xl-2xl { font-size: 1.5rem; }
   .vt-text-resp-2xl-3xl { font-size: 1.65rem; }
   .vt-text-resp-3xl-4xl { font-size: 2.1rem; }
