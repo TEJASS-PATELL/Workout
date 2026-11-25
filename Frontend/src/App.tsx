@@ -5809,7 +5809,7 @@ function DisciplineView({
                         }}
                         className="vt-btn vt-col-span-md-2 vt-px-4 vt-py-3 vt-box-xl vt-gap-2-5"
                     >
-                        <CheckCircle2 size={22} strokeWidth={2.5} />
+                        
                         <div className="vt-text-left">
                             <div className="vt-text-sm vt-font-black vt-uppercase">
                                 {isSelectedClean

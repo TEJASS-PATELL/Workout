@@ -556,6 +556,10 @@ html[data-theme='light'] ::selection {
               background-color var(--t-fast), color var(--t-fast);
 }
 
+.vt-btn{
+  justify-content: left;
+}
+
 .vt-primary-cta {
   width: 100%;
   min-height: 48px;
