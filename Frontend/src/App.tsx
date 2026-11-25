@@ -4076,19 +4076,18 @@ export default function App() {
     };
 
     const handleToggleSetComplete = (exercise, setIndex) => {
-        if (!workoutRunning) {
-            setWorkoutRunning(true);
-        }
-
-        const currentSets = appState.activeDrafts[exercise.id] || [];
-        const targetSet = currentSets[setIndex];
-        const willComplete = !targetSet?.completed;
-
         setAppState((prev) => {
-            const sets = prev.activeDrafts[exercise.id] || [];
-            const nextSets = sets.map((s, idx) =>
-                idx === setIndex ? { ...s, completed: willComplete } : s
-            );
+            const existing = prev.activeDrafts[exercise.id] || [];
+            const totalLen = Math.max(exercise.sets || 3, existing.length, setIndex + 1);
+            const nextSets = Array.from({ length: totalLen }, (_, idx) => {
+                const row = existing[idx] || {
+                    setNumber: idx + 1,
+                    weight: 0,
+                    reps: 0,
+                    completed: false
+                };
+                return idx === setIndex ? { ...row, completed: !row.completed } : row;
+            });
             return {
                 ...prev,
                 activeDrafts: {
@@ -4097,18 +4096,6 @@ export default function App() {
                 }
             };
         });
-
-        if (willComplete) {
-            const restSeconds = exercise.restSec || (exercise.type === 'compound' ? 120 : 75);
-            setRestTimer({
-                active: true,
-                paused: false,
-                remainingSec: restSeconds,
-                totalSec: restSeconds,
-                exerciseName: exercise.name,
-                exerciseType: exercise.type
-            });
-        }
     };
 
     const handleApplyOverloadWeight = (exercise, suggestedWeightKg) => {
@@ -6389,12 +6376,7 @@ function TodayView({
     activeDayPlan,
     dayRecall,
     recallLoading,
-    workoutRunning,
-    setWorkoutRunning,
-    workoutElapsedSec,
-    setWorkoutElapsedSec,
     savingWorkout,
-    formatTime,
     formatWeight,
     getEffectiveSetCount,
     handleSetInputChange,
@@ -6402,7 +6384,6 @@ function TodayView({
     handleApplyOverloadWeight,
     handleCopyLastSessionSets,
     handleFinishWorkout,
-    setRestTimer,
     showToast
 }) {
     const [openGuides, setOpenGuides] = useState({});
@@ -6481,17 +6462,6 @@ function TodayView({
         dayRecall,
         getEffectiveSetCount
     ]);
-
-    const firstCompoundWorkingWeightKg = useMemo(() => {
-        if (activeDayPlan.isRest || !activeDayPlan.exercises.length) return 0;
-        const firstEx = activeDayPlan.exercises[0];
-        const draft = appState.activeDrafts[firstEx.id]?.[0]?.weight;
-        const recallW = dayRecall?.exercises?.[firstEx.id]?.lastSets?.[0]?.weight;
-        const prev = appState.lastSessionLogs[firstEx.id]?.[0]?.weight;
-        return Number(draft || recallW || prev || 0);
-    }, [activeDayPlan, appState.activeDrafts, appState.lastSessionLogs, dayRecall]);
-
-    const roundToPlate = (kg) => Math.max(0, Math.round(kg / 2.5) * 2.5);
 
     return (
         <div className="vt-stack-4">
@@ -6606,173 +6576,140 @@ function TodayView({
                 </div>
             )}
 
-            {/* Bento Header Summary + Warm-up & Ramp-in Controls */}
-            <div className="vt-bento-3">
-                <div
-                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                    className="vt-card vt-span-2-lg vt-today-hero-card"
-                >
-                    <div className="vt-today-hero-top">
-                        <div>
-                            <div className="vt-pill-row">
-                                <span
-                                    style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                                    className="vt-badge-accent"
-                                >
-                                    {activeDayPlan.dayName}
-                                </span>
-                                <span
-                                    style={{
-                                        backgroundColor: colors.elevated,
-                                        borderColor: colors.border,
-                                        color: colors.muted
-                                    }}
-                                    className="vt-meta-pill tabular-nums"
-                                >
-                                    <Clock size={14} />
-                                    <span>~{activeDayPlan.estimatedMinutes} min</span>
-                                </span>
-                                {!activeDayPlan.isRest && (
-                                    <button
-                                        onClick={() =>
-                                            setAppState((prev) => ({
-                                                ...prev,
-                                                rampInEnabled: !prev.rampInEnabled
-                                            }))
-                                        }
-                                        style={{
-                                            backgroundColor: appState.rampInEnabled
-                                                ? colors.accentSurface
-                                                : colors.elevated,
-                                            borderColor: appState.rampInEnabled ? colors.accentBorder : colors.border,
-                                            color: colors.text
-                                        }}
-                                        className="vt-ramp-btn"
-                                    >
-                                        {appState.rampInEnabled
-                                            ? 'Wk 1–2 Ramp-In: ON (Max 3 sets @ 3–4 RIR)'
-                                            : 'Full Volume: ON (1–3 RIR)'}
-                                    </button>
-                                )}
-                            </div>
-                            <h2 className="vt-hero-heading font-display">
-                                {activeDayPlan.title}: {activeDayPlan.subtitle}
-                            </h2>
-                        </div>
-
-                        {!activeDayPlan.isRest && (
-                            <div className="vt-workout-actions">
+            {/* Full-Width Hero Summary Card */}
+            <div
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                className="vt-card vt-today-hero-card"
+            >
+                <div className="vt-today-hero-top">
+                    <div>
+                        <div className="vt-pill-row">
+                            <span
+                                style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                                className="vt-badge-accent"
+                            >
+                                {activeDayPlan.dayName}
+                            </span>
+                            <span
+                                style={{
+                                    backgroundColor: colors.elevated,
+                                    borderColor: colors.border,
+                                    color: colors.muted
+                                }}
+                                className="vt-meta-pill tabular-nums"
+                            >
+                                <Clock size={14} />
+                                <span>~{activeDayPlan.estimatedMinutes} min</span>
+                            </span>
+                            {!activeDayPlan.isRest && (
                                 <button
-                                    onClick={() => setWorkoutRunning((prev) => !prev)}
+                                    type="button"
+                                    onClick={() =>
+                                        setAppState((prev) => ({
+                                            ...prev,
+                                            rampInEnabled: !prev.rampInEnabled
+                                        }))
+                                    }
                                     style={{
-                                        backgroundColor: colors.elevated,
-                                        borderColor: colors.border,
+                                        backgroundColor: appState.rampInEnabled
+                                            ? colors.accentSurface
+                                            : colors.elevated,
+                                        borderColor: appState.rampInEnabled ? colors.accentBorder : colors.border,
                                         color: colors.text
                                     }}
-                                    className="vt-timer-btn font-mono-num"
+                                    className="vt-ramp-btn"
                                 >
-                                    {workoutRunning ? <Pause size={16} /> : <Play size={16} />}
-                                    <span>
-                                        {workoutRunning || workoutElapsedSec > 0
-                                            ? formatTime(workoutElapsedSec)
-                                            : 'Start Timer'}
-                                    </span>
+                                    {appState.rampInEnabled
+                                        ? 'Wk 1–2 Ramp-In: ON (Max 3 sets @ 3–4 RIR)'
+                                        : 'Full Volume: ON (1–3 RIR)'}
                                 </button>
-                                {workoutElapsedSec > 0 && (
-                                    <button
-                                        onClick={() => {
-                                            setWorkoutRunning(false);
-                                            setWorkoutElapsedSec(0);
-                                        }}
-                                        aria-label="Reset workout timer"
-                                        style={{
-                                            backgroundColor: colors.elevated,
-                                            borderColor: colors.border,
-                                            color: colors.muted
-                                        }}
-                                        className="vt-reset-timer-btn"
-                                    >
-                                        <RotateCcw size={16} />
-                                    </button>
-                                )}
-                                <button
-                                    disabled={savingWorkout}
-                                    onClick={handleFinishWorkout}
-                                    style={{
-                                        backgroundColor: colors.accent,
-                                        color: colors.accentText,
-                                        borderColor: colors.accentBorder,
-                                        opacity: savingWorkout ? 0.7 : 1
-                                    }}
-                                    className="vt-finish-btn"
-                                >
-                                    <Check size={16} strokeWidth={2.5} />
-                                    <span>{savingWorkout ? 'Saving DB...' : 'Finish Workout'}</span>
-                                </button>
-                            </div>
-                        )}
+                            )}
+                        </div>
+                        <h2 className="vt-hero-heading font-display">
+                            {activeDayPlan.title}: {activeDayPlan.subtitle}
+                        </h2>
                     </div>
 
                     {!activeDayPlan.isRest && (
-                        <>
-                            <div className="vt-hero-metrics" style={{ borderColor: colors.border }}>
-                                <div>
-                                    <div className="vt-stat-caption" style={{ color: colors.muted }}>
-                                        Sets Logged
-                                    </div>
-                                    <div className="vt-metric-val font-display">
-                                        {sessionProgress.completedSets} / {sessionProgress.totalSets}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="vt-stat-caption" style={{ color: colors.muted }}>
-                                        Live Volume
-                                    </div>
-                                    <div className="vt-metric-val font-display">
-                                        {formatWeight(sessionProgress.volumeKg)} {appState.unit}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="vt-stat-caption" style={{ color: colors.muted }}>
-                                        Effort Target
-                                    </div>
-                                    <div
-                                        style={{ color: isDark ? colors.accent : colors.text }}
-                                        className="vt-metric-val font-display"
-                                    >
-                                        {appState.rampInEnabled ? '3–4 RIR' : '1–3 RIR'}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="vt-stack-1">
-                                <div
-                                    className="vt-between-center vt-text-11 font-mono-num"
-                                    style={{ color: colors.muted }}
-                                >
-                                    <span>
-                                        Session Progress ({sessionProgress.pct}%)
-                                        {sessionProgress.overloadReadyCount > 0
-                                            ? ` • ${sessionProgress.overloadReadyCount} Overload Ready`
-                                            : ''}
-                                    </span>
-                                    <span>
-                                        {Math.max(0, sessionProgress.totalSets - sessionProgress.completedSets)} sets left
-                                    </span>
-                                </div>
-                                <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track-sm">
-                                    <div
-                                        style={{
-                                            width: `${sessionProgress.pct}%`,
-                                            backgroundColor: colors.accent
-                                        }}
-                                        className="vt-progress-fill"
-                                    />
-                                </div>
-                            </div>
-                        </>
+                        <div className="vt-workout-actions">
+                            <button
+                                type="button"
+                                disabled={savingWorkout}
+                                onClick={handleFinishWorkout}
+                                style={{
+                                    backgroundColor: colors.accent,
+                                    color: colors.accentText,
+                                    borderColor: colors.accentBorder,
+                                    opacity: savingWorkout ? 0.7 : 1
+                                }}
+                                className="vt-finish-btn"
+                            >
+                                <Check size={16} strokeWidth={2.5} />
+                                <span>{savingWorkout ? 'Saving DB...' : 'Finish Workout'}</span>
+                            </button>
+                        </div>
                     )}
                 </div>
+
+                {!activeDayPlan.isRest && (
+                    <>
+                        <div className="vt-hero-metrics" style={{ borderColor: colors.border }}>
+                            <div>
+                                <div className="vt-stat-caption" style={{ color: colors.muted }}>
+                                    Sets Logged
+                                </div>
+                                <div className="vt-metric-val font-display">
+                                    {sessionProgress.completedSets} / {sessionProgress.totalSets}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="vt-stat-caption" style={{ color: colors.muted }}>
+                                    Live Volume
+                                </div>
+                                <div className="vt-metric-val font-display">
+                                    {formatWeight(sessionProgress.volumeKg)} {appState.unit}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="vt-stat-caption" style={{ color: colors.muted }}>
+                                    Effort Target
+                                </div>
+                                <div
+                                    style={{ color: isDark ? colors.accent : colors.text }}
+                                    className="vt-metric-val font-display"
+                                >
+                                    {appState.rampInEnabled ? '3–4 RIR' : '1–3 RIR'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="vt-stack-1">
+                            <div
+                                className="vt-between-center vt-text-11 font-mono-num"
+                                style={{ color: colors.muted }}
+                            >
+                                <span>
+                                    Session Progress ({sessionProgress.pct}%)
+                                    {sessionProgress.overloadReadyCount > 0
+                                        ? ` • ${sessionProgress.overloadReadyCount} Overload Ready`
+                                        : ''}
+                                </span>
+                                <span>
+                                    {Math.max(0, sessionProgress.totalSets - sessionProgress.completedSets)} sets left
+                                </span>
+                            </div>
+                            <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track-sm">
+                                <div
+                                    style={{
+                                        width: `${sessionProgress.pct}%`,
+                                        backgroundColor: colors.accent
+                                    }}
+                                    className="vt-progress-fill"
+                                />
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Today's Visual Form Chart Preview Banner */}
@@ -6858,6 +6795,7 @@ function TodayView({
                     </p>
                     <div className="vt-row-wrap vt-gap-2" style={{ justifyContent: 'center' }}>
                         <button
+                            type="button"
                             onClick={() => {
                                 setAppState((prev) => ({ ...prev, sundayWalkDone: !prev.sundayWalkDone }));
                                 showToast('Sunday 20–30 min walk status saved to PostgreSQL!');
@@ -7299,11 +7237,11 @@ function TodayView({
                                                 <span style={{ color: colors.text }} className="font-mono-num">
                                                     {prevSets.length > 0
                                                         ? prevSets
-                                                            .map(
-                                                                (s) =>
-                                                                    `${isAssisted ? 'Assist ' : ''}${formatWeight(s.weight)}${appState.unit} × ${s.reps}`
-                                                            )
-                                                            .join('  |  ')
+                                                              .map(
+                                                                  (s) =>
+                                                                      `${isAssisted ? 'Assist ' : ''}${formatWeight(s.weight)}${appState.unit} × ${s.reps}`
+                                                              )
+                                                              .join('  |  ')
                                                         : 'First session — enter your starting weights & reps'}
                                                 </span>
                                             </div>
@@ -7348,11 +7286,11 @@ function TodayView({
                                                         <span>
                                                             {overload.mode === 'assist'
                                                                 ? `${formatWeight(overload.incrementKg)} ${appState.unit} Assist → ${formatWeight(
-                                                                    overload.suggestedWeightKg
-                                                                )} ${appState.unit}`
+                                                                      overload.suggestedWeightKg
+                                                                  )} ${appState.unit}`
                                                                 : `+${formatWeight(overload.incrementKg)} ${appState.unit} → ${formatWeight(
-                                                                    overload.suggestedWeightKg
-                                                                )} ${appState.unit}`}
+                                                                      overload.suggestedWeightKg
+                                                                  )} ${appState.unit}`}
                                                         </span>
                                                     </span>
                                                     <button
@@ -7507,6 +7445,7 @@ function TodayView({
 
                                                 <div className="vt-col-span-2 vt-flex vt-justify-end">
                                                     <button
+                                                        type="button"
                                                         onClick={() => handleToggleSetComplete(exercise, sIdx)}
                                                         aria-label={`Mark ${displayName} set ${sIdx + 1} complete`}
                                                         style={{
@@ -7526,6 +7465,42 @@ function TodayView({
                             </div>
                         );
                     })}
+
+                    {/* Bottom Finish & Save Workout Bar (No need to scroll back up) */}
+                    <div
+                        style={{ backgroundColor: colors.card, borderColor: colors.accentBorder }}
+                        className="vt-card-b2 vt-p-4 vt-resp-row-md vt-tabular"
+                    >
+                        <div className="vt-stack-0-5">
+                            <div className="vt-text-xs vt-font-extrabold vt-uppercase">
+                                {sessionProgress.completedSets} / {sessionProgress.totalSets} Sets Done •{' '}
+                                {formatWeight(sessionProgress.volumeKg)} {appState.unit} Volume
+                            </div>
+                            <div className="vt-text-xs" style={{ color: colors.muted }}>
+                                Har ticked set auto-saved hai. Poora workout complete hone par neeche tap karke PostgreSQL mein final save karo.
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            disabled={savingWorkout || sessionProgress.completedSets === 0}
+                            onClick={handleFinishWorkout}
+                            style={{
+                                backgroundColor: colors.accent,
+                                color: colors.accentText,
+                                borderColor: colors.accentBorder,
+                                opacity: savingWorkout ? 0.7 : 1
+                            }}
+                            className="vt-finish-btn vt-shrink-0"
+                        >
+                            <Check size={16} strokeWidth={2.5} />
+                            <span>
+                                {savingWorkout
+                                    ? 'Saving Workout...'
+                                    : `Finish & Save (${sessionProgress.completedSets}/${sessionProgress.totalSets})`}
+                            </span>
+                        </button>
+                    </div>
                 </div>
             )}
 
