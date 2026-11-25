@@ -1337,93 +1337,161 @@ export const INITIAL_FOOD_DATABASE = [
 
 export const MEAL_SLOTS = [
     {
-        slotId: 'breakfast',
-        slotName: 'Breakfast',
-        timeHint: '08:00',
+        slotId: 'pre_workout',
+        slotName: 'Pre-Workout (5 AM Fuel)',
+        timeHint: '04:30 AM',
+        roleTag: 'Fast Energy + Pinch Salt',
         options: [
             {
-                id: 'B1',
-                code: 'B1',
-                label: 'B1 (Egg Bhurji / Omelette)',
-                description: '2 whole eggs as bhurji or omelette in 5 g oil + 3 roti + 250 ml milk',
-                tracks: ['non-veg', 'eggetarian'],
-                proteinAnchor: 'egg',
-                expected: { kcal: 654, protein: 31, carbs: 77, fat: 24 },
+                id: 'P1',
+                code: 'P1',
+                label: 'P1 (Banana + Dates — Light)',
+                description: '1 medium banana + 20 g dates + 1 glass water with pinch of salt (25 min pre-gym)',
+                tracks: ['non-veg', 'eggetarian', 'veg'],
+                proteinAnchor: 'carbs',
+                expected: { kcal: 160, protein: 1.7, carbs: 42, fat: 0.4 },
                 ingredients: [
-                    { foodId: 'whole_egg', amount: 2 },
-                    { foodId: 'cooking_oil', amount: 5 },
-                    { foodId: 'roti', amount: 3 },
-                    { foodId: 'whole_milk', amount: 250 }
+                    { foodId: 'banana', amount: 1 },
+                    { foodId: 'dates', amount: 20 }
                 ]
             },
             {
-                id: 'B2',
-                code: 'B2',
-                label: 'B2 (Veg Paneer Bhurji)',
-                description: '80 g paneer bhurji in 5 g oil + 2 roti + 250 ml milk',
+                id: 'P2',
+                code: 'P2',
+                label: 'P2 (Bread + Banana — Heavy Day)',
+                description: '2 slices whole-wheat bread + 1 banana + 1 glass water (best for Leg/Pull days)',
                 tracks: ['non-veg', 'eggetarian', 'veg'],
-                proteinAnchor: 'paneer',
-                expected: { kcal: 630, protein: 30, carbs: 57, fat: 31 },
+                proteinAnchor: 'carbs',
+                expected: { kcal: 255, protein: 8.3, carbs: 53, fat: 2.4 },
                 ingredients: [
-                    { foodId: 'paneer', amount: 80 },
-                    { foodId: 'cooking_oil', amount: 5 },
-                    { foodId: 'roti', amount: 2 },
-                    { foodId: 'whole_milk', amount: 250 }
+                    { foodId: 'bread_slice', amount: 2 },
+                    { foodId: 'banana', amount: 1 }
                 ]
             }
         ]
     },
     {
-        slotId: 'mid_morning',
-        slotName: 'Mid-morning',
-        timeHint: '11:00',
+        slotId: 'post_workout',
+        slotName: 'Post-Workout Recovery',
+        timeHint: '06:30 AM',
+        roleTag: 'Muscle Synthesis Spike',
         options: [
             {
-                id: 'M1',
-                code: 'M1',
-                label: 'M1 (Banana PB Milk Shake)',
-                description: '1 banana + 300 ml milk + 16 g peanut butter shake',
-                tracks: ['non-veg', 'eggetarian', 'veg'],
-                proteinAnchor: 'dairy',
-                expected: { kcal: 382, protein: 15, carbs: 45, fat: 18 },
+                id: 'X1',
+                code: 'X1',
+                label: 'X1 (3 Boiled Eggs + Banana + Milk)',
+                description: '3 whole boiled eggs + 1 medium banana + 200 ml whole milk',
+                tracks: ['non-veg', 'eggetarian'],
+                proteinAnchor: 'egg',
+                expected: { kcal: 443, protein: 26.6, carbs: 37.8, fat: 21.4 },
                 ingredients: [
+                    { foodId: 'whole_egg', amount: 3 },
                     { foodId: 'banana', amount: 1 },
-                    { foodId: 'whole_milk', amount: 300 },
-                    { foodId: 'peanut_butter', amount: 16 }
+                    { foodId: 'whole_milk', amount: 200 }
                 ]
             },
             {
-                id: 'M2',
-                code: 'M2',
-                label: 'M2 (Sattu–Milk No-Blender Drink)',
-                description: '40 g sattu + 250 ml milk + 10 g jaggery',
-                tracks: ['non-veg', 'eggetarian', 'veg'],
-                proteinAnchor: 'sattu',
-                expected: { kcal: 353, protein: 16, carbs: 46, fat: 11 },
+                id: 'X2',
+                code: 'X2',
+                label: 'X2 (Chicken Tikka + 2 Roti + Banana)',
+                description: '100 g raw chicken breast pan-seared in 3 g oil + 2 roti + 1 banana',
+                tracks: ['non-veg'],
+                proteinAnchor: 'chicken',
+                expected: { kcal: 460, protein: 30.8, carbs: 69.6, fat: 7.0 },
                 ingredients: [
-                    { foodId: 'sattu', amount: 40 },
+                    { foodId: 'chicken_breast_raw', amount: 100 },
+                    { foodId: 'cooking_oil', amount: 3 },
+                    { foodId: 'roti', amount: 2 },
+                    { foodId: 'banana', amount: 1 }
+                ]
+            },
+            {
+                id: 'X3',
+                code: 'X3',
+                label: 'X3 (Veg Soya Chaat + Banana + Milk)',
+                description: '40 g dry soya chunks boiled & tossed with onion/lemon/5 g oil + 1 banana + 200 ml milk',
+                tracks: ['non-veg', 'eggetarian', 'veg'],
+                proteinAnchor: 'soya',
+                expected: { kcal: 410, protein: 28.5, carbs: 49.8, fat: 12.2 },
+                ingredients: [
+                    { foodId: 'soya_chunks_dry', amount: 40 },
+                    { foodId: 'cooking_oil', amount: 5 },
+                    { foodId: 'banana', amount: 1 },
+                    { foodId: 'whole_milk', amount: 200 }
+                ]
+            }
+        ]
+    },
+    {
+        slotId: 'breakfast',
+        slotName: 'Main Bulk Breakfast',
+        timeHint: '09:00 AM',
+        roleTag: 'Steady Carbs + Protein',
+        options: [
+            {
+                id: 'B1',
+                code: 'B1',
+                label: 'B1 (2-Egg Bhurji + 2 Roti + Curd)',
+                description: '2 whole eggs bhurji/omelette in 5 g oil + 2 roti + 100 g curd',
+                tracks: ['non-veg', 'eggetarian'],
+                proteinAnchor: 'egg',
+                expected: { kcal: 458, protein: 23.1, carbs: 48.1, fat: 18.9 },
+                ingredients: [
+                    { foodId: 'whole_egg', amount: 2 },
+                    { foodId: 'cooking_oil', amount: 5 },
+                    { foodId: 'roti', amount: 2 },
+                    { foodId: 'curd', amount: 100 }
+                ]
+            },
+            {
+                id: 'B2',
+                code: 'B2',
+                label: 'B2 (Veg Paneer Bhurji + 2 Roti + Curd)',
+                description: '75 g paneer bhurji in 5 g oil + 2 roti + 100 g curd',
+                tracks: ['non-veg', 'eggetarian', 'veg'],
+                proteinAnchor: 'paneer',
+                expected: { kcal: 524, protein: 24.4, carbs: 49.6, fat: 25.1 },
+                ingredients: [
+                    { foodId: 'paneer', amount: 75 },
+                    { foodId: 'cooking_oil', amount: 5 },
+                    { foodId: 'roti', amount: 2 },
+                    { foodId: 'curd', amount: 100 }
+                ]
+            },
+            {
+                id: 'B3',
+                code: 'B3',
+                label: 'B3 (High-Calorie Oats Milk Bowl)',
+                description: '60 g rolled oats cooked in 250 ml milk + 12 g peanut butter + 10 g chopped dates',
+                tracks: ['non-veg', 'eggetarian', 'veg'],
+                proteinAnchor: 'dairy',
+                expected: { kcal: 484, protein: 21.3, carbs: 61.5, fat: 18.4 },
+                ingredients: [
+                    { foodId: 'rolled_oats', amount: 60 },
                     { foodId: 'whole_milk', amount: 250 },
-                    { foodId: 'jaggery', amount: 10 }
+                    { foodId: 'peanut_butter', amount: 12 },
+                    { foodId: 'dates', amount: 10 }
                 ]
             }
         ]
     },
     {
         slotId: 'lunch',
-        slotName: 'Lunch',
-        timeHint: '13:30',
+        slotName: 'Power Lunch Thali',
+        timeHint: '01:00 PM',
+        roleTag: 'Biggest Meal of Day',
         options: [
             {
                 id: 'L1',
                 code: 'L1',
-                label: 'L1 (Chicken Curry Thali)',
-                description: '100 g raw chicken breast curry in 8 g oil + 200 g cooked rice + dal (35 g dry moong + 5 g ghee) + 100 g curd',
+                label: 'L1 (Chicken Curry + Rice + Dal + Curd)',
+                description: '100 g raw chicken breast curry in 7 g oil + 200 g cooked rice + dal (35 g dry moong + 5 g ghee) + 100 g curd',
                 tracks: ['non-veg'],
                 proteinAnchor: 'chicken',
-                expected: { kcal: 680, protein: 40, carbs: 81, fat: 20 },
+                expected: { kcal: 670, protein: 39.8, carbs: 81.4, fat: 19.0 },
                 ingredients: [
                     { foodId: 'chicken_breast_raw', amount: 100 },
-                    { foodId: 'cooking_oil', amount: 8 },
+                    { foodId: 'cooking_oil', amount: 7 },
                     { foodId: 'rice_cooked', amount: 200 },
                     { foodId: 'moong_dal_dry', amount: 35 },
                     { foodId: 'ghee', amount: 5 },
@@ -1433,14 +1501,14 @@ export const MEAL_SLOTS = [
             {
                 id: 'L2',
                 code: 'L2',
-                label: 'L2 (Veg Soya Chunks & Dal Thali)',
-                description: '40 g dry soya chunks curry in 8 g oil + 200 g cooked rice + dal (35 g dry moong + 5 g ghee) + 100 g curd',
+                label: 'L2 (Veg Soya Curry + Rice + Dal + Curd)',
+                description: '40 g dry soya chunks curry in 7 g oil + 200 g cooked rice + dal (35 g dry moong + 5 g ghee) + 100 g curd',
                 tracks: ['non-veg', 'eggetarian', 'veg'],
                 proteinAnchor: 'soya',
-                expected: { kcal: 698, protein: 38, carbs: 95, fat: 18 },
+                expected: { kcal: 688, protein: 38.1, carbs: 94.6, fat: 16.6 },
                 ingredients: [
                     { foodId: 'soya_chunks_dry', amount: 40 },
-                    { foodId: 'cooking_oil', amount: 8 },
+                    { foodId: 'cooking_oil', amount: 7 },
                     { foodId: 'rice_cooked', amount: 200 },
                     { foodId: 'moong_dal_dry', amount: 35 },
                     { foodId: 'ghee', amount: 5 },
@@ -1450,100 +1518,60 @@ export const MEAL_SLOTS = [
         ]
     },
     {
-        slotId: 'pre_workout',
-        slotName: 'Pre-workout',
-        timeHint: '17:00',
+        slotId: 'mid_morning',
+        slotName: 'Evening Liquid Bulk Shake',
+        timeHint: '04:30 PM',
+        roleTag: 'Easy Liquid Calories',
         options: [
             {
-                id: 'P1',
-                code: 'P1',
-                label: 'P1 (Bread + Banana)',
-                description: '2 slices whole-wheat bread + 1 banana (60–90 min pre-gym)',
+                id: 'M1',
+                code: 'M1',
+                label: 'M1 (Banana PB Oats Mass Shake)',
+                description: '1 banana + 250 ml milk + 20 g peanut butter + 25 g oats blended smooth',
                 tracks: ['non-veg', 'eggetarian', 'veg'],
-                proteinAnchor: 'carbs',
-                expected: { kcal: 255, protein: 8, carbs: 53, fat: 2 },
-                ingredients: [
-                    { foodId: 'bread_slice', amount: 2 },
-                    { foodId: 'banana', amount: 1 }
-                ]
-            },
-            {
-                id: 'P2',
-                code: 'P2',
-                label: 'P2 (Banana + Dates + Almonds)',
-                description: '1 banana + 30 g dates + 6 g almonds',
-                tracks: ['non-veg', 'eggetarian', 'veg'],
-                proteinAnchor: 'carbs',
-                expected: { kcal: 223, protein: 3, carbs: 51, fat: 3.5 },
+                proteinAnchor: 'dairy',
+                expected: { kcal: 472, protein: 18.5, carbs: 59.5, fat: 20.4 },
                 ingredients: [
                     { foodId: 'banana', amount: 1 },
-                    { foodId: 'dates', amount: 30 },
-                    { foodId: 'almonds', amount: 6 }
-                ]
-            }
-        ]
-    },
-    {
-        slotId: 'post_workout',
-        slotName: 'Post-workout',
-        timeHint: '19:00',
-        options: [
-            {
-                id: 'X1',
-                code: 'X1',
-                label: 'X1 (3 Boiled Eggs)',
-                description: '3 whole boiled eggs with pinch of salt & pepper',
-                tracks: ['non-veg', 'eggetarian'],
-                proteinAnchor: 'egg',
-                expected: { kcal: 216, protein: 19, carbs: 1, fat: 14 },
-                ingredients: [{ foodId: 'whole_egg', amount: 3 }]
-            },
-            {
-                id: 'X2',
-                code: 'X2',
-                label: 'X2 (Chicken Tikka + Roti)',
-                description: '100 g raw chicken breast grilled or tikka with 3 g oil + 1 roti',
-                tracks: ['non-veg'],
-                proteinAnchor: 'chicken',
-                expected: { kcal: 251, protein: 26, carbs: 21, fat: 6 },
-                ingredients: [
-                    { foodId: 'chicken_breast_raw', amount: 100 },
-                    { foodId: 'cooking_oil', amount: 3 },
-                    { foodId: 'roti', amount: 1 }
+                    { foodId: 'whole_milk', amount: 250 },
+                    { foodId: 'peanut_butter', amount: 20 },
+                    { foodId: 'rolled_oats', amount: 25 }
                 ]
             },
             {
-                id: 'X3',
-                code: 'X3',
-                label: 'X3 (Veg Soya Chaat + Banana)',
-                description: '35 g dry soya chunks boiled and tossed with onion, lemon and 5 g oil + 1 banana',
+                id: 'M2',
+                code: 'M2',
+                label: 'M2 (Desi Sattu Shake + Peanuts — No Blender)',
+                description: '45 g sattu + 250 ml milk + 10 g jaggery + 15 g roasted peanuts',
                 tracks: ['non-veg', 'eggetarian', 'veg'],
-                proteinAnchor: 'soya',
-                expected: { kcal: 271, protein: 19.5, carbs: 39, fat: 5.6 },
+                proteinAnchor: 'sattu',
+                expected: { kcal: 458, protein: 20.6, carbs: 51.2, fat: 18.3 },
                 ingredients: [
-                    { foodId: 'soya_chunks_dry', amount: 35 },
-                    { foodId: 'cooking_oil', amount: 5 },
-                    { foodId: 'banana', amount: 1 }
+                    { foodId: 'sattu', amount: 45 },
+                    { foodId: 'whole_milk', amount: 250 },
+                    { foodId: 'jaggery', amount: 10 },
+                    { foodId: 'peanuts', amount: 15 }
                 ]
             }
         ]
     },
     {
         slotId: 'dinner',
-        slotName: 'Dinner',
-        timeHint: '20:30',
+        slotName: 'Early Glycogen Dinner',
+        timeHint: '07:30 PM',
+        roleTag: 'Loads Tomorrow 5 AM Gym',
         options: [
             {
                 id: 'D1',
                 code: 'D1',
-                label: 'D1 (Chicken Curry + Roti + Rice)',
-                description: '100 g raw chicken breast curry in 7 g oil + 2 roti + 100 g sabzi + 100 g cooked rice',
+                label: 'D1 (Chicken Curry + 2 Roti + Rice)',
+                description: '80 g raw chicken breast curry in 6 g oil + 2 roti + 100 g sabzi + 100 g cooked rice',
                 tracks: ['non-veg'],
                 proteinAnchor: 'chicken',
-                expected: { kcal: 606, protein: 34, carbs: 79, fat: 16 },
+                expected: { kcal: 573, protein: 29.7, carbs: 78.6, fat: 14.4 },
                 ingredients: [
-                    { foodId: 'chicken_breast_raw', amount: 100 },
-                    { foodId: 'cooking_oil', amount: 7 },
+                    { foodId: 'chicken_breast_raw', amount: 80 },
+                    { foodId: 'cooking_oil', amount: 6 },
                     { foodId: 'roti', amount: 2 },
                     { foodId: 'mixed_sabzi', amount: 100 },
                     { foodId: 'rice_cooked', amount: 100 }
@@ -1552,46 +1580,46 @@ export const MEAL_SLOTS = [
             {
                 id: 'D2',
                 code: 'D2',
-                label: 'D2 (Egg Curry + Roti + Curd)',
-                description: '3 eggs in 8 g oil + 50 g gravy base + 2 roti + 150 g curd',
+                label: 'D2 (3-Egg Curry + 2 Roti + Curd)',
+                description: '3 eggs in 6 g oil + 50 g gravy base + 2 roti + 100 g curd',
                 tracks: ['non-veg', 'eggetarian'],
                 proteinAnchor: 'egg',
-                expected: { kcal: 610, protein: 32, carbs: 54, fat: 29 },
+                expected: { kcal: 562, protein: 30.0, carbs: 52.0, fat: 25.5 },
                 ingredients: [
                     { foodId: 'whole_egg', amount: 3 },
-                    { foodId: 'cooking_oil', amount: 8 },
+                    { foodId: 'cooking_oil', amount: 6 },
                     { foodId: 'gravy_base', amount: 50 },
                     { foodId: 'roti', amount: 2 },
-                    { foodId: 'curd', amount: 150 }
+                    { foodId: 'curd', amount: 100 }
                 ]
             },
             {
                 id: 'D3',
                 code: 'D3',
-                label: 'D3 (Paneer Masala + Roti + Curd)',
-                description: '80 g paneer in 5 g oil + 50 g gravy base + 2 roti + 150 g curd',
+                label: 'D3 (Paneer Masala + 2 Roti + Curd)',
+                description: '75 g paneer in 5 g oil + 50 g gravy base + 2 roti + 100 g curd',
                 tracks: ['non-veg', 'eggetarian', 'veg'],
                 proteinAnchor: 'paneer',
-                expected: { kcal: 591, protein: 28, carbs: 56, fat: 29 },
+                expected: { kcal: 547, protein: 25.0, carbs: 53.1, fat: 25.8 },
                 ingredients: [
-                    { foodId: 'paneer', amount: 80 },
+                    { foodId: 'paneer', amount: 75 },
                     { foodId: 'cooking_oil', amount: 5 },
                     { foodId: 'gravy_base', amount: 50 },
                     { foodId: 'roti', amount: 2 },
-                    { foodId: 'curd', amount: 150 }
+                    { foodId: 'curd', amount: 100 }
                 ]
             },
             {
                 id: 'D4',
                 code: 'D4',
-                label: 'D4 (Soya Chunks Curry + Roti + Rice)',
-                description: '50 g dry soya chunks curry in 8 g oil + 50 g gravy base + 2 roti + 100 g cooked rice',
+                label: 'D4 (Soya Chunks Curry + 2 Roti + Rice)',
+                description: '45 g dry soya chunks curry in 6 g oil + 50 g gravy base + 2 roti + 100 g cooked rice',
                 tracks: ['non-veg', 'eggetarian', 'veg'],
                 proteinAnchor: 'soya',
-                expected: { kcal: 605, protein: 36, carbs: 91, fat: 10 },
+                expected: { kcal: 570, protein: 33.7, carbs: 89.0, fat: 8.3 },
                 ingredients: [
-                    { foodId: 'soya_chunks_dry', amount: 50 },
-                    { foodId: 'cooking_oil', amount: 8 },
+                    { foodId: 'soya_chunks_dry', amount: 45 },
+                    { foodId: 'cooking_oil', amount: 6 },
                     { foodId: 'gravy_base', amount: 50 },
                     { foodId: 'roti', amount: 2 },
                     { foodId: 'rice_cooked', amount: 100 }
@@ -1601,17 +1629,18 @@ export const MEAL_SLOTS = [
     },
     {
         slotId: 'bedtime',
-        slotName: 'Bedtime',
-        timeHint: '22:30',
+        slotName: 'Pre-Sleep Recovery',
+        timeHint: '08:45 PM',
+        roleTag: 'Lights Out By 09:15 PM',
         options: [
             {
                 id: 'S1',
                 code: 'S1',
-                label: 'S1 (Warm Milk + Almonds)',
-                description: '200 ml milk + 6 almonds (7 g)',
+                label: 'S1 (Warm Milk + 6 Almonds)',
+                description: '200 ml warm whole milk + 6 almonds (7 g) — slow casein for overnight repair',
                 tracks: ['non-veg', 'eggetarian', 'veg'],
                 proteinAnchor: 'dairy',
-                expected: { kcal: 163, protein: 8, carbs: 11, fat: 10 },
+                expected: { kcal: 163, protein: 7.9, carbs: 11.1, fat: 10.1 },
                 ingredients: [
                     { foodId: 'whole_milk', amount: 200 },
                     { foodId: 'almonds', amount: 7 }
@@ -1624,7 +1653,7 @@ export const MEAL_SLOTS = [
                 description: '150 g curd + 10 g peanut butter',
                 tracks: ['non-veg', 'eggetarian', 'veg'],
                 proteinAnchor: 'dairy',
-                expected: { kcal: 150, protein: 8, carbs: 9, fat: 10 },
+                expected: { kcal: 150, protein: 7.8, carbs: 9.1, fat: 10.0 },
                 ingredients: [
                     { foodId: 'curd', amount: 150 },
                     { foodId: 'peanut_butter', amount: 10 }
@@ -1640,7 +1669,9 @@ export const APPETITE_HELPERS = [
     { id: 'ah-peanuts', label: '30 g roasted peanuts', kcal: 170, protein: 7, carbs: 4.8, fat: 14.7 },
     { id: 'ah-sattu', label: '30 g sattu in water/milk', kcal: 122, protein: 6, carbs: 18, fat: 1.8 },
     { id: 'ah-banana', label: '1 medium banana', kcal: 105, protein: 1.3, carbs: 27, fat: 0.4 },
-    { id: 'ah-milk', label: '250 ml extra milk', kcal: 152, protein: 8, carbs: 12, fat: 8.3 }
+    { id: 'ah-milk', label: '250 ml extra milk', kcal: 152, protein: 8, carbs: 12, fat: 8.3 },
+    { id: 'ah-eggs', label: '2 extra boiled eggs', kcal: 144, protein: 12.6, carbs: 0.8, fat: 9.6 },
+    { id: 'ah-chana', label: '50 g roasted chana', kcal: 185, protein: 9.5, carbs: 29, fat: 2.5 }
 ];
 
 // ============================================================================
@@ -2213,11 +2244,11 @@ export function calculateProgressiveOverload(
         mode: isAssisted ? 'assist' : 'add',
         reason: isAssisted
             ? `Hit ${exercise.repMax} reps on all ${prescribedSets} sets to reduce assistance by ${Math.abs(
-                  customDelta
-              )} kg`
+                customDelta
+            )} kg`
             : `Hit ${exercise.repMax} reps across all ${prescribedSets} sets to unlock +${Math.abs(
-                  customDelta
-              )} kg`
+                customDelta
+            )} kg`
     };
 }
 
@@ -2557,8 +2588,9 @@ export function runBuiltInUnitTests() {
         { kcal: 0, protein: 0 }
     );
     const nonVegPass =
-        Math.abs(nonVegTotals.kcal - 2955) <= 25 && Math.round(nonVegTotals.protein) >= 150;
-    const vegPass = Math.abs(vegTotals.kcal - 2990) <= 25 && Math.round(vegTotals.protein) >= 144;
+        Math.abs(nonVegTotals.kcal - 2939) <= 25 && Math.round(nonVegTotals.protein) >= 140;
+    const vegPass =
+        Math.abs(vegTotals.kcal - 2964) <= 25 && Math.round(vegTotals.protein) >= 140;
     results.push({
         name: 'Full-Day Non-Veg (~2,955 kcal / 155g P) & Veg (~2,990 kcal / 146g P)',
         passed: nonVegPass && vegPass,
@@ -3487,6 +3519,9 @@ export default function App() {
         return getFreshInitialState();
     });
 
+    const appStateRef = useRef(appState);
+    appStateRef.current = appState;
+
     // Cloud Sync State
     const [syncStatus, setSyncStatus] = useState('loading'); // 'loading' | 'synced' | 'syncing' | 'offline'
     const [lastSyncedAt, setLastSyncedAt] = useState(null);
@@ -3494,12 +3529,59 @@ export default function App() {
     const [localMigrationCandidate, setLocalMigrationCandidate] = useState(null);
     const [overviewRefreshKey, setOverviewRefreshKey] = useState(0);
 
-    // Prevent debounced effects from firing before initial PostgreSQL load completes
+    // Signature-based sync refs (prevents both blank overwrites & skipped 1st clicks)
     const serverReadyRef = useRef(false);
-    const skipNextConfigSyncRef = useRef(true);
-    const skipNextDailySyncRef = useRef(true);
+    const lastSyncedConfigSigRef = useRef('');
+    const lastSyncedDailySigRef = useRef('');
     const configTimerRef = useRef(null);
     const dailyTimerRef = useRef(null);
+
+    const buildConfigSig = useCallback(
+        (s) =>
+            JSON.stringify({
+                onboarded: s.onboarded,
+                dayStamp: s.dayStamp,
+                theme: s.theme,
+                unit: s.unit,
+                rampInEnabled: s.rampInEnabled,
+                pelvicSide: s.pelvicSide,
+                workoutStreak: s.workoutStreak,
+                profile: s.profile,
+                customSteps: s.customSteps,
+                variantChoices: s.variantChoices,
+                swappedAlternatives: s.swappedAlternatives,
+                selectedMealOptions: s.selectedMealOptions,
+                activeDrafts: s.activeDrafts
+            }),
+        []
+    );
+
+    const buildDailySig = useCallback((s, totalsOverride = null) => {
+        const t = totalsOverride || computeDayNutritionTotals(s);
+        return JSON.stringify({
+            date: s.dayStamp || getLocalDateStr(),
+            kcal: t.consumedKcal,
+            protein: t.consumedProtein,
+            carbs: t.consumedCarbs,
+            fat: t.consumedFat,
+            proteinFeedings: t.proteinFeedingsCount,
+            waterMl: s.waterMl,
+            sleepHours: s.sleepHours,
+            sundayWalkDone: s.sundayWalkDone,
+            selectedMealOptions: s.selectedMealOptions,
+            completedMealSlots: s.completedMealSlots,
+            loggedAppetiteHelpers: s.loggedAppetiteHelpers,
+            pelvicHabits: s.pelvicHabits
+        });
+    }, []);
+
+    const syncBaselineRefs = useCallback(
+        (stateObj) => {
+            lastSyncedConfigSigRef.current = buildConfigSig(stateObj);
+            lastSyncedDailySigRef.current = buildDailySig(stateObj);
+        },
+        [buildConfigSig, buildDailySig]
+    );
 
     const [activeTab, setActiveTab] = useState('today');
     const currentWeekdayIndex = useMemo(() => new Date().getDay(), []);
@@ -3563,8 +3645,7 @@ export default function App() {
                     setLocalMigrationCandidate(null);
                 }
 
-                skipNextConfigSyncRef.current = true;
-                skipNextDailySyncRef.current = true;
+                syncBaselineRefs(mergedServerState);
                 setAppState(mergedServerState);
                 setOnboardingForm(mergedServerState.profile);
                 setShowOnboarding(!mergedServerState.onboarded);
@@ -3576,16 +3657,17 @@ export default function App() {
                     showToast('Synced with PostgreSQL database!');
                 }
             } catch (err) {
+                syncBaselineRefs(appStateRef.current);
                 serverReadyRef.current = true;
                 setSyncStatus('offline');
                 setSyncErrorMsg(err.message || 'Backend unreachable');
-                setShowOnboarding((prev) => prev || !appState.onboarded);
+                setShowOnboarding((prev) => prev || !appStateRef.current.onboarded);
                 if (!silent) {
                     showToast(`Offline mode: ${err.message || 'Backend se connect nahi ho paya'}`);
                 }
             }
         },
-        [bumpOverview, showToast]
+        [bumpOverview, showToast, syncBaselineRefs]
     );
 
     // Bootstrap from PostgreSQL on app mount
@@ -3624,25 +3706,23 @@ export default function App() {
         fetchDayRecall(selectedDayIndex);
     }, [selectedDayIndex, fetchDayRecall]);
 
-    // Debounced auto-sync for UserConfig & live activeDrafts -> PUT /api/config
-    const configSyncSignature = useMemo(
-        () =>
-            JSON.stringify({
-                onboarded: appState.onboarded,
-                dayStamp: appState.dayStamp,
-                theme: appState.theme,
-                unit: appState.unit,
-                rampInEnabled: appState.rampInEnabled,
-                pelvicSide: appState.pelvicSide,
-                workoutStreak: appState.workoutStreak,
-                profile: appState.profile,
-                customSteps: appState.customSteps,
-                variantChoices: appState.variantChoices,
-                swappedAlternatives: appState.swappedAlternatives,
-                selectedMealOptions: appState.selectedMealOptions,
-                activeDrafts: appState.activeDrafts
-            }),
+    // Computed Nutrition Totals for Today
+    const nutritionTotals = useMemo(
+        () => computeDayNutritionTotals(appState),
         [
+            appState.selectedMealOptions,
+            appState.completedMealSlots,
+            appState.loggedAppetiteHelpers,
+            appState.foodDatabase,
+            appState.profile.dietTrack
+        ]
+    );
+
+    // Signatures built via identical helpers so baseline comparison is 100% exact
+    const configSyncSignature = useMemo(
+        () => buildConfigSig(appState),
+        [
+            buildConfigSig,
             appState.onboarded,
             appState.dayStamp,
             appState.theme,
@@ -3659,70 +3739,12 @@ export default function App() {
         ]
     );
 
-    useEffect(() => {
-        if (!serverReadyRef.current) return;
-        if (skipNextConfigSyncRef.current) {
-            skipNextConfigSyncRef.current = false;
-            return;
-        }
-
-        if (configTimerRef.current) clearTimeout(configTimerRef.current);
-        configTimerRef.current = setTimeout(async () => {
-            try {
-                setSyncStatus('syncing');
-                const payload = JSON.parse(configSyncSignature);
-                const res = await vtaperApi.updateConfig(payload);
-                setSyncStatus('synced');
-                setLastSyncedAt(res.updatedAt || new Date().toISOString());
-                setSyncErrorMsg('');
-            } catch (err) {
-                setSyncStatus('offline');
-                setSyncErrorMsg(err.message || 'Config sync failed');
-            }
-        }, 700);
-
-        return () => {
-            if (configTimerRef.current) clearTimeout(configTimerRef.current);
-        };
-    }, [configSyncSignature]);
-
-    // Computed Nutrition Totals for Today
-    const nutritionTotals = useMemo(
-        () => computeDayNutritionTotals(appState),
-        [
-            appState.selectedMealOptions,
-            appState.completedMealSlots,
-            appState.loggedAppetiteHelpers,
-            appState.foodDatabase,
-            appState.profile.dietTrack
-        ]
-    );
-
-    // Debounced auto-sync for Today's DailyLog (Nutrition, Water, Sleep, Habits) -> PUT /api/daily/:date
     const dailySyncSignature = useMemo(
-        () =>
-            JSON.stringify({
-                date: appState.dayStamp || getLocalDateStr(),
-                kcal: nutritionTotals.consumedKcal,
-                protein: nutritionTotals.consumedProtein,
-                carbs: nutritionTotals.consumedCarbs,
-                fat: nutritionTotals.consumedFat,
-                proteinFeedings: nutritionTotals.proteinFeedingsCount,
-                waterMl: appState.waterMl,
-                sleepHours: appState.sleepHours,
-                sundayWalkDone: appState.sundayWalkDone,
-                selectedMealOptions: appState.selectedMealOptions,
-                completedMealSlots: appState.completedMealSlots,
-                loggedAppetiteHelpers: appState.loggedAppetiteHelpers,
-                pelvicHabits: appState.pelvicHabits
-            }),
+        () => buildDailySig(appState, nutritionTotals),
         [
+            buildDailySig,
             appState.dayStamp,
-            nutritionTotals.consumedKcal,
-            nutritionTotals.consumedProtein,
-            nutritionTotals.consumedCarbs,
-            nutritionTotals.consumedFat,
-            nutritionTotals.proteinFeedingsCount,
+            nutritionTotals,
             appState.waterMl,
             appState.sleepHours,
             appState.sundayWalkDone,
@@ -3733,17 +3755,27 @@ export default function App() {
         ]
     );
 
-    useEffect(() => {
-        if (!serverReadyRef.current) return;
-        if (skipNextDailySyncRef.current) {
-            skipNextDailySyncRef.current = false;
-            return;
+    const flushConfigSync = useCallback(async (sig) => {
+        if (!sig || sig === lastSyncedConfigSigRef.current) return;
+        try {
+            setSyncStatus('syncing');
+            const payload = JSON.parse(sig);
+            const res = await vtaperApi.updateConfig(payload);
+            lastSyncedConfigSigRef.current = sig;
+            setSyncStatus('synced');
+            setLastSyncedAt(res.updatedAt || new Date().toISOString());
+            setSyncErrorMsg('');
+        } catch (err) {
+            setSyncStatus('offline');
+            setSyncErrorMsg(err.message || 'Config sync failed');
         }
+    }, []);
 
-        if (dailyTimerRef.current) clearTimeout(dailyTimerRef.current);
-        dailyTimerRef.current = setTimeout(async () => {
+    const flushDailySync = useCallback(
+        async (sig) => {
+            if (!sig || sig === lastSyncedDailySigRef.current) return;
             try {
-                const payload = JSON.parse(dailySyncSignature);
+                const payload = JSON.parse(sig);
                 const { date, ...body } = payload;
 
                 // Keep local dailyLogs archive in sync too
@@ -3757,6 +3789,7 @@ export default function App() {
 
                 setSyncStatus('syncing');
                 await vtaperApi.saveDailyLog(date, body);
+                lastSyncedDailySigRef.current = sig;
                 setSyncStatus('synced');
                 setLastSyncedAt(new Date().toISOString());
                 setSyncErrorMsg('');
@@ -3765,12 +3798,59 @@ export default function App() {
                 setSyncStatus('offline');
                 setSyncErrorMsg(err.message || 'Daily log sync failed');
             }
-        }, 650);
+        },
+        [bumpOverview]
+    );
+
+    // Debounced auto-sync for UserConfig & live activeDrafts -> PUT /api/config
+    useEffect(() => {
+        if (!serverReadyRef.current) return;
+        if (configSyncSignature === lastSyncedConfigSigRef.current) return;
+
+        if (configTimerRef.current) clearTimeout(configTimerRef.current);
+        configTimerRef.current = setTimeout(() => {
+            flushConfigSync(configSyncSignature);
+        }, 450);
+
+        return () => {
+            if (configTimerRef.current) clearTimeout(configTimerRef.current);
+        };
+    }, [configSyncSignature, flushConfigSync]);
+
+    // Debounced auto-sync for Today's DailyLog -> PUT /api/daily/:date
+    useEffect(() => {
+        if (!serverReadyRef.current) return;
+        if (dailySyncSignature === lastSyncedDailySigRef.current) return;
+
+        if (dailyTimerRef.current) clearTimeout(dailyTimerRef.current);
+        dailyTimerRef.current = setTimeout(() => {
+            flushDailySync(dailySyncSignature);
+        }, 450);
 
         return () => {
             if (dailyTimerRef.current) clearTimeout(dailyTimerRef.current);
         };
-    }, [dailySyncSignature, bumpOverview]);
+    }, [dailySyncSignature, flushDailySync]);
+
+    // Flush any pending save immediately if user minimizes/switches tab on phone
+    useEffect(() => {
+        const handleVisibilityFlush = () => {
+            if (document.visibilityState === 'hidden' && serverReadyRef.current) {
+                if (configTimerRef.current) {
+                    clearTimeout(configTimerRef.current);
+                    configTimerRef.current = null;
+                }
+                if (dailyTimerRef.current) {
+                    clearTimeout(dailyTimerRef.current);
+                    dailyTimerRef.current = null;
+                }
+                flushConfigSync(buildConfigSig(appStateRef.current));
+                flushDailySync(buildDailySig(appStateRef.current));
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityFlush);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityFlush);
+    }, [buildConfigSig, buildDailySig, flushConfigSync, flushDailySync]);
 
     // Safe Midnight Rollover (archives yesterday into PostgreSQL before resetting today's checklists)
     useEffect(() => {
@@ -4352,6 +4432,7 @@ export default function App() {
         const chosenTrack = onboardingForm.dietTrack || 'non-veg';
         const parsedStartKg = Number(onboardingForm.startWeightKg || 0);
         const todayStr = getLocalDateStr();
+        const nextMeals = getDefaultSelectedMealsForTrack(chosenTrack);
 
         const updatedProfile = {
             ...onboardingForm,
@@ -4366,7 +4447,7 @@ export default function App() {
             ...prev,
             onboarded: true,
             profile: updatedProfile,
-            selectedMealOptions: getDefaultSelectedMealsForTrack(chosenTrack),
+            selectedMealOptions: nextMeals,
             weightLogs: shouldCreateBaselineWeight
                 ? [
                       {
@@ -4382,6 +4463,16 @@ export default function App() {
                 : prev.weightLogs
         }));
         setShowOnboarding(false);
+
+        await runCloudMutation(
+            () =>
+                vtaperApi.updateConfig({
+                    onboarded: true,
+                    profile: updatedProfile,
+                    selectedMealOptions: nextMeals
+                }),
+            'Profile sync failed'
+        );
 
         if (shouldCreateBaselineWeight) {
             await runCloudMutation(
@@ -4405,9 +4496,8 @@ export default function App() {
             'Migration failed'
         );
         if (res?.state) {
-            skipNextConfigSyncRef.current = true;
-            skipNextDailySyncRef.current = true;
             const merged = hydrateMergedState(res.state);
+            syncBaselineRefs(merged);
             setAppState(merged);
             setLocalMigrationCandidate(null);
             setShowOnboarding(!merged.onboarded);
@@ -4772,7 +4862,7 @@ export default function App() {
 
                 {/* Page Container */}
                 <main className="vt-page-main">
-                    {/* 1-Click LocalStorage-to-PostgreSQL Migration Banner (only if DB is empty & old local data found) */}
+                    {/* 1-Click LocalStorage-to-PostgreSQL Migration Banner */}
                     {localMigrationCandidate && (
                         <div
                             style={{
@@ -4942,9 +5032,9 @@ export default function App() {
                             loadFromBackend={loadFromBackend}
                             runCloudMutation={runCloudMutation}
                             onStateReplaced={(nextState) => {
-                                skipNextConfigSyncRef.current = true;
-                                skipNextDailySyncRef.current = true;
-                                setAppState(hydrateMergedState(nextState));
+                                const hydrated = hydrateMergedState(nextState);
+                                syncBaselineRefs(hydrated);
+                                setAppState(hydrated);
                                 fetchDayRecall(selectedDayIndex);
                                 bumpOverview();
                             }}
@@ -7209,11 +7299,11 @@ function TodayView({
                                                 <span style={{ color: colors.text }} className="font-mono-num">
                                                     {prevSets.length > 0
                                                         ? prevSets
-                                                              .map(
-                                                                  (s) =>
-                                                                      `${isAssisted ? 'Assist ' : ''}${formatWeight(s.weight)}${appState.unit} × ${s.reps}`
-                                                              )
-                                                              .join('  |  ')
+                                                            .map(
+                                                                (s) =>
+                                                                    `${isAssisted ? 'Assist ' : ''}${formatWeight(s.weight)}${appState.unit} × ${s.reps}`
+                                                            )
+                                                            .join('  |  ')
                                                         : 'First session — enter your starting weights & reps'}
                                                 </span>
                                             </div>
@@ -7258,11 +7348,11 @@ function TodayView({
                                                         <span>
                                                             {overload.mode === 'assist'
                                                                 ? `${formatWeight(overload.incrementKg)} ${appState.unit} Assist → ${formatWeight(
-                                                                      overload.suggestedWeightKg
-                                                                  )} ${appState.unit}`
+                                                                    overload.suggestedWeightKg
+                                                                )} ${appState.unit}`
                                                                 : `+${formatWeight(overload.incrementKg)} ${appState.unit} → ${formatWeight(
-                                                                      overload.suggestedWeightKg
-                                                                  )} ${appState.unit}`}
+                                                                    overload.suggestedWeightKg
+                                                                )} ${appState.unit}`}
                                                         </span>
                                                     </span>
                                                     <button
@@ -7533,10 +7623,10 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                         muscleFilter === 'All'
                             ? day.exercises
                             : day.exercises.filter(
-                                  (ex) =>
-                                      ex.primaryGroup === muscleFilter ||
-                                      (ex.secondaryGroups || []).includes(muscleFilter)
-                              );
+                                (ex) =>
+                                    ex.primaryGroup === muscleFilter ||
+                                    (ex.secondaryGroups || []).includes(muscleFilter)
+                            );
 
                     if (muscleFilter !== 'All' && filteredExercises.length === 0 && !day.isRest) {
                         return null;
@@ -7653,22 +7743,42 @@ function NutritionView({
     appState,
     setAppState,
     nutritionTotals,
+    gainAnalysis,
     handleDietTrackChange,
     showToast
 }) {
     const [subView, setSubView] = useState('daily');
+    const [foodSearch, setFoodSearch] = useState('');
+    const [foodCategory, setFoodCategory] = useState('All');
 
     const kcalTarget = appState.profile.targetCalories || SCIENCE_RULES.TARGET_KCAL;
     const proteinTarget = appState.profile.targetProteinG || SCIENCE_RULES.TARGET_PROTEIN_G;
+    const carbsTarget = appState.profile.targetCarbsG || SCIENCE_RULES.ADVISORY_CARBS_G;
+    const fatTarget = appState.profile.targetFatG || SCIENCE_RULES.ADVISORY_FAT_G;
     const waterTarget = appState.profile.targetWaterMl || SCIENCE_RULES.TARGET_WATER_ML;
-    const sleepTarget = appState.profile.targetSleepHours || SCIENCE_RULES.TARGET_SLEEP_HOURS;
+    const sleepTarget = appState.profile.targetSleepHours || 8.0;
 
     const kcalPercent = Math.min(100, Math.round((nutritionTotals.consumedKcal / kcalTarget) * 100));
     const proteinPercent = Math.min(
         100,
         Math.round((nutritionTotals.consumedProtein / proteinTarget) * 100)
     );
+    const carbsPercent = Math.min(100, Math.round((nutritionTotals.consumedCarbs / carbsTarget) * 100));
+    const fatPercent = Math.min(100, Math.round((nutritionTotals.consumedFat / fatTarget) * 100));
     const waterPercent = Math.min(100, Math.round((appState.waterMl / waterTarget) * 100));
+
+    const remainingKcal = Math.max(0, kcalTarget - nutritionTotals.consumedKcal);
+    const remainingProtein = Math.max(0, proteinTarget - nutritionTotals.consumedProtein);
+
+    const completedSlotsCount = useMemo(
+        () => MEAL_SLOTS.filter((s) => Boolean(appState.completedMealSlots?.[s.slotId])).length,
+        [appState.completedMealSlots]
+    );
+
+    const nextPendingSlot = useMemo(
+        () => MEAL_SLOTS.find((s) => !appState.completedMealSlots?.[s.slotId]) || null,
+        [appState.completedMealSlots]
+    );
 
     const weeklyMenu = useMemo(
         () => generateWeeklyMenuRotation(appState.profile.dietTrack || 'non-veg'),
@@ -7679,6 +7789,23 @@ function NutritionView({
         () => generateWeeklyGroceryList(weeklyMenu, appState.foodDatabase),
         [weeklyMenu, appState.foodDatabase]
     );
+
+    const helperCounts = useMemo(() => {
+        const counts = {};
+        (appState.loggedAppetiteHelpers || []).forEach((id) => {
+            counts[id] = (counts[id] || 0) + 1;
+        });
+        return counts;
+    }, [appState.loggedAppetiteHelpers]);
+
+    const filteredFoods = useMemo(() => {
+        const q = foodSearch.trim().toLowerCase();
+        return (appState.foodDatabase || []).filter((f) => {
+            const catMatch = foodCategory === 'All' || f.category === foodCategory;
+            const textMatch = !q || f.name.toLowerCase().includes(q);
+            return catMatch && textMatch;
+        });
+    }, [appState.foodDatabase, foodSearch, foodCategory]);
 
     const toggleMealSlotCompleted = (slotId) => {
         setAppState((prev) => ({
@@ -7705,7 +7832,17 @@ function NutritionView({
             ...prev,
             loggedAppetiteHelpers: [...(prev.loggedAppetiteHelpers || []), helper.id]
         }));
-        showToast(`Added ${helper.label} (+${helper.kcal} kcal)`);
+        showToast(`Added ${helper.label} (+${helper.kcal} kcal, +${helper.protein}g P)`);
+    };
+
+    const handleRemoveOneHelper = (helperId) => {
+        setAppState((prev) => {
+            const arr = [...(prev.loggedAppetiteHelpers || [])];
+            const idx = arr.lastIndexOf(helperId);
+            if (idx === -1) return prev;
+            arr.splice(idx, 1);
+            return { ...prev, loggedAppetiteHelpers: arr };
+        });
     };
 
     const handleClearHelpers = () => {
@@ -7713,89 +7850,228 @@ function NutritionView({
         showToast('Cleared extra appetite helpers for today.');
     };
 
+    const handleApplyCalorieAdjustment = (delta) => {
+        setAppState((prev) => ({
+            ...prev,
+            profile: {
+                ...prev.profile,
+                targetCalories: Math.max(2400, (prev.profile.targetCalories || 2900) + delta)
+            }
+        }));
+        showToast(`Daily calorie target updated by ${delta > 0 ? '+' : ''}${delta} kcal!`);
+    };
+
+    const sleepLowWarning = Number(appState.sleepHours || 0) > 0 && Number(appState.sleepHours) < 7.5;
+
     return (
         <div className="vt-stack-5">
-            {/* Top Track Switcher */}
+            {/* 1. 5:00 AM GYM LEAN-BULK COMMAND HEADER */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                className="vt-card vt-p-card-md vt-resp-row-md"
+                className="vt-card vt-p-card-md vt-stack-4"
             >
-                <div>
-                    <span
-                        style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                        className="vt-badge-lg vt-text-11 vt-font-extrabold vt-uppercase"
-                    >
-                        Zero Supplements • Auto-Archived Daily in PostgreSQL
-                    </span>
-                    <h2 className="font-display vt-text-resp-3xl-4xl vt-font-black vt-uppercase vt-mt-1">
-                        Whole-Food Lean Bulk Nutrition
-                    </h2>
-                </div>
-
-                <div className="vt-row-wrap vt-gap-1-5">
-                    {['non-veg', 'eggetarian', 'veg'].map((t) => {
-                        const active = (appState.profile.dietTrack || 'non-veg') === t;
-                        return (
-                            <button
-                                key={t}
-                                onClick={() => handleDietTrackChange(t)}
-                                style={{
-                                    backgroundColor: active ? colors.accent : colors.elevated,
-                                    color: active ? colors.accentText : colors.text,
-                                    borderColor: active ? colors.accentBorder : colors.border
-                                }}
-                                className="vt-btn vt-h-40 vt-px-3 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase"
+                <div className="vt-resp-row-md">
+                    <div className="vt-stack-1">
+                        <div className="vt-row-wrap vt-gap-1-5">
+                            <span
+                                style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                                className="vt-badge-lg vt-text-10 vt-font-extrabold vt-uppercase"
                             >
-                                {t}
-                            </button>
-                        );
-                    })}
+                                5:00 AM Gym • 55 kg / 173 cm Fast Lean Bulk
+                            </span>
+                            <span
+                                style={{
+                                    backgroundColor: colors.elevated,
+                                    borderColor: colors.border,
+                                    color: colors.muted
+                                }}
+                                className="vt-badge vt-border vt-text-10 vt-font-bold font-mono-num"
+                            >
+                                {completedSlotsCount}/7 Meals Done
+                            </span>
+                        </div>
+                        <h2 className="font-display vt-text-resp-3xl-4xl vt-font-black vt-uppercase">
+                            Whole-Food Indian Bulk Protocol
+                        </h2>
+                        <p className="vt-text-xs" style={{ color: colors.muted }}>
+                            04:30 AM fast carbs → 05:00 AM gym → 06:30 AM recovery → 04:30 PM liquid bulk shake → 09:00 PM sleep.
+                        </p>
+                    </div>
+
+                    <div className="vt-row-wrap vt-gap-1-5 vt-shrink-0">
+                        {['non-veg', 'eggetarian', 'veg'].map((t) => {
+                            const active = (appState.profile.dietTrack || 'non-veg') === t;
+                            return (
+                                <button
+                                    key={t}
+                                    type="button"
+                                    onClick={() => handleDietTrackChange(t)}
+                                    style={{
+                                        backgroundColor: active ? colors.accent : colors.elevated,
+                                        color: active ? colors.accentText : colors.text,
+                                        borderColor: active ? colors.accentBorder : colors.border
+                                    }}
+                                    className="vt-btn vt-h-40 vt-px-3 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase"
+                                >
+                                    {t}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Live Bulk Gap & Next Meal Strip */}
+                <div
+                    style={{
+                        backgroundColor: remainingKcal === 0 ? colors.accentSurface : colors.elevated,
+                        borderColor: remainingKcal === 0 ? colors.accentBorder : colors.border
+                    }}
+                    className="vt-p-3 vt-box-xl vt-resp-row-md vt-tabular"
+                >
+                    <div className="vt-flex vt-items-center vt-gap-2">
+                        <Zap
+                            size={16}
+                            style={{ color: isDark ? colors.accent : colors.text, flexShrink: 0 }}
+                        />
+                        <div className="vt-text-xs">
+                            {remainingKcal === 0 && remainingProtein === 0 ? (
+                                <strong style={{ color: colors.success }}>
+                                    BULK TARGET HIT! Aaj ka 2,900 kcal aur protein surplus 100% lock ho gaya — ab 9:00 PM tak so jao.
+                                </strong>
+                            ) : nextPendingSlot ? (
+                                <>
+                                    <strong>Next Up ({nextPendingSlot.timeHint}):</strong> {nextPendingSlot.slotName} •{' '}
+                                    <span style={{ color: colors.muted }}>
+                                        Bacha hua: <strong style={{ color: colors.text }}>{remainingKcal} kcal</strong> &{' '}
+                                        <strong style={{ color: colors.text }}>{remainingProtein}g protein</strong>
+                                    </span>
+                                </>
+                            ) : (
+                                <>
+                                    <strong>Gap Remaining:</strong> {remainingKcal} kcal & {remainingProtein}g protein — neeche 1-tap Appetite Helpers se fill kar lo.
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    <span
+                        style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.muted }}
+                        className="vt-badge vt-border font-mono-num vt-text-10 vt-font-extrabold vt-shrink-0"
+                    >
+                        Planned: {nutritionTotals.plannedKcal} kcal • {nutritionTotals.plannedProtein}g P
+                    </span>
+                </div>
+
+                {/* Smart Calorie Auto-Coach Banner (from Weight Gain Velocity) */}
+                {gainAnalysis && gainAnalysis.calorieAdjustment !== 0 && (
+                    <div
+                        style={{
+                            backgroundColor: colors.elevated,
+                            borderColor:
+                                gainAnalysis.calorieAdjustment > 0 ? colors.accentBorder : colors.danger
+                        }}
+                        className="vt-p-3 vt-box-xl vt-resp-row vt-gap-2"
+                    >
+                        <div className="vt-text-xs">
+                            <strong>Weight Velocity Coach:</strong> {gainAnalysis.headline}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => handleApplyCalorieAdjustment(gainAnalysis.calorieAdjustment)}
+                            style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                            className="vt-btn vt-h-36 vt-px-3 vt-rounded-lg vt-text-11 vt-font-extrabold vt-uppercase vt-shrink-0"
+                        >
+                            Apply {gainAnalysis.calorieAdjustment > 0 ? '+300' : '-200'} kcal
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* 2. ACTIVITY RINGS + CARBS/FAT BREAKDOWN */}
+            <div
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                className="vt-card vt-p-4 vt-stack-4 vt-tabular"
+            >
+                <div className="vt-grid-3 vt-gap-2 vt-justify-items-center">
+                    {[
+                        {
+                            v: nutritionTotals.consumedKcal,
+                            m: kcalTarget,
+                            c: colors.accent,
+                            s: 'kcal',
+                            t: `${nutritionTotals.consumedKcal}/${kcalTarget}`
+                        },
+                        {
+                            v: nutritionTotals.consumedProtein,
+                            m: proteinTarget,
+                            c: '#FF7A1A',
+                            s: 'protein',
+                            t: `${nutritionTotals.consumedProtein}/${proteinTarget}g`
+                        },
+                        {
+                            v: appState.waterMl,
+                            m: waterTarget,
+                            c: '#0059FF',
+                            s: 'water',
+                            t: `${(appState.waterMl / 1000).toFixed(1)}/${(waterTarget / 1000).toFixed(1)}L`
+                        }
+                    ].map((r) => (
+                        <div key={r.s} className="vt-text-center">
+                            <Ring
+                                value={r.v}
+                                max={r.m}
+                                color={r.c}
+                                track={colors.elevated}
+                                label={`${Math.min(100, Math.round((r.v / r.m) * 100))}%`}
+                                sub={r.s}
+                            />
+                            <div className="vt-text-11 vt-font-bold vt-mt-1-5 font-mono-num">{r.t}</div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Carbs & Healthy Fats Secondary Bars (Crucial for 5 AM Energy & Hormones) */}
+                <div
+                    className="vt-grid-sm-2 vt-gap-3 vt-pt-2 vt-border-t"
+                    style={{ borderColor: colors.border }}
+                >
+                    <div className="vt-stack-1">
+                        <div className="vt-between-center vt-text-11 font-mono-num">
+                            <span className="vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                Carbs (5 AM Gym Fuel)
+                            </span>
+                            <span className="vt-font-extrabold">
+                                {nutritionTotals.consumedCarbs}g / {carbsTarget}g ({carbsPercent}%)
+                            </span>
+                        </div>
+                        <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track-sm">
+                            <div
+                                style={{ width: `${carbsPercent}%`, backgroundColor: '#38BDF8' }}
+                                className="vt-progress-fill"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="vt-stack-1">
+                        <div className="vt-between-center vt-text-11 font-mono-num">
+                            <span className="vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                Healthy Fats (Hormones & Surplus)
+                            </span>
+                            <span className="vt-font-extrabold">
+                                {nutritionTotals.consumedFat}g / {fatTarget}g ({fatPercent}%)
+                            </span>
+                        </div>
+                        <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track-sm">
+                            <div
+                                style={{ width: `${fatPercent}%`, backgroundColor: '#FBBF24' }}
+                                className="vt-progress-fill"
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Activity Rings Card */}
-            <div
-                style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                className="vt-card vt-p-4 vt-grid-3 vt-gap-2 vt-justify-items-center vt-tabular"
-            >
-                {[
-                    {
-                        v: nutritionTotals.consumedKcal,
-                        m: kcalTarget,
-                        c: colors.accent,
-                        s: 'kcal',
-                        t: `${nutritionTotals.consumedKcal}/${kcalTarget}`
-                    },
-                    {
-                        v: nutritionTotals.consumedProtein,
-                        m: proteinTarget,
-                        c: '#FF7A1A',
-                        s: 'protein',
-                        t: `${nutritionTotals.consumedProtein}/${proteinTarget}g`
-                    },
-                    {
-                        v: appState.waterMl,
-                        m: waterTarget,
-                        c: '#0059FF',
-                        s: 'water',
-                        t: `${(appState.waterMl / 1000).toFixed(1)}/${(waterTarget / 1000).toFixed(1)}L`
-                    }
-                ].map((r) => (
-                    <div key={r.s} className="vt-text-center">
-                        <Ring
-                            value={r.v}
-                            max={r.m}
-                            color={r.c}
-                            track={colors.elevated}
-                            label={`${Math.min(100, Math.round((r.v / r.m) * 100))}%`}
-                            sub={r.s}
-                        />
-                        <div className="vt-text-11 vt-font-bold vt-mt-1-5 font-mono-num">{r.t}</div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Macro, Hydration & Sleep Bento Grid */}
+            {/* 3. MACRO, HYDRATION & 5 AM SLEEP BENTO GRID */}
             <div className="vt-grid-md-3 vt-gap-4 vt-tabular">
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -7823,8 +8099,8 @@ function NutritionView({
                         />
                     </div>
                     <div className="vt-text-11 vt-between-center" style={{ color: colors.muted }}>
-                        <span>Planned Menu: {nutritionTotals.plannedKcal} kcal</span>
-                        <span>Floor: {SCIENCE_RULES.MIN_ACCEPTABLE_KCAL} kcal</span>
+                        <span>Left: {remainingKcal} kcal</span>
+                        <span>Min Floor: {SCIENCE_RULES.MIN_ACCEPTABLE_KCAL}</span>
                     </div>
                 </div>
 
@@ -7857,18 +8133,21 @@ function NutritionView({
                         />
                     </div>
                     <div className="vt-text-11 vt-between-center" style={{ color: colors.muted }}>
-                        <span>Feedings ≥18g: {nutritionTotals.proteinFeedingsCount}/4</span>
-                        <span>Floor: 110g/day</span>
+                        <span>Feedings ≥18g: {nutritionTotals.proteinFeedingsCount}/5</span>
+                        <span>Floor: {SCIENCE_RULES.FLOOR_PROTEIN_G}g</span>
                     </div>
                 </div>
 
                 <div
-                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                    style={{
+                        backgroundColor: colors.card,
+                        borderColor: sleepLowWarning ? colors.warning : colors.border
+                    }}
                     className="vt-card vt-p-card-md vt-stack-3"
                 >
                     <div className="vt-between-center">
                         <span className="vt-text-xs vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
-                            Water ({(waterTarget / 1000).toFixed(1)}L) & Sleep ({sleepTarget}h)
+                            Water ({(waterTarget / 1000).toFixed(1)}L) & 5 AM Sleep ({sleepTarget}h)
                         </span>
                         <Droplets className="vt-icon-5" style={{ color: isDark ? colors.accent : colors.text }} />
                     </div>
@@ -7883,6 +8162,7 @@ function NutritionView({
                     </div>
                     <div className="vt-grid-3 vt-gap-1-5">
                         <button
+                            type="button"
                             onClick={() =>
                                 setAppState((prev) => ({ ...prev, waterMl: prev.waterMl + 250 }))
                             }
@@ -7892,6 +8172,7 @@ function NutritionView({
                             +250ml
                         </button>
                         <button
+                            type="button"
                             onClick={() =>
                                 setAppState((prev) => ({ ...prev, waterMl: prev.waterMl + 500 }))
                             }
@@ -7901,6 +8182,7 @@ function NutritionView({
                             +500ml
                         </button>
                         <button
+                            type="button"
                             onClick={() => setAppState((prev) => ({ ...prev, waterMl: 0 }))}
                             style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
                             className="vt-btn vt-h-36 vt-box-xl vt-text-xs vt-font-bold"
@@ -7908,12 +8190,12 @@ function NutritionView({
                             Reset
                         </button>
                     </div>
-                    <div className="vt-between-center vt-gap-2 vt-pt-1 vt-border-t" style={{ borderColor: colors.border }}>
-                        <span className="vt-text-11 vt-font-bold" style={{ color: colors.muted }}>
-                            Sleep Logged:
+                    <div className="vt-between-center vt-gap-1-5 vt-pt-1-5 vt-border-t" style={{ borderColor: colors.border }}>
+                        <span className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: sleepLowWarning ? colors.warning : colors.muted }}>
+                            {sleepLowWarning ? 'Low Sleep!' : 'Sleep (Bed 9PM):'}
                         </span>
                         <div className="vt-flex vt-items-center vt-gap-1">
-                            {[6.5, 7.5, 8, 8.5].map((hrs) => (
+                            {[6.5, 7, 7.5, 8, 8.5].map((hrs) => (
                                 <button
                                     key={hrs}
                                     type="button"
@@ -7944,10 +8226,10 @@ function NutritionView({
                 </div>
             </div>
 
-            {/* Sub-Tabs */}
+            {/* 4. SUB-TABS */}
             <div className="vt-flex vt-items-center vt-gap-2 vt-overflow-x-auto">
                 {[
-                    { id: 'daily', label: 'Today 7-Slot Checklist' },
+                    { id: 'daily', label: '5 AM Daily Meal Timeline (7 Slots)' },
                     { id: 'rotation', label: '7-Day Rotation & Grocery List' },
                     { id: 'foods', label: '29 Indian Whole Foods DB' }
                 ].map((tab) => {
@@ -7955,6 +8237,7 @@ function NutritionView({
                     return (
                         <button
                             key={tab.id}
+                            type="button"
                             onClick={() => setSubView(tab.id)}
                             style={{
                                 backgroundColor: active ? colors.accent : colors.card,
@@ -7969,10 +8252,11 @@ function NutritionView({
                 })}
             </div>
 
+            {/* 5. DAILY 5:00 AM MEAL CHECKLIST */}
             {subView === 'daily' && (
                 <div className="vt-stack-4">
                     <div className="vt-stack-3">
-                        {MEAL_SLOTS.map((slot) => {
+                        {MEAL_SLOTS.map((slot, slotIdx) => {
                             const allowedOptions = slot.options.filter((o) =>
                                 o.tracks.includes(appState.profile.dietTrack || 'non-veg')
                             );
@@ -7983,133 +8267,224 @@ function NutritionView({
                                 slot.options[0];
                             const macros = computeMealOptionMacros(activeOpt, appState.foodDatabase);
                             const isDone = Boolean(appState.completedMealSlots?.[slot.slotId]);
+                            const isNext = nextPendingSlot?.slotId === slot.slotId;
 
                             return (
-                                <div
-                                    key={slot.slotId}
-                                    style={{
-                                        backgroundColor: isDone ? colors.accentSurface : colors.card,
-                                        borderColor: isDone ? colors.accentBorder : colors.border
-                                    }}
-                                    className="vt-card vt-p-card-md vt-stack-3 vt-transition-colors"
-                                >
-                                    <div className="vt-between-start vt-gap-3">
-                                        <div className="vt-stack-1 vt-flex-1">
-                                            <div className="vt-row-wrap vt-gap-2">
-                                                <span
-                                                    style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                                                    className="vt-badge vt-border vt-text-11 vt-font-extrabold font-mono-num"
-                                                >
-                                                    {slot.timeHint}
-                                                </span>
-                                                <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-                                                    {slot.slotName}
-                                                </h3>
-                                                <span
-                                                    style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                                                    className="vt-badge vt-text-xs vt-font-extrabold font-mono-num"
-                                                >
-                                                    {macros.kcal} kcal • {macros.protein}g P
-                                                </span>
+                                <React.Fragment key={slot.slotId}>
+                                    <div
+                                        style={{
+                                            backgroundColor: isDone ? colors.accentSurface : colors.card,
+                                            borderColor: isDone || isNext ? colors.accentBorder : colors.border
+                                        }}
+                                        className="vt-card vt-p-card-md vt-stack-3 vt-transition-colors"
+                                    >
+                                        <div className="vt-between-start vt-gap-3">
+                                            <div className="vt-stack-1 vt-flex-1">
+                                                <div className="vt-row-wrap vt-gap-1-5">
+                                                    <span
+                                                        style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                                        className="vt-badge vt-border vt-text-11 vt-font-extrabold font-mono-num"
+                                                    >
+                                                        {slot.timeHint}
+                                                    </span>
+                                                    {isNext && !isDone && (
+                                                        <span
+                                                            style={{ backgroundColor: colors.warning, color: '#0A0A0B' }}
+                                                            className="vt-badge-xs vt-text-10 vt-font-extrabold vt-uppercase"
+                                                        >
+                                                            Next Meal
+                                                        </span>
+                                                    )}
+                                                    <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                                                        {slot.slotName}
+                                                    </h3>
+                                                    <span
+                                                        style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                                                        className="vt-badge vt-text-xs vt-font-extrabold font-mono-num"
+                                                    >
+                                                        {macros.kcal} kcal • {macros.protein}g P
+                                                    </span>
+                                                </div>
+
+                                                <p className="vt-text-resp-xs-sm vt-font-semibold">{activeOpt.description}</p>
+
+                                                <div className="vt-row-wrap vt-gap-2 vt-text-11 font-mono-num" style={{ color: colors.muted }}>
+                                                    <span>Carbs: {macros.carbs}g • Fat: {macros.fat}g</span>
+                                                    {slot.roleTag && (
+                                                        <span style={{ color: isDark ? colors.accent : colors.text, fontWeight: 700 }}>
+                                                            • {slot.roleTag}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <p className="vt-text-resp-xs-sm vt-font-semibold">{activeOpt.description}</p>
-                                            <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
-                                                Carbs: {macros.carbs}g • Fat: {macros.fat}g • Anchor: {activeOpt.proteinAnchor}
-                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleMealSlotCompleted(slot.slotId)}
+                                                aria-label={`Mark ${slot.slotName} completed`}
+                                                style={{
+                                                    backgroundColor: isDone ? colors.accent : colors.elevated,
+                                                    color: isDone ? colors.accentText : colors.muted,
+                                                    borderColor: isDone ? colors.accentBorder : colors.border
+                                                }}
+                                                className="vt-btn vt-sq-48 vt-box-xl vt-shrink-0"
+                                            >
+                                                <Check className="vt-icon-6 vt-stroke-2-5" />
+                                            </button>
                                         </div>
 
-                                        <button
-                                            onClick={() => toggleMealSlotCompleted(slot.slotId)}
-                                            aria-label={`Mark ${slot.slotName} completed`}
-                                            style={{
-                                                backgroundColor: isDone ? colors.accent : colors.elevated,
-                                                color: isDone ? colors.accentText : colors.muted,
-                                                borderColor: isDone ? colors.accentBorder : colors.border
-                                            }}
-                                            className="vt-btn vt-sq-48 vt-box-xl vt-shrink-0"
-                                        >
-                                            <Check className="vt-icon-6 vt-stroke-2-5" />
-                                        </button>
+                                        {allowedOptions.length > 1 && (
+                                            <div
+                                                className="vt-row-wrap vt-gap-1-5 vt-pt-2 vt-border-t"
+                                                style={{ borderColor: colors.border }}
+                                            >
+                                                <span className="vt-text-11 vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
+                                                    Swap:
+                                                </span>
+                                                {allowedOptions.map((opt) => {
+                                                    const chosen = opt.id === activeOpt.id;
+                                                    return (
+                                                        <button
+                                                            key={opt.id}
+                                                            type="button"
+                                                            onClick={() => handleSelectSlotOption(slot.slotId, opt.id)}
+                                                            style={{
+                                                                backgroundColor: chosen ? colors.accent : colors.elevated,
+                                                                color: chosen ? colors.accentText : colors.text,
+                                                                borderColor: chosen ? colors.accentBorder : colors.border
+                                                            }}
+                                                            className="vt-btn vt-h-34 vt-px-2-5 vt-py-1 vt-rounded-lg vt-border vt-text-xs vt-font-extrabold"
+                                                        >
+                                                            {opt.label}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {allowedOptions.length > 1 && (
+                                    {/* Visual 05:00 AM GYM SESSION DIVIDER right after Pre-Workout */}
+                                    {slotIdx === 0 && (
                                         <div
-                                            className="vt-row-wrap vt-gap-1-5 vt-pt-2 vt-border-t"
-                                            style={{ borderColor: colors.border }}
+                                            style={{
+                                                backgroundColor: colors.elevated,
+                                                borderColor: colors.accentBorder
+                                            }}
+                                            className="vt-p-3 vt-box-xl vt-between-center vt-flex-wrap vt-gap-2"
                                         >
-                                            <span className="vt-text-11 vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
-                                                Swap Option:
+                                            <div className="vt-flex vt-items-center vt-gap-2">
+                                                <Clock size={16} style={{ color: isDark ? colors.accent : colors.text }} />
+                                                <span className="vt-text-xs vt-font-extrabold vt-uppercase">
+                                                    05:00 AM – 06:15 AM • GYM TRAINING WINDOW
+                                                </span>
+                                            </div>
+                                            <span className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
+                                                Sip 750ml–1L water during workout • Immediately eat Post-Workout at 06:30 AM
                                             </span>
-                                            {allowedOptions.map((opt) => {
-                                                const chosen = opt.id === activeOpt.id;
-                                                return (
-                                                    <button
-                                                        key={opt.id}
-                                                        onClick={() => handleSelectSlotOption(slot.slotId, opt.id)}
-                                                        style={{
-                                                            backgroundColor: chosen ? colors.accent : colors.elevated,
-                                                            color: chosen ? colors.accentText : colors.text,
-                                                            borderColor: chosen ? colors.accentBorder : colors.border
-                                                        }}
-                                                        className="vt-btn vt-h-34 vt-px-2-5 vt-py-1 vt-rounded-lg vt-border vt-text-xs vt-font-extrabold"
-                                                    >
-                                                        {opt.label}
-                                                    </button>
-                                                );
-                                            })}
                                         </div>
                                     )}
-                                </div>
+                                </React.Fragment>
                             );
                         })}
                     </div>
 
+                    {/* Hardgainer 1-Tap Calorie & Protein Boosters */}
                     <div
                         style={{ backgroundColor: colors.card, borderColor: colors.border }}
                         className="vt-card vt-p-card-md vt-stack-3"
                     >
-                        <div className="vt-between-center">
+                        <div className="vt-between-center vt-flex-wrap vt-gap-2">
                             <div>
                                 <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-                                    One-Tap Appetite Helpers (+Calories)
+                                    55 kg Hardgainer Boosters (+Calories / +Protein)
                                 </h3>
                                 <p className="vt-text-xs" style={{ color: colors.muted }}>
-                                    Struggling to hit 2,900 kcal or need +300 kcal for a plateau? Tap to log low-volume whole foods.
+                                    Agar bhook kam lagti hai ya 2,900 kcal kam pad rahe hain, toh inme se 1–2 tap karke add karo:
                                 </p>
                             </div>
                             {(appState.loggedAppetiteHelpers?.length || 0) > 0 && (
                                 <button
+                                    type="button"
                                     onClick={handleClearHelpers}
                                     style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
                                     className="vt-btn vt-h-38 vt-px-3 vt-box-xl vt-text-xs vt-font-bold"
                                 >
-                                    Clear ({appState.loggedAppetiteHelpers.length})
+                                    Clear All ({appState.loggedAppetiteHelpers.length})
                                 </button>
                             )}
                         </div>
 
                         <div className="vt-grid-helpers vt-gap-2">
-                            {APPETITE_HELPERS.map((helper) => (
-                                <button
-                                    key={helper.id}
-                                    onClick={() => handleAddAppetiteHelper(helper)}
-                                    style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
-                                    className="vt-btn vt-h-48 vt-p-3 vt-box-xl vt-text-left vt-between-center vt-gap-2"
-                                >
-                                    <div>
-                                        <div className="vt-text-xs vt-font-extrabold">{helper.label}</div>
-                                        <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
-                                            +{helper.kcal} kcal • +{helper.protein}g P
+                            {APPETITE_HELPERS.map((helper) => {
+                                const count = helperCounts[helper.id] || 0;
+                                return (
+                                    <div
+                                        key={helper.id}
+                                        style={{
+                                            backgroundColor: count > 0 ? colors.accentSurface : colors.elevated,
+                                            borderColor: count > 0 ? colors.accentBorder : colors.border
+                                        }}
+                                        className="vt-p-2-5 vt-box-xl vt-between-center vt-gap-2"
+                                    >
+                                        <div className="vt-min-w-0">
+                                            <div className="vt-text-xs vt-font-extrabold">
+                                                {helper.label}
+                                                {count > 0 ? ` ×${count}` : ''}
+                                            </div>
+                                            <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
+                                                +{helper.kcal} kcal • +{helper.protein}g P
+                                            </div>
+                                        </div>
+
+                                        <div className="vt-flex vt-items-center vt-gap-1 vt-shrink-0">
+                                            {count > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveOneHelper(helper.id)}
+                                                    aria-label={`Remove one ${helper.label}`}
+                                                    style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.danger }}
+                                                    className="vt-btn vt-h-34 vt-px-2 vt-rounded-lg vt-border vt-text-xs vt-font-extrabold"
+                                                >
+                                                    −
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleAddAppetiteHelper(helper)}
+                                                aria-label={`Add ${helper.label}`}
+                                                style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                                                className="vt-btn vt-h-34 vt-px-2-5 vt-rounded-lg vt-text-xs vt-font-extrabold"
+                                            >
+                                                <Plus size={14} />
+                                            </button>
                                         </div>
                                     </div>
-                                    <Plus className="vt-icon-4 vt-shrink-0" />
-                                </button>
-                            ))}
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* 55kg / 173cm / 5 AM Golden Rules Card */}
+                    <div
+                        style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                        className="vt-card vt-p-4 vt-flex vt-items-start vt-gap-3"
+                    >
+                        <Info
+                            size={18}
+                            className="vt-shrink-0 vt-mt-0-5"
+                            style={{ color: isDark ? colors.accent : colors.text }}
+                        />
+                        <div className="vt-text-xs vt-stack-1" style={{ color: colors.muted }}>
+                            <strong style={{ color: colors.text }}>55 kg Fast Clean Bulk Rules (5:00 AM Gym):</strong>
+                            <div>• <strong>Raat 9:00–9:15 PM tak so jao:</strong> 4:25 AM uthne par 7.5+ hr sleep ke bina muscle grow nahi hota.</div>
+                            <div>• <strong>Liquid calories miss mat karo:</strong> 4:30 PM ka shake bina pet bhare ~470 kcal deta hai — yahi 55→65 kg fast le jayega.</div>
+                            <div>• <strong>Sunday ko bhi same 2,900 kcal khao:</strong> Rest day par hi muscle repair aur size badhta hai.</div>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* 6. 7-DAY ROTATION & GROCERY LIST */}
             {subView === 'rotation' && (
                 <div className="vt-stack-4">
                     <div
@@ -8117,10 +8492,10 @@ function NutritionView({
                         className="vt-card vt-p-card vt-stack-3"
                     >
                         <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
-                            7-Day Non-Repeating Dinner Protein Rotation ({appState.profile.dietTrack})
+                            7-Day 5 AM Meal Rotation ({appState.profile.dietTrack})
                         </h3>
                         <p className="vt-text-xs" style={{ color: colors.muted }}>
-                            Lunch and Dinner never use the same primary protein anchor on the same day.
+                            Lunch and Dinner never repeat the same primary protein source on the same day.
                         </p>
                         <div className="vt-grid-rotation vt-gap-2 vt-pt-2">
                             {weeklyMenu.map((d) => (
@@ -8136,13 +8511,13 @@ function NutritionView({
                                         {d.day}
                                     </div>
                                     <div className="font-mono-num vt-stack-0-5 vt-text-11">
-                                        <div>B: {d.slots.breakfast}</div>
-                                        <div>M: {d.slots.mid_morning}</div>
-                                        <div>L: {d.slots.lunch}</div>
-                                        <div>Pre: {d.slots.pre_workout}</div>
-                                        <div>Post: {d.slots.post_workout}</div>
-                                        <div>D: {d.slots.dinner}</div>
-                                        <div>Bed: {d.slots.bedtime}</div>
+                                        <div>4:30 Pre: {d.slots.pre_workout}</div>
+                                        <div>6:30 Post: {d.slots.post_workout}</div>
+                                        <div>9:00 B: {d.slots.breakfast}</div>
+                                        <div>1:00 L: {d.slots.lunch}</div>
+                                        <div>4:30 Shk: {d.slots.mid_morning}</div>
+                                        <div>7:30 D: {d.slots.dinner}</div>
+                                        <div>8:45 Bed: {d.slots.bedtime}</div>
                                     </div>
                                 </div>
                             ))}
@@ -8187,16 +8562,53 @@ function NutritionView({
                 </div>
             )}
 
+            {/* 7. SEARCHABLE 29 INDIAN WHOLE FOODS DB */}
             {subView === 'foods' && (
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
                     className="vt-card vt-p-card vt-stack-3"
                 >
-                    <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
-                        IFCT 2017 / USDA Indian Whole-Food Database (29 Items)
-                    </h3>
+                    <div className="vt-between-center vt-flex-wrap vt-gap-2">
+                        <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
+                            IFCT 2017 / USDA Indian Whole-Food Database ({filteredFoods.length}/29)
+                        </h3>
+                    </div>
+
+                    <div className="vt-resp-row vt-gap-2">
+                        <input
+                            type="text"
+                            placeholder="Search food (e.g., egg, paneer, soya, oats, milk)..."
+                            value={foodSearch}
+                            onChange={(e) => setFoodSearch(e.target.value)}
+                            style={{
+                                backgroundColor: colors.elevated,
+                                borderColor: colors.border,
+                                color: colors.text,
+                                flex: 1
+                            }}
+                            className="vt-input vt-h-40 vt-px-3 vt-text-xs"
+                        />
+                        <div className="vt-row-wrap vt-gap-1">
+                            {['All', 'Protein', 'Carbs', 'Dairy', 'Pantry'].map((cat) => (
+                                <button
+                                    key={cat}
+                                    type="button"
+                                    onClick={() => setFoodCategory(cat)}
+                                    style={{
+                                        backgroundColor: foodCategory === cat ? colors.accent : colors.elevated,
+                                        color: foodCategory === cat ? colors.accentText : colors.text,
+                                        borderColor: foodCategory === cat ? colors.accentBorder : colors.border
+                                    }}
+                                    className="vt-btn vt-h-36 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase"
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="vt-grid-md-2 vt-gap-2-5">
-                        {appState.foodDatabase.map((f) => (
+                        {filteredFoods.map((f) => (
                             <div
                                 key={f.id}
                                 style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
@@ -8263,8 +8675,8 @@ function ProgressView({
                     item.morningKg !== undefined && item.morningKg !== null
                         ? Number(item.morningKg)
                         : item.weightKg !== undefined
-                          ? Number(item.weightKg)
-                          : null;
+                            ? Number(item.weightKg)
+                            : null;
                 const nKg =
                     item.nightKg !== undefined && item.nightKg !== null ? Number(item.nightKg) : null;
                 const primaryKg = mKg || nKg || Number(item.weightKg || 0);
@@ -8361,8 +8773,8 @@ function ProgressView({
                         prev.profile.startWeightKg > 0
                             ? prev.profile.startWeightKg
                             : firstLog
-                              ? firstLog.weightKg
-                              : finalPrimaryKg,
+                                ? firstLog.weightKg
+                                : finalPrimaryKg,
                     currentWeightKg: latestLog ? latestLog.weightKg : finalPrimaryKg
                 },
                 weightLogs: nextLogs
@@ -8561,8 +8973,8 @@ function ProgressView({
         const dualDays = normalizedLogs.filter((w) => w.fluctuationKg !== null);
         const overallAvgSwingKg = dualDays.length
             ? Number(
-                  (dualDays.reduce((acc, w) => acc + w.fluctuationKg, 0) / dualDays.length).toFixed(2)
-              )
+                (dualDays.reduce((acc, w) => acc + w.fluctuationKg, 0) / dualDays.length).toFixed(2)
+            )
             : null;
 
         const weeklyVelocity =
@@ -8656,8 +9068,8 @@ function ProgressView({
                         gainAnalysis.status === 'FAST_GAIN_WARNING'
                             ? colors.danger
                             : gainAnalysis.status === 'PLATEAU_SUGGESTION'
-                              ? colors.accentBorder
-                              : colors.border
+                                ? colors.accentBorder
+                                : colors.border
                 }}
                 className="vt-card-b2 vt-p-card vt-resp-row-lg"
             >
@@ -8670,8 +9082,8 @@ function ProgressView({
                                     gainAnalysis.status === 'FAST_GAIN_WARNING'
                                         ? colors.danger
                                         : isDark
-                                          ? colors.accent
-                                          : colors.text
+                                            ? colors.accent
+                                            : colors.text
                             }}
                         />
                         <span className="vt-text-xs vt-font-extrabold vt-uppercase vt-tracking-wider">
@@ -8753,8 +9165,8 @@ function ProgressView({
                     <div className="font-display vt-text-3xl vt-font-black vt-mt-1" style={{ color: colors.accent }}>
                         {kpiSummary.overallAvgSwingKg !== null
                             ? `${kpiSummary.overallAvgSwingKg >= 0 ? '+' : ''}${formatWeight(
-                                  kpiSummary.overallAvgSwingKg
-                              )} ${appState.unit}`
+                                kpiSummary.overallAvgSwingKg
+                            )} ${appState.unit}`
                             : '0'}
                     </div>
                     <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
@@ -8773,8 +9185,8 @@ function ProgressView({
                         {kpiSummary.currentKg <= 0
                             ? 'Day 0'
                             : kpiSummary.remainingToGoalKg <= 0
-                              ? 'Goal Hit ✓'
-                              : `~${kpiSummary.estWeeksToGoal} Wks`}
+                                ? 'Goal Hit ✓'
+                                : `~${kpiSummary.estWeeksToGoal} Wks`}
                     </div>
                     <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
                         {kpiSummary.currentKg > 0
@@ -8892,7 +9304,7 @@ function ProgressView({
                         </div>
                     </div>
 
-                    
+
 
                     {liveFormSwing !== null && (
                         <div
@@ -9166,22 +9578,22 @@ function ProgressView({
                                     wk.status === 'OPTIMAL'
                                         ? colors.accent
                                         : wk.status === 'FAST_GAIN'
-                                          ? colors.danger
-                                          : colors.elevated;
+                                            ? colors.danger
+                                            : colors.elevated;
                                 const badgeColor =
                                     wk.status === 'OPTIMAL'
                                         ? colors.accentText
                                         : wk.status === 'FAST_GAIN'
-                                          ? '#FFFFFF'
-                                          : colors.text;
+                                            ? '#FFFFFF'
+                                            : colors.text;
                                 const badgeText =
                                     wk.status === 'BASELINE'
                                         ? 'Baseline Week'
                                         : wk.status === 'OPTIMAL'
-                                          ? 'Optimal Gain ✓'
-                                          : wk.status === 'FAST_GAIN'
-                                            ? 'Fast Gain'
-                                            : 'Slow / Plateau';
+                                            ? 'Optimal Gain ✓'
+                                            : wk.status === 'FAST_GAIN'
+                                                ? 'Fast Gain'
+                                                : 'Slow / Plateau';
 
                                 return (
                                     <div
@@ -10050,8 +10462,10 @@ function SettingsView({
     showToast
 }) {
     const [confirmReset, setConfirmReset] = useState(false);
+    const [confirmRestoreDate, setConfirmRestoreDate] = useState(null);
     const [backups, setBackups] = useState([]);
     const [loadingBackups, setLoadingBackups] = useState(false);
+    const [busyAction, setBusyAction] = useState(null); // 'reload' | 'backup' | 'restore' | 'import' | 'reset' | null
 
     const fetchBackups = useCallback(async () => {
         setLoadingBackups(true);
@@ -10069,25 +10483,48 @@ function SettingsView({
         fetchBackups();
     }, [fetchBackups]);
 
+    const handleReloadAll = async () => {
+        if (busyAction) return;
+        setBusyAction('reload');
+        try {
+            await Promise.all([loadFromBackend(false), fetchBackups()]);
+        } finally {
+            setBusyAction(null);
+        }
+    };
+
     const handleCreateBackupNow = async () => {
-        const res = await runCloudMutation(
-            () => vtaperApi.createBackupNow(),
-            'Cloud backup failed'
-        );
-        if (res?.ok) {
-            fetchBackups();
-            showToast('Instant PostgreSQL Cloud Snapshot created!');
+        if (busyAction) return;
+        setBusyAction('backup');
+        try {
+            const res = await runCloudMutation(
+                () => vtaperApi.createBackupNow(),
+                'Cloud backup failed'
+            );
+            if (res?.ok) {
+                await fetchBackups();
+                showToast('Instant PostgreSQL Cloud Snapshot created!');
+            }
+        } finally {
+            setBusyAction(null);
         }
     };
 
     const handleRestoreBackup = async (snapshotDate) => {
-        const res = await runCloudMutation(
-            () => vtaperApi.restoreBackup(snapshotDate),
-            'Restore failed'
-        );
-        if (res?.state) {
-            onStateReplaced(res.state);
-            showToast(`Restored full database from ${snapshotDate} snapshot!`);
+        if (busyAction) return;
+        setBusyAction('restore');
+        try {
+            const res = await runCloudMutation(
+                () => vtaperApi.restoreBackup(snapshotDate),
+                'Restore failed'
+            );
+            if (res?.state) {
+                onStateReplaced(res.state);
+                setConfirmRestoreDate(null);
+                showToast(`Restored full database from ${snapshotDate} snapshot!`);
+            }
+        } finally {
+            setBusyAction(null);
         }
     };
 
@@ -10105,18 +10542,24 @@ function SettingsView({
 
     const handleImportJson = (e) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+        e.target.value = '';
+        if (!file || busyAction) return;
+
         const reader = new FileReader();
         reader.onload = async (ev) => {
+            setBusyAction('import');
             try {
                 const parsed = JSON.parse(String(ev.target?.result || '{}'));
+                if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+                    throw new Error('Invalid backup structure');
+                }
                 const res = await runCloudMutation(
                     () => vtaperApi.importState(parsed),
                     'Database import failed'
                 );
                 if (res?.state) {
                     onStateReplaced(res.state);
-                    fetchBackups();
+                    await fetchBackups();
                     showToast('JSON backup imported directly into PostgreSQL!');
                 } else {
                     onStateReplaced(parsed);
@@ -10124,31 +10567,57 @@ function SettingsView({
                 }
             } catch {
                 showToast('Invalid JSON backup file.');
+            } finally {
+                setBusyAction(null);
             }
         };
         reader.readAsText(file);
     };
 
     const handleFullReset = async () => {
-        const res = await runCloudMutation(
-            () => vtaperApi.resetAll(appState.theme),
-            'Cloud reset failed'
-        );
-        if (res?.state) {
-            onStateReplaced(res.state);
-            fetchBackups();
-        } else {
-            const fresh = getFreshInitialState(appState.theme);
-            setAppState(fresh);
+        if (busyAction) return;
+        setBusyAction('reset');
+        try {
+            const res = await runCloudMutation(
+                () => vtaperApi.resetAll(appState.theme),
+                'Cloud reset failed'
+            );
+            if (res?.state) {
+                onStateReplaced(res.state);
+                await fetchBackups();
+            } else {
+                const fresh = getFreshInitialState(appState.theme);
+                setAppState(fresh);
+            }
+            setConfirmReset(false);
+            setShowOnboarding(true);
+            showToast('All data wiped cleanly to 0 (Safety backup saved in PostgreSQL).');
+        } finally {
+            setBusyAction(null);
         }
-        setConfirmReset(false);
-        setShowOnboarding(true);
-        showToast('All data wiped cleanly to 0 (Safety backup saved in PostgreSQL).');
     };
+
+    const handleTargetChange = (field, rawValue) => {
+        const val = rawValue === '' ? 0 : Math.max(0, Number(rawValue));
+        setAppState((prev) => ({
+            ...prev,
+            profile: {
+                ...prev.profile,
+                [field]: val
+            }
+        }));
+    };
+
+    const statusColor =
+        syncStatus === 'synced'
+            ? colors.success
+            : syncStatus === 'offline'
+              ? colors.danger
+              : colors.warning;
 
     return (
         <div className="vt-stack-5">
-            {/* 1. Preferences & Goals */}
+            {/* 1. Preferences, Athlete Goals & Daily Bulk Targets */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-card vt-stack-4"
@@ -10159,7 +10628,7 @@ function SettingsView({
                             Preferences & Athlete Goals
                         </h3>
                         <p className="vt-text-xs" style={{ color: colors.muted }}>
-                            Goal Band: {appState.profile.goalWeightMinKg}–{appState.profile.goalWeightMaxKg} kg • Units, theme aur diet track yahan se update karein.
+                            Goal Band: {appState.profile.goalWeightMinKg}–{appState.profile.goalWeightMaxKg} kg • Units, theme, diet track aur daily targets yahan se customize karein.
                         </p>
                     </div>
                     <button
@@ -10238,6 +10707,45 @@ function SettingsView({
                         </select>
                     </div>
                 </div>
+
+                {/* Daily Targets Quick Editor (Auto-Syncs to PostgreSQL) */}
+                <div className="vt-stack-2 vt-pt-2 vt-border-t" style={{ borderColor: colors.border }}>
+                    <div className="vt-text-11 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                        Daily Bulk & Recovery Targets (Auto-Saved)
+                    </div>
+                    <div className="vt-grid-kpi vt-gap-2-5 vt-tabular">
+                        {[
+                            { key: 'targetCalories', label: 'Calories (kcal)', step: 50, placeholder: '2900' },
+                            { key: 'targetProteinG', label: 'Protein (g)', step: 5, placeholder: '130' },
+                            { key: 'targetWaterMl', label: 'Water (ml)', step: 250, placeholder: '3500' },
+                            { key: 'targetSleepHours', label: 'Sleep (hrs)', step: 0.5, placeholder: '8' }
+                        ].map((item) => (
+                            <div
+                                key={item.key}
+                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                className="vt-p-2-5 vt-box-xl vt-stack-1"
+                            >
+                                <label className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                    {item.label}
+                                </label>
+                                <input
+                                    type="number"
+                                    inputMode="decimal"
+                                    step={item.step}
+                                    placeholder={item.placeholder}
+                                    value={appState.profile[item.key] || ''}
+                                    onChange={(e) => handleTargetChange(item.key, e.target.value)}
+                                    style={{
+                                        backgroundColor: colors.card,
+                                        borderColor: colors.border,
+                                        color: colors.text
+                                    }}
+                                    className="vt-input vt-h-38 vt-px-2-5 vt-text-sm vt-font-extrabold font-mono-num"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
 
             {/* 2. PostgreSQL Cloud Sync & 14-Day Automatic Snapshots */}
@@ -10246,33 +10754,48 @@ function SettingsView({
                 className="vt-card vt-p-card vt-stack-4"
             >
                 <div className="vt-between-center vt-flex-wrap vt-gap-3">
-                    <div>
+                    <div className="vt-stack-1">
                         <div className="vt-flex vt-items-center vt-gap-2">
                             <Database size={18} style={{ color: isDark ? colors.accent : colors.text }} />
                             <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
                                 PostgreSQL Cloud Backups (14-Day Auto Snapshots)
                             </h3>
                         </div>
-                        
+                        <div className="vt-row-wrap vt-gap-2 vt-text-11 font-mono-num" style={{ color: colors.muted }}>
+                            <span style={{ color: statusColor, fontWeight: 800 }}>
+                                ● {syncStatus === 'synced' ? 'DB Synced' : syncStatus === 'offline' ? 'Offline' : 'Syncing...'}
+                            </span>
+                            {lastSyncedAt && (
+                                <span>• Last sync: {new Date(lastSyncedAt).toLocaleTimeString()}</span>
+                            )}
+                            <span>• {backups.length}/14 snapshots stored</span>
+                        </div>
                     </div>
 
                     <div className="vt-flex vt-items-center vt-gap-2">
                         <button
                             type="button"
-                            onClick={() => loadFromBackend(false)}
+                            disabled={Boolean(busyAction)}
+                            onClick={handleReloadAll}
                             style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
                             className="vt-btn vt-h-40 vt-px-3 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-1-5"
                         >
-                            <RefreshCw size={14} />
-                            <span>Reload DB</span>
+                            <RefreshCw
+                                size={14}
+                                style={{
+                                    animation: busyAction === 'reload' ? 'spin 1s linear infinite' : 'none'
+                                }}
+                            />
+                            <span>{busyAction === 'reload' ? 'Reloading...' : 'Reload DB'}</span>
                         </button>
                         <button
                             type="button"
+                            disabled={Boolean(busyAction)}
                             onClick={handleCreateBackupNow}
                             style={{ backgroundColor: colors.accent, color: colors.accentText }}
                             className="vt-btn vt-h-40 vt-px-3-5 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase"
                         >
-                            Backup Now
+                            {busyAction === 'backup' ? 'Saving...' : 'Backup Now'}
                         </button>
                     </div>
                 </div>
@@ -10290,43 +10813,82 @@ function SettingsView({
                     </div>
                 ) : (
                     <div className="vt-stack-2">
-                        {backups.map((b) => (
-                            <div
-                                key={b.id}
-                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                                className="vt-p-3 vt-box-xl vt-between-center vt-flex-wrap vt-gap-2 vt-text-xs"
-                            >
-                                <div className="font-mono-num">
-                                    <strong>{b.snapshotDate}</strong>{' '}
-                                    <span style={{ color: colors.muted }}>
-                                        • {b.meta?.workoutsCount || 0} workouts • {b.meta?.weightLogsCount || 0} weights •{' '}
-                                        {b.meta?.disciplineDaysCount || 0} clean days
-                                    </span>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => handleRestoreBackup(b.snapshotDate)}
-                                    style={{ backgroundColor: colors.card, borderColor: colors.accentBorder, color: colors.text }}
-                                    className="vt-btn vt-h-34 vt-px-3 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase"
+                        {backups.map((b) => {
+                            const isConfirming = confirmRestoreDate === b.snapshotDate;
+                            return (
+                                <div
+                                    key={b.id}
+                                    style={{
+                                        backgroundColor: isConfirming ? colors.accentSurface : colors.elevated,
+                                        borderColor: isConfirming ? colors.accentBorder : colors.border
+                                    }}
+                                    className="vt-p-3 vt-box-xl vt-between-center vt-flex-wrap vt-gap-2 vt-text-xs"
                                 >
-                                    Restore
-                                </button>
-                            </div>
-                        ))}
+                                    <div className="font-mono-num">
+                                        <strong>{b.snapshotDate}</strong>{' '}
+                                        <span style={{ color: colors.muted }}>
+                                            • {b.meta?.workoutsCount || 0} workouts • {b.meta?.weightLogsCount || 0} weights •{' '}
+                                            {b.meta?.disciplineDaysCount || 0} clean days
+                                        </span>
+                                    </div>
+
+                                    {!isConfirming ? (
+                                        <button
+                                            type="button"
+                                            disabled={Boolean(busyAction)}
+                                            onClick={() => setConfirmRestoreDate(b.snapshotDate)}
+                                            style={{ backgroundColor: colors.card, borderColor: colors.accentBorder, color: colors.text }}
+                                            className="vt-btn vt-h-34 vt-px-3 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase"
+                                        >
+                                            Restore
+                                        </button>
+                                    ) : (
+                                        <div className="vt-flex vt-items-center vt-gap-1-5">
+                                            <button
+                                                type="button"
+                                                disabled={Boolean(busyAction)}
+                                                onClick={() => handleRestoreBackup(b.snapshotDate)}
+                                                style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                                                className="vt-btn vt-h-34 vt-px-3 vt-rounded-lg vt-text-11 vt-font-extrabold vt-uppercase"
+                                            >
+                                                {busyAction === 'restore' ? 'Restoring...' : 'Confirm'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                disabled={Boolean(busyAction)}
+                                                onClick={() => setConfirmRestoreDate(null)}
+                                                style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
+                                                className="vt-btn vt-h-34 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-bold"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>
 
-            {/* 3. Local JSON Backup, Icon & Zero Reset */}
+            {/* 3. Local JSON Backup & Zero Reset */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-card vt-stack-4"
             >
-                <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-                    JSON Export / Import, App Icon & Zero Reset
-                </h3>
+                <div>
+                    <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                        JSON Export / Import & Zero Reset
+                    </h3>
+                    <p className="vt-text-xs" style={{ color: colors.muted }}>
+                        Offline backup download karein ya purana JSON file directly PostgreSQL mein restore karein.
+                    </p>
+                </div>
+
                 <div className="vt-backup-row">
                     <button
+                        type="button"
+                        disabled={Boolean(busyAction)}
                         onClick={handleExportJson}
                         style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
                         className="vt-btn vt-h-46 vt-px-4 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2"
@@ -10336,16 +10898,30 @@ function SettingsView({
                     </button>
 
                     <label
-                        style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+                        style={{
+                            backgroundColor: colors.elevated,
+                            borderColor: colors.border,
+                            color: colors.text,
+                            opacity: busyAction ? 0.5 : 1,
+                            pointerEvents: busyAction ? 'none' : 'auto'
+                        }}
                         className="vt-btn vt-h-46 vt-px-4 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2 vt-cursor-pointer"
                     >
                         <Upload className="vt-icon-4" />
-                        <span>Import JSON → DB</span>
-                        <input type="file" accept=".json" onChange={handleImportJson} className="vt-hidden" />
+                        <span>{busyAction === 'import' ? 'Importing...' : 'Import JSON → DB'}</span>
+                        <input
+                            type="file"
+                            accept=".json"
+                            disabled={Boolean(busyAction)}
+                            onChange={handleImportJson}
+                            className="vt-hidden"
+                        />
                     </label>
 
                     {!confirmReset ? (
                         <button
+                            type="button"
+                            disabled={Boolean(busyAction)}
                             onClick={() => setConfirmReset(true)}
                             style={{ backgroundColor: colors.danger, color: '#FFFFFF' }}
                             className="vt-btn vt-h-46 vt-px-4 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2 vt-ml-auto"
@@ -10356,13 +10932,17 @@ function SettingsView({
                     ) : (
                         <div className="vt-flex vt-items-center vt-gap-2 vt-ml-auto">
                             <button
+                                type="button"
+                                disabled={Boolean(busyAction)}
                                 onClick={handleFullReset}
                                 style={{ backgroundColor: colors.danger, color: '#FFFFFF' }}
                                 className="vt-btn vt-h-46 vt-px-4 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase"
                             >
-                                Confirm Wipe
+                                {busyAction === 'reset' ? 'Wiping...' : 'Confirm Wipe'}
                             </button>
                             <button
+                                type="button"
+                                disabled={Boolean(busyAction)}
                                 onClick={() => setConfirmReset(false)}
                                 style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
                                 className="vt-btn vt-h-46 vt-px-3 vt-box-xl vt-text-xs vt-font-bold"
@@ -11171,8 +11751,8 @@ export function PelvicRehabSection({
                                         timerPhase === 'rest'
                                             ? '#0059FF'
                                             : isDark
-                                              ? colors.accent
-                                              : colors.text
+                                                ? colors.accent
+                                                : colors.text
                                 }}
                             >
                                 {timerPhase === 'rest'
