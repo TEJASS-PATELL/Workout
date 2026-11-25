@@ -4656,30 +4656,6 @@ export default function App() {
 
                     <div className="vt-mobile-actions">
                         <button
-                            onClick={() => loadFromBackend(false)}
-                            aria-label="Sync with PostgreSQL"
-                            style={{
-                                backgroundColor: colors.elevated,
-                                borderColor: syncStatus === 'offline' ? colors.danger : colors.border,
-                                color: syncPillColor
-                            }}
-                            className="vt-icon-btn-44"
-                        >
-                            {syncStatus === 'offline' ? <CloudOff size={16} /> : <Cloud size={16} />}
-                        </button>
-                        <button
-                            onClick={() =>
-                                setAppState((prev) => ({
-                                    ...prev,
-                                    unit: prev.unit === 'kg' ? 'lb' : 'kg'
-                                }))
-                            }
-                            style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
-                            className="vt-unit-btn"
-                        >
-                            {appState.unit}
-                        </button>
-                        <button
                             onClick={() =>
                                 setAppState((prev) => ({
                                     ...prev,
@@ -5778,110 +5754,6 @@ function DisciplineView({
                         </div>
                     </button>
                 </div>
-
-                {/* Urge Level, Trigger Selector & Honest Slip Log */}
-                <div
-                    style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                    className="vt-p-3-5 vt-box-xl vt-stack-3"
-                >
-                    <div className="vt-between-center vt-flex-wrap vt-gap-2">
-                        <span className="vt-text-11 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
-                            Urge Intensity Today ({urgeLevel}/10)
-                        </span>
-                        <input
-                            type="range"
-                            min="0"
-                            max="10"
-                            value={urgeLevel}
-                            onChange={(e) => setUrgeLevel(Number(e.target.value))}
-                            style={{ width: 170, accentColor: colors.accent }}
-                        />
-                    </div>
-
-                    <div className="vt-row-wrap vt-gap-1-5">
-                        {COMMON_URGE_TRIGGERS.map((trig) => {
-                            const active = selectedTrigger === trig;
-                            return (
-                                <button
-                                    key={trig}
-                                    type="button"
-                                    onClick={() => setSelectedTrigger(active ? '' : trig)}
-                                    style={{
-                                        backgroundColor: active ? colors.accent : colors.card,
-                                        color: active ? colors.accentText : colors.text,
-                                        borderColor: active ? colors.accentBorder : colors.border
-                                    }}
-                                    className="vt-btn vt-h-32 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-bold"
-                                >
-                                    {trig}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    <div className="vt-between-center vt-flex-wrap vt-gap-2">
-                        <input
-                            type="text"
-                            placeholder="Short reflection or note (optional)..."
-                            value={dailyNote}
-                            onChange={(e) => setDailyNote(e.target.value)}
-                            style={{
-                                backgroundColor: colors.card,
-                                borderColor: colors.border,
-                                color: colors.text,
-                                flex: 1,
-                                minWidth: 190
-                            }}
-                            className="vt-input vt-h-38 vt-px-3 vt-text-xs"
-                        />
-
-                        <div className="vt-flex vt-items-center vt-gap-1-5">
-                            {existingForSelected && (
-                                <button
-                                    type="button"
-                                    onClick={() => handleDeleteDisciplineDate(selectedDate)}
-                                    style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.muted }}
-                                    className="vt-btn vt-h-38 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-bold"
-                                >
-                                    Clear Date
-                                </button>
-                            )}
-                            {!confirmRelapse ? (
-                                <button
-                                    type="button"
-                                    onClick={() => setConfirmRelapse(true)}
-                                    style={{
-                                        backgroundColor: isSelectedRelapse ? colors.danger : colors.card,
-                                        color: isSelectedRelapse ? '#FFFFFF' : colors.danger,
-                                        borderColor: colors.danger
-                                    }}
-                                    className="vt-btn vt-h-38 vt-px-3 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase"
-                                >
-                                    {isSelectedRelapse ? 'Slip Logged' : 'Log Honest Slip'}
-                                </button>
-                            ) : (
-                                <>
-                                    <button
-                                        type="button"
-                                        onClick={handleLogRelapse}
-                                        style={{ backgroundColor: colors.danger, color: '#FFFFFF' }}
-                                        className="vt-btn vt-h-38 vt-px-3 vt-rounded-lg vt-text-11 vt-font-extrabold vt-uppercase"
-                                    >
-                                        Confirm Slip
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setConfirmRelapse(false)}
-                                        style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
-                                        className="vt-btn vt-h-38 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-bold"
-                                    >
-                                        Cancel
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {/* 2. TOP 4 LIVE DISCIPLINE KPI CARDS */}
@@ -6146,187 +6018,6 @@ function DisciplineView({
                     colors={colors}
                     isDark={isDark}
                 />
-            </div>
-
-            {/* 4. URGE SOS 90-SECOND EMERGENCY BREAKER + 35-DAY HEATMAP */}
-            <div className="vt-grid-lg-3 vt-gap-4">
-                <div
-                    style={{
-                        backgroundColor: colors.card,
-                        borderColor: sosActive ? colors.danger : colors.border
-                    }}
-                    className="vt-card vt-p-card vt-stack-3 vt-col-between"
-                >
-                    <div className="vt-stack-1">
-                        <div className="vt-flex vt-items-center vt-gap-2">
-                            <ShieldAlert size={18} style={{ color: colors.danger }} />
-                            <span className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.danger }}>
-                                Emergency Circuit Breaker
-                            </span>
-                        </div>
-                        <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-                            90-Sec Urge SOS Timer
-                        </h3>
-                        <p className="vt-text-xs" style={{ color: colors.muted }}>
-                            Jab strong urge aaye, turant SOS start karein — 90 second survive karne par dopamine wave 80% gir jaati hai.
-                        </p>
-                    </div>
-
-                    <div
-                        style={{
-                            backgroundColor: colors.elevated,
-                            borderColor: sosActive ? colors.danger : colors.border,
-                            textAlign: 'center'
-                        }}
-                        className="vt-p-4 vt-box-xl vt-stack-2"
-                    >
-                        <div
-                            className="font-display tabular-nums"
-                            style={{
-                                fontSize: 44,
-                                fontWeight: 900,
-                                lineHeight: 1,
-                                color: sosActive ? colors.danger : colors.text
-                            }}
-                        >
-                            {sosSecLeft}s
-                        </div>
-                        <p className="vt-text-xs vt-font-semibold" style={{ color: colors.text }}>
-                            {URGE_SOS_ACTIONS[sosTipIdx]}
-                        </p>
-                    </div>
-
-                    <div className="vt-flex vt-gap-2">
-                        <button
-                            type="button"
-                            onClick={() => setSosActive((p) => !p)}
-                            style={{
-                                backgroundColor: sosActive ? colors.elevated : colors.danger,
-                                color: sosActive ? colors.text : '#FFFFFF',
-                                borderColor: colors.danger,
-                                flex: 1
-                            }}
-                            className="vt-btn vt-h-44 vt-rounded-xl vt-border vt-text-xs vt-font-extrabold vt-uppercase"
-                        >
-                            {sosActive ? 'Pause SOS' : 'Start 90s SOS'}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setSosActive(false);
-                                setSosSecLeft(90);
-                                setSosTipIdx((i) => (i + 1) % URGE_SOS_ACTIONS.length);
-                            }}
-                            aria-label="Reset SOS timer"
-                            style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
-                            className="vt-icon-btn-44"
-                        >
-                            <RotateCcw size={16} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* 35-Day Clean Consistency Heatmap + Trigger Breakdown */}
-                <div
-                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                    className="vt-col-span-lg-2 vt-card vt-p-card vt-stack-4"
-                >
-                    <div className="vt-between-center vt-flex-wrap vt-gap-2">
-                        <div>
-                            <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-                                35-Day Clean Wall (5-Week Matrix)
-                            </h3>
-                            <p className="vt-text-xs" style={{ color: colors.muted }}>
-                                Har square ek din hai — kisi bhi din par tap karke log edit karein.
-                            </p>
-                        </div>
-
-                        <div className="vt-row-wrap vt-gap-3 vt-text-11 vt-font-bold">
-                            <span className="vt-flex vt-items-center vt-gap-1-5">
-                                <span className="vt-legend-dot" style={{ backgroundColor: colors.accent }} />
-                                Clean
-                            </span>
-                            <span className="vt-flex vt-items-center vt-gap-1-5">
-                                <span className="vt-legend-dot" style={{ backgroundColor: colors.danger }} />
-                                Slip
-                            </span>
-                            <span className="vt-flex vt-items-center vt-gap-1-5">
-                                <span className="vt-legend-dot" style={{ backgroundColor: colors.elevated }} />
-                                Unlogged
-                            </span>
-                        </div>
-                    </div>
-
-                    <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-                            gap: 8
-                        }}
-                    >
-                        {disciplineStats.heatmap35.map((cell) => {
-                            const bg =
-                                cell.status === 'clean'
-                                    ? colors.accent
-                                    : cell.status === 'relapse'
-                                      ? colors.danger
-                                      : colors.elevated;
-
-                            return (
-                                <button
-                                    key={cell.date}
-                                    type="button"
-                                    onClick={() => setSelectedDate(cell.date)}
-                                    title={`${cell.date} — ${cell.status.toUpperCase()}`}
-                                    style={{
-                                        backgroundColor: bg,
-                                        border:
-                                            cell.date === selectedDate
-                                                ? `2px solid ${colors.text}`
-                                                : `1px solid ${colors.border}`,
-                                        borderRadius: 8,
-                                        height: 36,
-                                        color:
-                                            cell.status === 'clean'
-                                                ? colors.accentText
-                                                : cell.status === 'relapse'
-                                                  ? '#FFFFFF'
-                                                  : colors.muted,
-                                        fontSize: 10,
-                                        fontWeight: 800,
-                                        cursor: 'pointer'
-                                    }}
-                                    className="font-mono-num"
-                                >
-                                    {cell.shortDate.slice(3)}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {disciplineStats.triggerBreakdown.length > 0 && (
-                        <div className="vt-stack-2 vt-pt-2 vt-border-t" style={{ borderColor: colors.border }}>
-                            <div className="vt-text-xs vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
-                                Top Trigger Analysis (Apne Weak Points Pehchanein)
-                            </div>
-                            <div style={{ width: '100%', height: 150 }}>
-                                <ResponsiveContainer width="100%" height={150}>
-                                    <BarChart
-                                        data={disciplineStats.triggerBreakdown}
-                                        layout="vertical"
-                                        margin={{ top: 4, right: 16, left: 10, bottom: 4 }}
-                                    >
-                                        <CartesianGrid stroke={colors.border} strokeDasharray="3 3" horizontal={false} />
-                                        <XAxis type="number" allowDecimals={false} stroke={colors.muted} fontSize={10} />
-                                        <YAxis type="category" dataKey="trigger" width={120} stroke={colors.muted} fontSize={10} />
-                                        <Tooltip content={<ModernChartTooltip colors={colors} suffixMap={{ count: 'logs' }} />} />
-                                        <Bar dataKey="count" name="Occurrences" fill={colors.warning} radius={[0, 6, 6, 0]} maxBarSize={18} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    )}
-                </div>
             </div>
 
             {/* 5. MILESTONES ROADMAP */}
@@ -6991,80 +6682,6 @@ function TodayView({
                             </div>
                         </>
                     )}
-                </div>
-
-                {/* Warm-Up Protocol Card */}
-                <div
-                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                    className="vt-card vt-warmup-card"
-                >
-                    <div>
-                        <div className="vt-track-label" style={{ color: colors.muted }}>
-                            Warm-Up & Rest Protocol
-                        </div>
-                        <h3 className="vt-warmup-title font-display">
-                            5 Min Cardio + 3 Compound Ramp Sets
-                        </h3>
-                        {!activeDayPlan.isRest && (
-                            <div className="vt-warmup-list tabular-nums" style={{ color: colors.muted }}>
-                                {firstCompoundWorkingWeightKg > 0 ? (
-                                    <p>
-                                        <strong style={{ color: colors.text }}>1st Compound Ramp:</strong>{' '}
-                                        {formatWeight(roundToPlate(firstCompoundWorkingWeightKg * 0.5))}
-                                        {appState.unit} × 8 →{' '}
-                                        {formatWeight(roundToPlate(firstCompoundWorkingWeightKg * 0.7))}
-                                        {appState.unit} × 5 →{' '}
-                                        {formatWeight(roundToPlate(firstCompoundWorkingWeightKg * 0.85))}
-                                        {appState.unit} × 3
-                                    </p>
-                                ) : (
-                                    <p>
-                                        <strong style={{ color: colors.text }}>1st Compound Ramp:</strong> Enter working weight in Set #1 to auto-calculate 50% / 70% / 85% warm-ups.
-                                    </p>
-                                )}
-                                <p>
-                                    <strong style={{ color: colors.text }}>Isolations:</strong> 1 light feeler set only.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="vt-rest-presets tabular-nums">
-                        <button
-                            onClick={() =>
-                                setRestTimer({
-                                    active: true,
-                                    paused: false,
-                                    remainingSec: 150,
-                                    totalSec: 150,
-                                    exerciseName: 'Heavy Compound Rest',
-                                    exerciseType: 'compound'
-                                })
-                            }
-                            style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
-                            className="vt-preset-btn"
-                        >
-                            <Clock size={14} />
-                            <span>150s Heavy</span>
-                        </button>
-                        <button
-                            onClick={() =>
-                                setRestTimer({
-                                    active: true,
-                                    paused: false,
-                                    remainingSec: 75,
-                                    totalSec: 75,
-                                    exerciseName: 'Isolation Lift Rest',
-                                    exerciseType: 'isolation'
-                                })
-                            }
-                            style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
-                            className="vt-preset-btn"
-                        >
-                            <Zap size={14} />
-                            <span>75s Iso</span>
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -9275,20 +8892,7 @@ function ProgressView({
                         </div>
                     </div>
 
-                    <div>
-                        <input
-                            type="text"
-                            placeholder="Optional note (high carbs, salt, sleep...)"
-                            value={noteInput}
-                            onChange={(e) => setNoteInput(e.target.value)}
-                            style={{
-                                backgroundColor: colors.elevated,
-                                borderColor: colors.border,
-                                color: colors.text
-                            }}
-                            className="vt-input vt-h-38 vt-px-3 vt-text-xs"
-                        />
-                    </div>
+                    
 
                     {liveFormSwing !== null && (
                         <div
@@ -9311,7 +8915,7 @@ function ProgressView({
                         style={{ backgroundColor: colors.accent, color: colors.accentText }}
                         className="vt-btn vt-w-full vt-h-46 vt-rounded-xl vt-font-extrabold vt-text-xs vt-uppercase vt-tracking-wider"
                     >
-                        Save Weigh-In to PostgreSQL
+                        Save Weigh-In
                     </button>
                 </form>
 
@@ -10499,17 +10103,6 @@ function SettingsView({
         showToast('Exported VTaper JSON backup.');
     };
 
-    const handleDownloadSvgIcon = () => {
-        const blob = new Blob([VTAPER_SVG_RAW], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'icon.svg';
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('Downloaded public/icon.svg!');
-    };
-
     const handleImportJson = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -10660,10 +10253,7 @@ function SettingsView({
                                 PostgreSQL Cloud Backups (14-Day Auto Snapshots)
                             </h3>
                         </div>
-                        <p className="vt-text-xs font-mono-num" style={{ color: colors.muted }}>
-                            API: {API_BASE_URL} • Status: <strong>{syncStatus.toUpperCase()}</strong>
-                            {lastSyncedAt ? ` • Last Sync: ${new Date(lastSyncedAt).toLocaleTimeString()}` : ''}
-                        </p>
+                        
                     </div>
 
                     <div className="vt-flex vt-items-center vt-gap-2">
@@ -10753,15 +10343,6 @@ function SettingsView({
                         <span>Import JSON → DB</span>
                         <input type="file" accept=".json" onChange={handleImportJson} className="vt-hidden" />
                     </label>
-
-                    <button
-                        onClick={handleDownloadSvgIcon}
-                        style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
-                        className="vt-btn vt-h-46 vt-px-4 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2"
-                    >
-                        <Sparkles className="vt-icon-4" />
-                        <span>Download icon.svg</span>
-                    </button>
 
                     {!confirmReset ? (
                         <button
@@ -11695,7 +11276,7 @@ export function PelvicRehabSection({
                 >
                     <div
                         className="vt-text-xs vt-font-extrabold vt-uppercase vt-tracking-wider"
-                        style={{ color: isDark ? colors.accent : colors.success }}
+                        style={{ color: isDark ? colors.accent : colors.accent }}
                     >
                         Weak / Lengthened (Phase 2–3: Strengthen)
                     </div>

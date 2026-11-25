@@ -1790,7 +1790,8 @@ input[type='range']:active::-webkit-slider-thumb {
   .vt-footer-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
   .vt-page-main { padding: 28px 32px 64px; }
-  .vt-bento-3, .vt-grid-lg-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  
+  .vt-grid-lg-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .vt-span-2-lg, .vt-col-span-lg-2 { grid-column: span 2 / span 2; }
   .vt-grid-rotation { grid-template-columns: repeat(7, minmax(0, 1fr)); }
   .vt-resp-row-lg { flex-direction: row; align-items: center; justify-content: space-between; }
