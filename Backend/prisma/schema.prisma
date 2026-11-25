@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model UserConfig {
+  id                  String   @id @default("vtaper_main")
+  onboarded           Boolean  @default(false)
+  dayStamp            String   @default("")
+  theme               String   @default("dark")
+  unit                String   @default("kg")
+  rampInEnabled       Boolean  @default(true)
+  pelvicSide          String   @default("right")
+  workoutStreak       Int      @default(0)
+  profile             Json
+  customSteps         Json     @default("{}")
+  variantChoices      Json     @default("{\"thu-5\":\"dips\"}")
+  swappedAlternatives Json     @default("{}")
+  selectedMealOptions Json     @default("{}")
+  foodDatabase        Json     @default("[]")
+  activeDrafts        Json     @default("{}")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model WorkoutSession {
+  id            String        @id @default(uuid())
+  date          String        // YYYY-MM-DD (IST)
+  dayIndex      Int           // 0 = Sun, 1 = Mon ... 6 = Sat
+  dayTitle      String
+  durationSec   Int           @default(0)
+  totalVolumeKg Float         @default(0)
+  setsCompleted Int           @default(0)
+  prsCount      Int           @default(0)
+  notes         String        @default("")
+  exercises     ExerciseLog[]
+  createdAt     DateTime      @default(now())
+
+  @@index([date])
+  @@index([dayIndex, date])
+}
+
+model ExerciseLog {
+  id            String         @id @default(uuid())
+  sessionId     String
+  session       WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  date          String         // YYYY-MM-DD
+  dayIndex      Int
+  exerciseId    String         // e.g., "mon-1", "tue-2"
+  exerciseName  String
+  primaryGroup  String
+  isAssisted    Boolean        @default(false)
+  sets          Json           // [{ setNumber, weight, reps }]
+  topWeightKg   Float          @default(0)
+  bestReps      Int            @default(0)
+  e1rmKg        Float          @default(0)
+  volumeKg      Float          @default(0)
+  setsCompleted Int            @default(0)
+  createdAt     DateTime       @default(now())
+
+  @@index([exerciseId, date])
+  @@index([dayIndex, date])
+  @@index([sessionId])
+}
+
+model WeightLog {
+  id            String   @id @default(uuid())
+  date          String   @unique // YYYY-MM-DD
+  morningKg     Float?
+  nightKg       Float?
+  weightKg      Float
+  fluctuationKg Float?
+  notes         String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([date])
+}
+
+model DailyLog {
+  id                    String   @id @default(uuid())
+  date                  String   @unique // YYYY-MM-DD
+  kcal                  Int      @default(0)
+  proteinG              Float    @default(0)
+  carbsG                Float    @default(0)
+  fatG                  Float    @default(0)
+  proteinFeedings       Int      @default(0)
+  waterMl               Int      @default(0)
+  sleepHours            Float    @default(0)
+  sundayWalkDone        Boolean  @default(false)
+  selectedMealOptions   Json     @default("{}")
+  completedMealSlots    Json     @default("{}")
+  loggedAppetiteHelpers Json     @default("[]")
+  pelvicHabits          Json     @default("{}")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([date])
+}
+
+model BodyMeasurement {
+  id          String   @id @default(uuid())
+  date        String   // YYYY-MM-DD
+  shoulders   Float    @default(0)
+  chest       Float    @default(0)
+  waist       Float    @default(0)
+  arms        Float    @default(0)
+  thighs      Float    @default(0)
+  vTaperRatio Float    @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([date])
+}
+
+model DisciplineLog {
+  id        String   @id @default(uuid())
+  date      String   @unique // YYYY-MM-DD
+  status    String   // "clean" | "relapse"
+  noPorn    Boolean  @default(true)
+  noFap     Boolean  @default(true)
+  urgeLevel Int      @default(0)
+  trigger   String   @default("")
+  note      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+}
+
+model UrgeLog {
+  id        String   @id @default(uuid())
+  date      String   // YYYY-MM-DD
+  time      String   @default("")
+  trigger   String   @default("Instant Control")
+  defeated  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([date])
+}
+
+model CardioLog {
+  id              String   @id @default(uuid())
+  date            String   @unique // YYYY-MM-DD
+  durationMin     Int      @default(30)
+  drillsCompleted Int      @default(0)
+  kcalBurned      Int      @default(210)
+  createdAt       DateTime @default(now())
+
+  @@index([date])
+}
+
+model PelvicLog {
+  id            String   @id @default(uuid())
+  date          String   @unique // YYYY-MM-DD
+  highSide      String   @default("right")
+  durationMin   Int      @default(18)
+  setsCompleted Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@index([date])
+}
+
+model CloudBackup {
+  id           String   @id @default(uuid())
+  snapshotDate String   @unique // YYYY-MM-DD
+  payload      Json
+  meta         Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

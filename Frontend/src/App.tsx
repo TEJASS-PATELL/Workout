@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import './App.css';
 import {
     Dumbbell,
@@ -40,12 +40,15 @@ import {
     RotateCcw,
     Plus,
     ShoppingBag,
-    RefreshCw
+    RefreshCw,
+    Cloud,
+    CloudOff,
+    Database,
+    History
 } from 'lucide-react';
 import {
     ResponsiveContainer,
     ComposedChart,
-    LineChart,
     Line,
     XAxis,
     YAxis,
@@ -53,7 +56,6 @@ import {
     Tooltip,
     ReferenceArea,
     ReferenceLine,
-    AreaChart,
     Area,
     BarChart,
     Bar,
@@ -68,10 +70,82 @@ import {
 } from 'recharts';
 
 // ============================================================================
-// SECTION 1: SCIENCE RULES (Pure Constants — Zero App State Mixed In)
+// SECTION 0: BACKEND API CLIENT (DEDICATED POSTGRESQL RELATIONAL BACKEND)
 // ============================================================================
 
+export const API_BASE_URL = (
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) ||
+    'http://localhost:3001'
+).replace(/\/+$/, '');
 
+async function apiRequest(path, options = {}) {
+    const controller = new AbortController();
+    const timeoutMs = options.timeoutMs || 15000;
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        const res = await fetch(`${API_BASE_URL}${path}`, {
+            method: options.method || 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            },
+            body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+            signal: controller.signal
+        });
+
+        const text = await res.text();
+        let json = {};
+        try {
+            json = text ? JSON.parse(text) : {};
+        } catch {
+            json = { error: text || `HTTP ${res.status}` };
+        }
+
+        if (!res.ok) {
+            throw new Error(json.error || json.message || `Request failed (${res.status})`);
+        }
+        return json;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+export const vtaperApi = {
+    health: () => apiRequest('/api/health'),
+    bootstrap: () => apiRequest('/api/bootstrap'),
+    updateConfig: (payload) => apiRequest('/api/config', { method: 'PUT', body: payload }),
+    completeWorkout: (payload) =>
+        apiRequest('/api/workouts/complete', { method: 'POST', body: payload }),
+    getWorkoutRecall: (dayIndex) => apiRequest(`/api/workouts/recall/${dayIndex}`),
+    deleteWorkout: (id) => apiRequest(`/api/workouts/${id}`, { method: 'DELETE' }),
+    saveDailyLog: (date, payload) =>
+        apiRequest(`/api/daily/${date}`, { method: 'PUT', body: payload }),
+    saveWeightLog: (date, payload) =>
+        apiRequest(`/api/weights/${date}`, { method: 'PUT', body: payload }),
+    deleteWeightLog: (date) => apiRequest(`/api/weights/${date}`, { method: 'DELETE' }),
+    addMeasurement: (payload) => apiRequest('/api/measurements', { method: 'POST', body: payload }),
+    deleteMeasurement: (id) => apiRequest(`/api/measurements/${id}`, { method: 'DELETE' }),
+    saveDiscipline: (date, payload) =>
+        apiRequest(`/api/discipline/${date}`, { method: 'PUT', body: payload }),
+    deleteDiscipline: (date) => apiRequest(`/api/discipline/${date}`, { method: 'DELETE' }),
+    logUrge: (payload) => apiRequest('/api/urges', { method: 'POST', body: payload }),
+    saveCardio: (date, payload) =>
+        apiRequest(`/api/cardio/${date}`, { method: 'PUT', body: payload }),
+    savePelvic: (date, payload) =>
+        apiRequest(`/api/pelvic/${date}`, { method: 'PUT', body: payload }),
+    getOverview: (period = 'weekly') => apiRequest(`/api/overview?period=${period}`),
+    listBackups: () => apiRequest('/api/backups'),
+    createBackupNow: () => apiRequest('/api/backups/now', { method: 'POST' }),
+    restoreBackup: (snapshotDate) =>
+        apiRequest('/api/backups/restore', { method: 'POST', body: { snapshotDate } }),
+    importState: (data) => apiRequest('/api/import', { method: 'POST', body: { data } }),
+    resetAll: (theme = 'dark') => apiRequest('/api/reset', { method: 'POST', body: { theme } })
+};
+
+// ============================================================================
+// SECTION 1: SCIENCE RULES (Pure Constants — Zero App State Mixed In)
+// ============================================================================
 
 export const SCIENCE_RULES = {
     VOLUME_MIN_SETS: 10,
@@ -1204,7 +1278,6 @@ export const WORKOUT_PLAN = [
     }
 ];
 
-// Accurately audited direct weekly primary sets across Mon-Sat (Total = 131 Sets)
 export const EXPECTED_WEEKLY_PRIMARY_SETS = {
     Chest: 14,
     'Front delts': 7,
@@ -1640,6 +1713,62 @@ export function computeMealOptionMacros(option, foodDb = INITIAL_FOOD_DATABASE) 
         protein: Number(protein.toFixed(1)),
         carbs: Number(carbs.toFixed(1)),
         fat: Number(fat.toFixed(1))
+    };
+}
+
+export function computeDayNutritionTotals(state) {
+    let consumedKcal = 0;
+    let consumedProtein = 0;
+    let consumedCarbs = 0;
+    let consumedFat = 0;
+    let proteinFeedingsCount = 0;
+    let plannedKcal = 0;
+    let plannedProtein = 0;
+
+    const foodDb = state?.foodDatabase?.length ? state.foodDatabase : INITIAL_FOOD_DATABASE;
+    const dietTrack = state?.profile?.dietTrack || 'non-veg';
+
+    MEAL_SLOTS.forEach((slot) => {
+        const selectedOptId = state?.selectedMealOptions?.[slot.slotId];
+        const opt =
+            slot.options.find((o) => o.id === selectedOptId) ||
+            slot.options.find((o) => o.tracks.includes(dietTrack)) ||
+            slot.options[0];
+        if (!opt) return;
+
+        const macros = computeMealOptionMacros(opt, foodDb);
+        plannedKcal += macros.kcal;
+        plannedProtein += macros.protein;
+
+        if (state?.completedMealSlots?.[slot.slotId]) {
+            consumedKcal += macros.kcal;
+            consumedProtein += macros.protein;
+            consumedCarbs += macros.carbs;
+            consumedFat += macros.fat;
+            if (macros.protein >= 18) {
+                proteinFeedingsCount += 1;
+            }
+        }
+    });
+
+    (state?.loggedAppetiteHelpers || []).forEach((helperId) => {
+        const helper = APPETITE_HELPERS.find((h) => h.id === helperId);
+        if (helper) {
+            consumedKcal += helper.kcal;
+            consumedProtein += helper.protein;
+            consumedCarbs += helper.carbs;
+            consumedFat += helper.fat;
+        }
+    });
+
+    return {
+        consumedKcal: Math.round(consumedKcal),
+        consumedProtein: Math.round(consumedProtein),
+        consumedCarbs: Math.round(consumedCarbs),
+        consumedFat: Math.round(consumedFat),
+        plannedKcal: Math.round(plannedKcal),
+        plannedProtein: Math.round(plannedProtein),
+        proteinFeedingsCount
     };
 }
 
@@ -2083,11 +2212,11 @@ export function calculateProgressiveOverload(
         mode: isAssisted ? 'assist' : 'add',
         reason: isAssisted
             ? `Hit ${exercise.repMax} reps on all ${prescribedSets} sets to reduce assistance by ${Math.abs(
-                customDelta
-            )} kg`
+                  customDelta
+              )} kg`
             : `Hit ${exercise.repMax} reps across all ${prescribedSets} sets to unlock +${Math.abs(
-                customDelta
-            )} kg`
+                  customDelta
+              )} kg`
     };
 }
 
@@ -2222,10 +2351,6 @@ export function analyzeWeeklyGainRate(weightLogs, ignoreInitial14Days = true) {
     };
 }
 
-// ============================================================================
-// DISCIPLINE (NO PORN / NO MASTURBATION) ANALYTICS ENGINE
-// ============================================================================
-
 export function analyzeDisciplineProgress(
     disciplineLogs = {},
     urgeLogs = [],
@@ -2241,7 +2366,6 @@ export function analyzeDisciplineProgress(
     const cleanRatePct =
         totalLoggedDays > 0 ? Math.round((totalCleanDays / totalLoggedDays) * 100) : 0;
 
-    // Calculate current consecutive clean streak up to today (or yesterday if today not checked in yet)
     let currentStreak = 0;
     const todayEntry = disciplineLogs?.[referenceDateStr];
     const yesterdayStr = addDaysToDateStr(referenceDateStr, -1);
@@ -2259,7 +2383,6 @@ export function analyzeDisciplineProgress(
         cursorDate = addDaysToDateStr(cursorDate, -1);
     }
 
-    // Calculate best streak + chronological daily growth series
     let bestStreak = 0;
     let runningStreak = 0;
     let momentumScore = 0;
@@ -2284,7 +2407,6 @@ export function analyzeDisciplineProgress(
             momentumScore = Math.max(0, Math.round(momentumScore * 0.72));
         }
 
-        // 7-day rolling clean consistency percentage
         const windowEntries = entries.slice(Math.max(0, idx - 6), idx + 1);
         const cleanInWindow = windowEntries.filter((w) => w.status === 'clean').length;
         const rolling7Pct = Math.round((cleanInWindow / windowEntries.length) * 100);
@@ -2303,17 +2425,12 @@ export function analyzeDisciplineProgress(
         };
     });
 
-    // Trigger breakdown across both urgeLogs and relapse logs
     const triggerCounts = {};
     entries.forEach((e) => {
-        if (e.trigger) {
-            triggerCounts[e.trigger] = (triggerCounts[e.trigger] || 0) + 1;
-        }
+        if (e.trigger) triggerCounts[e.trigger] = (triggerCounts[e.trigger] || 0) + 1;
     });
     (urgeLogs || []).forEach((u) => {
-        if (u.trigger) {
-            triggerCounts[u.trigger] = (triggerCounts[u.trigger] || 0) + 1;
-        }
+        if (u.trigger) triggerCounts[u.trigger] = (triggerCounts[u.trigger] || 0) + 1;
     });
 
     const triggerBreakdown = Object.entries(triggerCounts)
@@ -2321,7 +2438,6 @@ export function analyzeDisciplineProgress(
         .sort((a, b) => b.count - a.count)
         .slice(0, 6);
 
-    // Last 35 days (5 weeks) calendar heatmap
     const heatmap35 = Array.from({ length: 35 }, (_, i) => {
         const dStr = addDaysToDateStr(referenceDateStr, -(34 - i));
         const log = disciplineLogs?.[dStr] || null;
@@ -2371,7 +2487,6 @@ export function analyzeDisciplineProgress(
 export function runBuiltInUnitTests() {
     const results = [];
 
-    // Test 1: Exact Weekly Primary Sets (131 Sets)
     const { primary } = computeWeeklyMuscleVolumes();
     const totalSets = Object.values(primary).reduce((a, b) => a + b, 0);
     const allMatchExpected = Object.entries(EXPECTED_WEEKLY_PRIMARY_SETS).every(
@@ -2384,7 +2499,6 @@ export function runBuiltInUnitTests() {
         actual: `${totalSets} sets (Lats/Back ${primary['Lats/Back']}, Biceps ${primary.Biceps}, Chest ${primary.Chest}, Quads ${primary.Quads})`
     });
 
-    // Test 2: Assisted Lift Overload
     const assistPullup = WORKOUT_PLAN[1].exercises[1];
     const tAssist = calculateProgressiveOverload(assistPullup, [
         { weight: 25, reps: 10 },
@@ -2401,7 +2515,6 @@ export function runBuiltInUnitTests() {
         actual: `shouldIncrease: ${tAssist.shouldIncrease}, ${tAssist.incrementKg} kg -> ${tAssist.suggestedWeightKg} kg`
     });
 
-    // Test 3: All 17 Meal Options Within ±5%
     let allMealsWithin5Pct = true;
     let maxDeviationPct = 0;
     MEAL_SLOTS.forEach((slot) => {
@@ -2419,7 +2532,6 @@ export function runBuiltInUnitTests() {
         actual: `Max deviation ${(maxDeviationPct * 100).toFixed(2)}% across 17 options`
     });
 
-    // Test 4: Full-Day Non-Veg & Veg Totals
     const findOpt = (code) => {
         for (const s of MEAL_SLOTS) {
             const found = s.options.find((o) => o.code === code);
@@ -2455,7 +2567,6 @@ export function runBuiltInUnitTests() {
         )}g P | Veg ${vegTotals.kcal} kcal/${Math.round(vegTotals.protein)}g P`
     });
 
-    // Test 5: Gain Rate Velocity Rules
     const tFast = analyzeWeeklyGainRate(
         [
             { date: '2026-10-01', morningKg: 55.0 },
@@ -2482,7 +2593,6 @@ export function runBuiltInUnitTests() {
         actual: `${tFast.status} & ${tSlow.status} (+${tSlow.calorieAdjustment} kcal)`
     });
 
-    // Test 6: Clean Discipline Streak & Growth Score Engine
     const mockDiscipline = {
         '2026-11-18': { date: '2026-11-18', status: 'clean', noPorn: true, noFap: true, urgeLevel: 4 },
         '2026-11-19': { date: '2026-11-19', status: 'clean', noPorn: true, noFap: true, urgeLevel: 3 },
@@ -2506,7 +2616,7 @@ export function runBuiltInUnitTests() {
 }
 
 // ============================================================================
-// SECTION 6: ZERO-DEFAULT INITIAL STATE (ONLY 65–68 KG GOAL BAND PRE-SET)
+// SECTION 6: INITIAL STATE & SERVER HYDRATION MERGER
 // ============================================================================
 
 const DEFAULT_PROFILE = {
@@ -2538,7 +2648,12 @@ const VTAPER_SVG_RAW = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512
 
 const STORAGE_KEY = 'vtaper_tracker_state_v5';
 
-function buildInitialActiveDrafts(lastLogs, rampInEnabled = true, customSteps = {}, variantChoices = {}) {
+function buildInitialActiveDrafts(
+    lastLogs = {},
+    rampInEnabled = true,
+    customSteps = {},
+    variantChoices = {}
+) {
     const drafts = {};
     WORKOUT_PLAN.forEach((day) => {
         day.exercises.forEach((ex) => {
@@ -2578,6 +2693,7 @@ function getFreshInitialState(theme = 'dark') {
         variantChoices: { 'thu-5': 'dips' },
         swappedAlternatives: {},
         lastSessionLogs: {},
+        lastSessionMetaByExercise: {},
         activeDrafts: buildInitialActiveDrafts({}, true, {}, { 'thu-5': 'dips' }),
         foodDatabase: INITIAL_FOOD_DATABASE,
         selectedMealOptions: getDefaultSelectedMealsForTrack(defaultTrack),
@@ -2591,6 +2707,7 @@ function getFreshInitialState(theme = 'dark') {
         measurements: [],
         workoutHistory: [],
         exerciseHistory: {},
+        dailyLogs: {},
         cardioLogs: [],
         pelvicSide: 'right',
         pelvicLogs: [],
@@ -2600,7 +2717,58 @@ function getFreshInitialState(theme = 'dark') {
     };
 }
 
+function hydrateMergedState(rawState) {
+    const base = getFreshInitialState(rawState?.theme || 'dark');
+    if (!rawState || typeof rawState !== 'object') return base;
 
+    const { name: _legacyName, ...savedProfile } = rawState.profile || {};
+    const mergedProfile = { ...DEFAULT_PROFILE, ...savedProfile };
+    const trackDefaults = getDefaultSelectedMealsForTrack(mergedProfile.dietTrack);
+    const selectedMeals =
+        rawState.selectedMealOptions && Object.keys(rawState.selectedMealOptions).length > 0
+            ? { ...trackDefaults, ...rawState.selectedMealOptions }
+            : trackDefaults;
+
+    const lastLogs = rawState.lastSessionLogs || {};
+    const rampIn = rawState.rampInEnabled ?? true;
+    const customSteps = rawState.customSteps || {};
+    const variantChoices = { 'thu-5': 'dips', ...(rawState.variantChoices || {}) };
+
+    const builtDrafts = buildInitialActiveDrafts(lastLogs, rampIn, customSteps, variantChoices);
+    const mergedDrafts = { ...builtDrafts };
+    if (rawState.activeDrafts && typeof rawState.activeDrafts === 'object') {
+        Object.entries(rawState.activeDrafts).forEach(([exId, sets]) => {
+            if (Array.isArray(sets) && sets.length > 0) {
+                mergedDrafts[exId] = sets;
+            }
+        });
+    }
+
+    return {
+        ...base,
+        ...rawState,
+        profile: mergedProfile,
+        foodDatabase: rawState.foodDatabase?.length ? rawState.foodDatabase : INITIAL_FOOD_DATABASE,
+        selectedMealOptions: selectedMeals,
+        variantChoices,
+        lastSessionLogs: lastLogs,
+        activeDrafts: mergedDrafts,
+        dailyLogs: rawState.dailyLogs || {}
+    };
+}
+
+function hasAnyLocalProgress(state) {
+    if (!state || typeof state !== 'object') return false;
+    return (
+        Boolean(state.onboarded) ||
+        (state.workoutHistory?.length || 0) > 0 ||
+        (state.weightLogs?.length || 0) > 0 ||
+        (state.measurements?.length || 0) > 0 ||
+        Object.keys(state.disciplineLogs || {}).length > 0 ||
+        (state.cardioLogs?.length || 0) > 0 ||
+        (state.pelvicLogs?.length || 0) > 0
+    );
+}
 
 // ============================================================================
 // SECTION 7: MODERN EDITORIAL CHARTS & SHARED BRANDING COMPONENTS
@@ -2633,7 +2801,6 @@ function BrandLogo({ size = 40, isDark = true, colors }) {
     );
 }
 
-// Modern Minimal Editorial Tooltip for all Recharts graphs
 function ModernChartTooltip({ active, payload, label, colors, suffixMap = {} }) {
     if (!active || !payload || !payload.length) return null;
     return (
@@ -2699,7 +2866,6 @@ function ModernChartTooltip({ active, payload, label, colors, suffixMap = {} }) 
     );
 }
 
-// Flat activity ring (SVG)
 function Ring({ value, max, size = 92, stroke = 10, color, track, label, sub }) {
     const r = (size - stroke) / 2;
     const c = 2 * Math.PI * r;
@@ -2730,7 +2896,6 @@ function Ring({ value, max, size = 92, stroke = 10, color, track, label, sub }) 
     );
 }
 
-// Semi-circle V-taper gauge (goal band 1.40-1.50)
 function VTaperGauge({ ratio, colors, isDark }) {
     const MIN = 1.0,
         MAX = 1.7,
@@ -2785,7 +2950,6 @@ function VTaperGauge({ ratio, colors, isDark }) {
     );
 }
 
-// Modern Radial Reboot Progress Gauge (used in Clean Discipline tab)
 function RebootRadialGauge({ pct, currentStreak, colors, isDark }) {
     const data = [{ name: '90-Day Reboot', value: Math.max(0, Math.min(100, pct)) }];
     const strokeCol = isDark ? colors.accent : '#0059ff';
@@ -2862,7 +3026,6 @@ function RebootRadialGauge({ pct, currentStreak, colors, isDark }) {
     );
 }
 
-// Weekly sets radar (STATS tab)
 function MuscleRadar({ colors, isDark }) {
     const { primary } = useMemo(() => computeWeeklyMuscleVolumes(), []);
     const data = Object.entries(primary).map(([g, v]) => ({ g, v, t: 12 }));
@@ -2904,7 +3067,6 @@ function MuscleRadar({ colors, isDark }) {
     );
 }
 
-// Modern Upgraded Progress Charts (28-Day Dual Heatmap + Composed Volume/Sets + Gradient e1RM Area)
 function ProgressCharts({ appState, formatWeight, colors, isDark }) {
     const hist = appState.workoutHistory || [];
     const weightLogs = appState.weightLogs || [];
@@ -2913,7 +3075,6 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
     const secondaryStroke = '#FF7A1A';
     const weightOnlyColor = isDark ? '#38BDF8' : '#0EA5E9';
 
-    // 1. 28-Day Combined Consistency (Workouts + Dual Weigh-Ins)
     const heatmapData = useMemo(() => {
         const workoutMap = {};
         hist.forEach((h) => {
@@ -2946,7 +3107,6 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
         return { days, activeWorkoutDays, activeWeightDays, gymConsistencyPct };
     }, [hist, weightLogs]);
 
-    // 2. Session Volume + Sets Composed Analytics
     const [volumeRange, setVolumeRange] = useState(10);
     const volumeAnalytics = useMemo(() => {
         const sliced = hist.slice(0, volumeRange).reverse();
@@ -2966,7 +3126,6 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
         return { chart, avgVol, peakVol };
     }, [hist, volumeRange, formatWeight]);
 
-    // 3. Strength Curve + Estimated 1RM (Epley Formula)
     const exList = useMemo(
         () =>
             WORKOUT_PLAN.flatMap((d) => d.exercises).filter(
@@ -3019,7 +3178,6 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
 
     return (
         <div className="vt-stack-4">
-            {/* CARD 1: 28-DAY CONSISTENCY HEATMAP */}
             <div style={card} className="vt-card vt-p-card vt-stack-3">
                 <div className="vt-between-center vt-flex-wrap vt-gap-2">
                     <div>
@@ -3069,7 +3227,6 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
                 </div>
             </div>
 
-            {/* CARD 2: MODERN COMPOSED SESSION VOLUME & SETS CHART */}
             <div style={card} className="vt-card vt-p-card vt-stack-3">
                 <div className="vt-between-center vt-flex-wrap vt-gap-2">
                     <div>
@@ -3163,7 +3320,6 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
                 </div>
             </div>
 
-            {/* CARD 3: MODERN STRENGTH & ESTIMATED 1RM AREA CURVE */}
             <div style={card} className="vt-card vt-p-card vt-stack-3">
                 <div className="vt-between-center vt-flex-wrap vt-gap-2">
                     <div>
@@ -3297,11 +3453,11 @@ function ProgressCharts({ appState, formatWeight, colors, isDark }) {
 }
 
 // ============================================================================
-// END OF PART 1 — REPLY "OK" FOR PART 2 (Main App + Clean Discipline Page + All Views)
+// END OF PART 1 — REPLY "OK" FOR PART 2 (Main App + Cloud Sync + Today Recall + Discipline)
 // ============================================================================
 
 // ============================================================================
-// SECTION 8: MAIN APPLICATION COMPONENT (PART 2 START)
+// SECTION 8: MAIN APPLICATION COMPONENT (POSTGRESQL SYNC + FULL STATE ENGINE)
 // ============================================================================
 
 export default function App() {
@@ -3317,87 +3473,47 @@ export default function App() {
         }
     }, []);
 
+    // Instant offline cache hydration while PostgreSQL bootstrap loads
     const [appState, setAppState] = useState(() => {
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
-                const parsed = JSON.parse(saved);
-                const { name: _legacyName, ...savedProfile } = parsed.profile || {};
-                const mergedProfile = { ...DEFAULT_PROFILE, ...savedProfile };
-                return {
-                    ...getFreshInitialState(),
-                    ...parsed,
-                    profile: mergedProfile,
-                    foodDatabase: parsed.foodDatabase?.length ? parsed.foodDatabase : INITIAL_FOOD_DATABASE,
-                    selectedMealOptions:
-                        parsed.selectedMealOptions || getDefaultSelectedMealsForTrack(mergedProfile.dietTrack),
-                    activeDrafts: {
-                        ...buildInitialActiveDrafts(
-                            parsed.lastSessionLogs || {},
-                            parsed.rampInEnabled ?? true,
-                            parsed.customSteps || {},
-                            parsed.variantChoices || { 'thu-5': 'dips' }
-                        ),
-                        ...(parsed.activeDrafts || {})
-                    }
-                };
+                return hydrateMergedState(JSON.parse(saved));
             }
-        } catch (e) {
-            // Fallback to clean zero state if localStorage is blocked
+        } catch {
+            // Ignore localStorage read errors
         }
         return getFreshInitialState();
     });
 
-    useEffect(() => {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-        } catch (e) {
-            // Ignore storage quota errors
-        }
-    }, [appState]);
+    // Cloud Sync State
+    const [syncStatus, setSyncStatus] = useState('loading'); // 'loading' | 'synced' | 'syncing' | 'offline'
+    const [lastSyncedAt, setLastSyncedAt] = useState(null);
+    const [syncErrorMsg, setSyncErrorMsg] = useState('');
+    const [localMigrationCandidate, setLocalMigrationCandidate] = useState(null);
+    const [overviewRefreshKey, setOverviewRefreshKey] = useState(0);
 
-    useEffect(() => {
-        const rollover = () => {
-            const t = getLocalDateStr();
-            setAppState((prev) => {
-                if (prev.dayStamp === t) return prev;
-                const drafts = Object.fromEntries(
-                    Object.entries(prev.activeDrafts || {}).map(([id, sets]) => [
-                        id,
-                        sets.map((s) => ({ ...s, completed: false }))
-                    ])
-                );
-                return {
-                    ...prev,
-                    dayStamp: t,
-                    waterMl: 0,
-                    completedMealSlots: {},
-                    loggedAppetiteHelpers: [],
-                    pelvicHabits: {},
-                    activeDrafts: drafts
-                };
-            });
-        };
-        rollover();
-        document.addEventListener('visibilitychange', rollover);
-        return () => document.removeEventListener('visibilitychange', rollover);
-    }, []);
+    // Prevent debounced effects from firing before initial PostgreSQL load completes
+    const serverReadyRef = useRef(false);
+    const skipNextConfigSyncRef = useRef(true);
+    const skipNextDailySyncRef = useRef(true);
+    const configTimerRef = useRef(null);
+    const dailyTimerRef = useRef(null);
 
     const [activeTab, setActiveTab] = useState('today');
-
     const currentWeekdayIndex = useMemo(() => new Date().getDay(), []);
     const [selectedDayIndex, setSelectedDayIndex] = useState(currentWeekdayIndex);
 
-    const [showOnboarding, setShowOnboarding] = useState(!appState.onboarded);
-    const [onboardingForm, setOnboardingForm] = useState(appState.profile);
+    // Exact Workout Day Recall (from PostgreSQL `ExerciseLog` & `WorkoutSession`)
+    const [dayRecall, setDayRecall] = useState(null);
+    const [recallLoading, setRecallLoading] = useState(false);
 
-    const openProfileEditor = useCallback(() => {
-        setOnboardingForm(appState.profile);
-        setShowOnboarding(true);
-    }, [appState.profile]);
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    const [onboardingForm, setOnboardingForm] = useState(appState.profile);
 
     const [workoutRunning, setWorkoutRunning] = useState(false);
     const [workoutElapsedSec, setWorkoutElapsedSec] = useState(0);
+    const [savingWorkout, setSavingWorkout] = useState(false);
 
     const [restTimer, setRestTimer] = useState({
         active: false,
@@ -3409,14 +3525,334 @@ export default function App() {
     });
 
     const [workoutSummary, setWorkoutSummary] = useState(null);
-
     const [toast, setToast] = useState(null);
+
     const showToast = useCallback((message) => {
         setToast(message);
         setTimeout(() => {
             setToast((prev) => (prev === message ? null : prev));
-        }, 3200);
+        }, 3400);
     }, []);
+
+    const bumpOverview = useCallback(() => {
+        setOverviewRefreshKey((k) => k + 1);
+    }, []);
+
+    // Helper: Fetch fresh state from PostgreSQL backend
+    const loadFromBackend = useCallback(
+        async (silent = false) => {
+            setSyncStatus((prev) => (prev === 'loading' ? 'loading' : 'syncing'));
+            setSyncErrorMsg('');
+            try {
+                const res = await vtaperApi.bootstrap();
+                const mergedServerState = hydrateMergedState(res.state);
+
+                // Check if old localStorage has progress while PostgreSQL is completely fresh
+                let cachedLocal = null;
+                try {
+                    const rawLocal = localStorage.getItem(STORAGE_KEY);
+                    if (rawLocal) cachedLocal = JSON.parse(rawLocal);
+                } catch {
+                    cachedLocal = null;
+                }
+
+                if (!hasAnyLocalProgress(mergedServerState) && hasAnyLocalProgress(cachedLocal)) {
+                    setLocalMigrationCandidate(cachedLocal);
+                } else {
+                    setLocalMigrationCandidate(null);
+                }
+
+                skipNextConfigSyncRef.current = true;
+                skipNextDailySyncRef.current = true;
+                setAppState(mergedServerState);
+                setOnboardingForm(mergedServerState.profile);
+                setShowOnboarding(!mergedServerState.onboarded);
+                serverReadyRef.current = true;
+                setSyncStatus('synced');
+                setLastSyncedAt(res.syncedAt || new Date().toISOString());
+                bumpOverview();
+                if (!silent) {
+                    showToast('Synced with PostgreSQL database!');
+                }
+            } catch (err) {
+                serverReadyRef.current = true;
+                setSyncStatus('offline');
+                setSyncErrorMsg(err.message || 'Backend unreachable');
+                setShowOnboarding((prev) => prev || !appState.onboarded);
+                if (!silent) {
+                    showToast(`Offline mode: ${err.message || 'Backend se connect nahi ho paya'}`);
+                }
+            }
+        },
+        [bumpOverview, showToast]
+    );
+
+    // Bootstrap from PostgreSQL on app mount
+    useEffect(() => {
+        loadFromBackend(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Keep localStorage mirrored purely as fast offline cache
+    useEffect(() => {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        } catch {
+            // Ignore quota errors
+        }
+    }, [appState]);
+
+    // Fetch Exact Workout Day Recall whenever selectedDayIndex changes
+    const fetchDayRecall = useCallback(async (dayIdx) => {
+        if (dayIdx === 0) {
+            setDayRecall(null);
+            return;
+        }
+        setRecallLoading(true);
+        try {
+            const res = await vtaperApi.getWorkoutRecall(dayIdx);
+            setDayRecall(res);
+        } catch {
+            setDayRecall(null);
+        } finally {
+            setRecallLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchDayRecall(selectedDayIndex);
+    }, [selectedDayIndex, fetchDayRecall]);
+
+    // Debounced auto-sync for UserConfig & live activeDrafts -> PUT /api/config
+    const configSyncSignature = useMemo(
+        () =>
+            JSON.stringify({
+                onboarded: appState.onboarded,
+                dayStamp: appState.dayStamp,
+                theme: appState.theme,
+                unit: appState.unit,
+                rampInEnabled: appState.rampInEnabled,
+                pelvicSide: appState.pelvicSide,
+                workoutStreak: appState.workoutStreak,
+                profile: appState.profile,
+                customSteps: appState.customSteps,
+                variantChoices: appState.variantChoices,
+                swappedAlternatives: appState.swappedAlternatives,
+                selectedMealOptions: appState.selectedMealOptions,
+                activeDrafts: appState.activeDrafts
+            }),
+        [
+            appState.onboarded,
+            appState.dayStamp,
+            appState.theme,
+            appState.unit,
+            appState.rampInEnabled,
+            appState.pelvicSide,
+            appState.workoutStreak,
+            appState.profile,
+            appState.customSteps,
+            appState.variantChoices,
+            appState.swappedAlternatives,
+            appState.selectedMealOptions,
+            appState.activeDrafts
+        ]
+    );
+
+    useEffect(() => {
+        if (!serverReadyRef.current) return;
+        if (skipNextConfigSyncRef.current) {
+            skipNextConfigSyncRef.current = false;
+            return;
+        }
+
+        if (configTimerRef.current) clearTimeout(configTimerRef.current);
+        configTimerRef.current = setTimeout(async () => {
+            try {
+                setSyncStatus('syncing');
+                const payload = JSON.parse(configSyncSignature);
+                const res = await vtaperApi.updateConfig(payload);
+                setSyncStatus('synced');
+                setLastSyncedAt(res.updatedAt || new Date().toISOString());
+                setSyncErrorMsg('');
+            } catch (err) {
+                setSyncStatus('offline');
+                setSyncErrorMsg(err.message || 'Config sync failed');
+            }
+        }, 700);
+
+        return () => {
+            if (configTimerRef.current) clearTimeout(configTimerRef.current);
+        };
+    }, [configSyncSignature]);
+
+    // Computed Nutrition Totals for Today
+    const nutritionTotals = useMemo(
+        () => computeDayNutritionTotals(appState),
+        [
+            appState.selectedMealOptions,
+            appState.completedMealSlots,
+            appState.loggedAppetiteHelpers,
+            appState.foodDatabase,
+            appState.profile.dietTrack
+        ]
+    );
+
+    // Debounced auto-sync for Today's DailyLog (Nutrition, Water, Sleep, Habits) -> PUT /api/daily/:date
+    const dailySyncSignature = useMemo(
+        () =>
+            JSON.stringify({
+                date: appState.dayStamp || getLocalDateStr(),
+                kcal: nutritionTotals.consumedKcal,
+                protein: nutritionTotals.consumedProtein,
+                carbs: nutritionTotals.consumedCarbs,
+                fat: nutritionTotals.consumedFat,
+                proteinFeedings: nutritionTotals.proteinFeedingsCount,
+                waterMl: appState.waterMl,
+                sleepHours: appState.sleepHours,
+                sundayWalkDone: appState.sundayWalkDone,
+                selectedMealOptions: appState.selectedMealOptions,
+                completedMealSlots: appState.completedMealSlots,
+                loggedAppetiteHelpers: appState.loggedAppetiteHelpers,
+                pelvicHabits: appState.pelvicHabits
+            }),
+        [
+            appState.dayStamp,
+            nutritionTotals.consumedKcal,
+            nutritionTotals.consumedProtein,
+            nutritionTotals.consumedCarbs,
+            nutritionTotals.consumedFat,
+            nutritionTotals.proteinFeedingsCount,
+            appState.waterMl,
+            appState.sleepHours,
+            appState.sundayWalkDone,
+            appState.selectedMealOptions,
+            appState.completedMealSlots,
+            appState.loggedAppetiteHelpers,
+            appState.pelvicHabits
+        ]
+    );
+
+    useEffect(() => {
+        if (!serverReadyRef.current) return;
+        if (skipNextDailySyncRef.current) {
+            skipNextDailySyncRef.current = false;
+            return;
+        }
+
+        if (dailyTimerRef.current) clearTimeout(dailyTimerRef.current);
+        dailyTimerRef.current = setTimeout(async () => {
+            try {
+                const payload = JSON.parse(dailySyncSignature);
+                const { date, ...body } = payload;
+
+                // Keep local dailyLogs archive in sync too
+                setAppState((prev) => ({
+                    ...prev,
+                    dailyLogs: {
+                        ...(prev.dailyLogs || {}),
+                        [date]: { date, ...body }
+                    }
+                }));
+
+                setSyncStatus('syncing');
+                await vtaperApi.saveDailyLog(date, body);
+                setSyncStatus('synced');
+                setLastSyncedAt(new Date().toISOString());
+                setSyncErrorMsg('');
+                bumpOverview();
+            } catch (err) {
+                setSyncStatus('offline');
+                setSyncErrorMsg(err.message || 'Daily log sync failed');
+            }
+        }, 650);
+
+        return () => {
+            if (dailyTimerRef.current) clearTimeout(dailyTimerRef.current);
+        };
+    }, [dailySyncSignature, bumpOverview]);
+
+    // Safe Midnight Rollover (archives yesterday into PostgreSQL before resetting today's checklists)
+    useEffect(() => {
+        const rollover = () => {
+            const today = getLocalDateStr();
+            setAppState((prev) => {
+                if (prev.dayStamp === today) return prev;
+                const oldDate = prev.dayStamp;
+                const oldTotals = computeDayNutritionTotals(prev);
+                const archivedYesterday = {
+                    date: oldDate,
+                    kcal: oldTotals.consumedKcal,
+                    protein: oldTotals.consumedProtein,
+                    carbs: oldTotals.consumedCarbs,
+                    fat: oldTotals.consumedFat,
+                    proteinFeedings: oldTotals.proteinFeedingsCount,
+                    waterMl: prev.waterMl || 0,
+                    sleepHours: prev.sleepHours || 0,
+                    sundayWalkDone: Boolean(prev.sundayWalkDone),
+                    selectedMealOptions: prev.selectedMealOptions || {},
+                    completedMealSlots: prev.completedMealSlots || {},
+                    loggedAppetiteHelpers: prev.loggedAppetiteHelpers || [],
+                    pelvicHabits: prev.pelvicHabits || {}
+                };
+
+                if (oldDate) {
+                    vtaperApi.saveDailyLog(oldDate, archivedYesterday).catch(() => {});
+                }
+
+                const drafts = Object.fromEntries(
+                    Object.entries(prev.activeDrafts || {}).map(([id, sets]) => [
+                        id,
+                        sets.map((s) => ({ ...s, completed: false }))
+                    ])
+                );
+
+                return {
+                    ...prev,
+                    dayStamp: today,
+                    waterMl: 0,
+                    sleepHours: 0,
+                    sundayWalkDone: false,
+                    completedMealSlots: {},
+                    loggedAppetiteHelpers: [],
+                    pelvicHabits: {},
+                    activeDrafts: drafts,
+                    dailyLogs: {
+                        ...(prev.dailyLogs || {}),
+                        ...(oldDate ? { [oldDate]: archivedYesterday } : {})
+                    }
+                };
+            });
+        };
+        rollover();
+        document.addEventListener('visibilitychange', rollover);
+        return () => document.removeEventListener('visibilitychange', rollover);
+    }, []);
+
+    // Helper wrapper for direct PostgreSQL mutations from child views
+    const runCloudMutation = useCallback(
+        async (apiFn, errorLabel = 'Cloud sync failed') => {
+            setSyncStatus('syncing');
+            try {
+                const res = await apiFn();
+                setSyncStatus('synced');
+                setLastSyncedAt(new Date().toISOString());
+                setSyncErrorMsg('');
+                bumpOverview();
+                return res;
+            } catch (err) {
+                setSyncStatus('offline');
+                setSyncErrorMsg(err.message || errorLabel);
+                showToast(`${errorLabel}: ${err.message || 'Check backend server'}`);
+                return null;
+            }
+        },
+        [bumpOverview, showToast]
+    );
+
+    const openProfileEditor = useCallback(() => {
+        setOnboardingForm(appState.profile);
+        setShowOnboarding(true);
+    }, [appState.profile]);
 
     useEffect(() => {
         if (!workoutRunning) return;
@@ -3446,35 +3882,35 @@ export default function App() {
         () =>
             isDark
                 ? {
-                    bg: '#0A0A0B',
-                    card: '#000000',
-                    elevated: '#141416',
-                    border: '#27272A',
-                    text: '#FFFFFF',
-                    muted: '#A1A1AA',
-                    accent: '#CCFF00',
-                    accentText: '#0A0A0B',
-                    accentSurface: '#1A2205',
-                    accentBorder: '#CCFF00',
-                    danger: '#EF4444',
-                    warning: '#FBBF24',
-                    success: '#22C55E'
-                }
+                      bg: '#0A0A0B',
+                      card: '#000000',
+                      elevated: '#141416',
+                      border: '#27272A',
+                      text: '#FFFFFF',
+                      muted: '#A1A1AA',
+                      accent: '#CCFF00',
+                      accentText: '#0A0A0B',
+                      accentSurface: '#1A2205',
+                      accentBorder: '#CCFF00',
+                      danger: '#EF4444',
+                      warning: '#FBBF24',
+                      success: '#22C55E'
+                  }
                 : {
-                    bg: '#F4F4F2',
-                    card: '#FFFFFF',
-                    elevated: '#EDEDEA',
-                    border: '#D6D6D1',
-                    text: '#0A0A0B',
-                    muted: '#55555C',
-                    accent: '#0059FF',
-                    accentText: '#FFFFFF',
-                    accentSurface: '#DBEAFE',
-                    accentBorder: '#0059FF',
-                    danger: '#DC2626',
-                    warning: '#D97706',
-                    success: '#16A34A'
-                },
+                      bg: '#F4F4F2',
+                      card: '#FFFFFF',
+                      elevated: '#EDEDEA',
+                      border: '#D6D6D1',
+                      text: '#0A0A0B',
+                      muted: '#55555C',
+                      accent: '#0059FF',
+                      accentText: '#FFFFFF',
+                      accentSurface: '#DBEAFE',
+                      accentBorder: '#0059FF',
+                      danger: '#DC2626',
+                      warning: '#D97706',
+                      success: '#16A34A'
+                  },
         [isDark]
     );
 
@@ -3524,7 +3960,7 @@ export default function App() {
     );
 
     // ============================================================================
-    // HANDLERS FOR TODAY TAB (WORKOUT, SETS, VARIANTS & RAMP-IN)
+    // HANDLERS FOR TODAY TAB (WORKOUT, SETS, RECALL & ATOMIC DB SAVE)
     // ============================================================================
 
     const getEffectiveSetCount = useCallback(
@@ -3614,8 +4050,31 @@ export default function App() {
         );
     };
 
-    const handleFinishWorkout = () => {
-        if (activeDayPlan.isRest) return;
+    const handleCopyLastSessionSets = (exercise, lastSets) => {
+        if (!Array.isArray(lastSets) || lastSets.length === 0) return;
+        setAppState((prev) => {
+            const currentSets = prev.activeDrafts[exercise.id] || [];
+            const nextSets = currentSets.map((s, idx) => {
+                const match = lastSets[idx] || lastSets[lastSets.length - 1];
+                return {
+                    ...s,
+                    weight: Number(match?.weight || 0),
+                    reps: Number(match?.reps || 0)
+                };
+            });
+            return {
+                ...prev,
+                activeDrafts: {
+                    ...prev.activeDrafts,
+                    [exercise.id]: nextSets
+                }
+            };
+        });
+        showToast(`Loaded exact last session weights & reps for ${exercise.name}`);
+    };
+
+    const handleFinishWorkout = async () => {
+        if (activeDayPlan.isRest || savingWorkout) return;
 
         const anyCompleted = activeDayPlan.exercises.some((ex) => {
             const limit = getEffectiveSetCount(ex);
@@ -3626,12 +4085,16 @@ export default function App() {
             return;
         }
 
+        setSavingWorkout(true);
+
         let totalVolumeKg = 0;
         let setsCompleted = 0;
-        const prsAchieved = [];
+        const prsAchievedLocal = [];
         const updatedLastLogs = { ...appState.lastSessionLogs };
         const updatedExerciseHistory = { ...(appState.exerciseHistory || {}) };
         const todayStr = getLocalDateStr();
+        const apiExercisesPayload = [];
+        const exerciseSetsMap = {};
 
         activeDayPlan.exercises.forEach((ex) => {
             const limit = getEffectiveSetCount(ex);
@@ -3641,35 +4104,51 @@ export default function App() {
             if (completedSets.length === 0) return;
 
             const activeVar = appState.variantChoices?.[ex.id];
+            const swappedName = appState.swappedAlternatives?.[ex.id];
+            const activeVariantObj = ex.flags?.variants?.find((v) => v.id === activeVar);
+            const finalName = swappedName || (activeVariantObj ? activeVariantObj.name : ex.name);
             const isAssisted =
-                Boolean(ex.flags?.assisted) ||
-                Boolean(ex.flags?.variants?.find((v) => v.id === activeVar)?.assisted);
+                Boolean(ex.flags?.assisted) || Boolean(activeVariantObj?.assisted);
 
             let exVolume = 0;
             let bestWeight = isAssisted ? Infinity : 0;
             let bestRepsAtBest = 0;
 
-            completedSets.forEach((s) => {
-                const w = Number(s.weight || 0);
-                const r = Number(s.reps || 0);
+            const normalizedSets = completedSets.map((s, idx) => ({
+                setNumber: idx + 1,
+                weight: Number(s.weight || 0),
+                reps: Number(s.reps || 0)
+            }));
+
+            normalizedSets.forEach((s) => {
                 const unilateralMultiplier = ex.flags?.unilateral ? 2 : 1;
-                exVolume += w * r * unilateralMultiplier;
+                exVolume += s.weight * s.reps * unilateralMultiplier;
 
                 if (isAssisted) {
-                    if (w < bestWeight || (w === bestWeight && r > bestRepsAtBest)) {
-                        bestWeight = w;
-                        bestRepsAtBest = r;
+                    if (s.weight < bestWeight || (s.weight === bestWeight && s.reps > bestRepsAtBest)) {
+                        bestWeight = s.weight;
+                        bestRepsAtBest = s.reps;
                     }
                 } else {
-                    if (w > bestWeight || (w === bestWeight && r > bestRepsAtBest)) {
-                        bestWeight = w;
-                        bestRepsAtBest = r;
+                    if (s.weight > bestWeight || (s.weight === bestWeight && s.reps > bestRepsAtBest)) {
+                        bestWeight = s.weight;
+                        bestRepsAtBest = s.reps;
                     }
                 }
             });
 
-            setsCompleted += completedSets.length;
+            setsCompleted += normalizedSets.length;
             totalVolumeKg += Math.round(exVolume);
+            exerciseSetsMap[ex.id] = normalizedSets;
+
+            apiExercisesPayload.push({
+                exerciseId: ex.id,
+                exerciseName: finalName,
+                primaryGroup: ex.primaryGroup,
+                isAssisted,
+                unilateral: Boolean(ex.flags?.unilateral),
+                sets: normalizedSets
+            });
 
             const prevSets = appState.lastSessionLogs[ex.id] || [];
             if (prevSets.length > 0) {
@@ -3685,8 +4164,8 @@ export default function App() {
                         bestWeight < prevMinAssist ||
                         (bestWeight === prevMinAssist && bestRepsAtBest > prevRepsAtMin)
                     ) {
-                        prsAchieved.push({
-                            exerciseName: ex.name,
+                        prsAchievedLocal.push({
+                            exerciseName: finalName,
                             weightKg: bestWeight,
                             reps: bestRepsAtBest,
                             isAssisted: true
@@ -3704,8 +4183,8 @@ export default function App() {
                         bestWeight > prevBestWeight ||
                         (bestWeight === prevBestWeight && bestRepsAtBest > prevBestReps)
                     ) {
-                        prsAchieved.push({
-                            exerciseName: ex.name,
+                        prsAchievedLocal.push({
+                            exerciseName: finalName,
                             weightKg: bestWeight,
                             reps: bestRepsAtBest,
                             isAssisted: false
@@ -3714,9 +4193,9 @@ export default function App() {
                 }
             }
 
-            updatedLastLogs[ex.id] = completedSets.map((s) => ({
-                weight: Number(s.weight || 0),
-                reps: Number(s.reps || 0)
+            updatedLastLogs[ex.id] = normalizedSets.map((s) => ({
+                weight: s.weight,
+                reps: s.reps
             }));
 
             const prevExHist = updatedExerciseHistory[ex.id] || [];
@@ -3725,26 +4204,18 @@ export default function App() {
                 {
                     id: `${ex.id}-${Date.now()}`,
                     date: todayStr,
+                    dayIndex: activeDayPlan.dayIndex,
                     topWeightKg: bestWeight === Infinity ? 0 : bestWeight,
                     bestReps: bestRepsAtBest,
                     volumeKg: Math.round(exVolume),
-                    setsCompleted: completedSets.length,
-                    primaryGroup: ex.primaryGroup
+                    setsCompleted: normalizedSets.length,
+                    primaryGroup: ex.primaryGroup,
+                    sets: normalizedSets
                 }
             ];
         });
 
         const durationToRecord = workoutElapsedSec;
-        const newHistoryEntry = {
-            id: `hist-${Date.now()}`,
-            date: todayStr,
-            dayIndex: activeDayPlan.dayIndex,
-            dayTitle: activeDayPlan.title,
-            durationSec: durationToRecord,
-            totalVolumeKg,
-            setsCompleted,
-            prsCount: prsAchieved.length
-        };
 
         const nextDrafts = { ...appState.activeDrafts };
         activeDayPlan.exercises.forEach((ex) => {
@@ -3764,91 +4235,63 @@ export default function App() {
             });
         });
 
+        // Persist atomically to PostgreSQL (`WorkoutSession` + `ExerciseLog` tables)
+        const apiRes = await runCloudMutation(
+            () =>
+                vtaperApi.completeWorkout({
+                    date: todayStr,
+                    dayIndex: activeDayPlan.dayIndex,
+                    dayTitle: activeDayPlan.title,
+                    durationSec: durationToRecord,
+                    exercises: apiExercisesPayload,
+                    nextActiveDrafts: nextDrafts
+                }),
+            'Workout saved locally (DB offline)'
+        );
+
+        const finalPRs = apiRes?.prsAchieved || prsAchievedLocal;
+        const newHistoryEntry = {
+            id: apiRes?.session?.id || `hist-${Date.now()}`,
+            date: todayStr,
+            dayIndex: activeDayPlan.dayIndex,
+            dayTitle: activeDayPlan.title,
+            durationSec: durationToRecord,
+            totalVolumeKg: apiRes?.session?.totalVolumeKg ?? totalVolumeKg,
+            setsCompleted: apiRes?.session?.setsCompleted ?? setsCompleted,
+            prsCount: finalPRs.length,
+            exerciseSets: exerciseSetsMap
+        };
+
         setAppState((prev) => ({
             ...prev,
             lastSessionLogs: updatedLastLogs,
             activeDrafts: nextDrafts,
             exerciseHistory: updatedExerciseHistory,
-            workoutStreak: prev.workoutStreak + 1,
+            workoutStreak: apiRes?.workoutStreak ?? prev.workoutStreak + 1,
             workoutHistory: [newHistoryEntry, ...prev.workoutHistory]
         }));
 
         setWorkoutRunning(false);
         setWorkoutElapsedSec(0);
         setRestTimer((prev) => ({ ...prev, active: false }));
+        setSavingWorkout(false);
 
         setWorkoutSummary({
             dayTitle: `${activeDayPlan.shortDay} — ${activeDayPlan.title}`,
             durationSec: durationToRecord,
-            totalVolumeKg,
-            setsCompleted,
-            prsAchieved
+            totalVolumeKg: newHistoryEntry.totalVolumeKg,
+            setsCompleted: newHistoryEntry.setsCompleted,
+            prsAchieved: finalPRs,
+            savedToCloud: Boolean(apiRes?.ok)
         });
+
+        // Refresh exact recall for this day from PostgreSQL
+        fetchDayRecall(activeDayPlan.dayIndex);
     };
 
     // ============================================================================
-    // COMPUTED ANALYTICS (NUTRITION, GAIN RATE, MEASUREMENTS & DISCIPLINE)
+    // COMPUTED ANALYTICS (GAIN RATE, MEASUREMENTS & DISCIPLINE)
     // ============================================================================
-
-    const nutritionTotals = useMemo(() => {
-        let consumedKcal = 0;
-        let consumedProtein = 0;
-        let consumedCarbs = 0;
-        let consumedFat = 0;
-        let proteinFeedingsCount = 0;
-
-        let plannedKcal = 0;
-        let plannedProtein = 0;
-
-        MEAL_SLOTS.forEach((slot) => {
-            const selectedOptId = appState.selectedMealOptions?.[slot.slotId];
-            const opt =
-                slot.options.find((o) => o.id === selectedOptId) ||
-                slot.options.find((o) => o.tracks.includes(appState.profile.dietTrack)) ||
-                slot.options[0];
-            if (!opt) return;
-
-            const macros = computeMealOptionMacros(opt, appState.foodDatabase);
-            plannedKcal += macros.kcal;
-            plannedProtein += macros.protein;
-
-            if (appState.completedMealSlots?.[slot.slotId]) {
-                consumedKcal += macros.kcal;
-                consumedProtein += macros.protein;
-                consumedCarbs += macros.carbs;
-                consumedFat += macros.fat;
-                if (macros.protein >= 18) {
-                    proteinFeedingsCount += 1;
-                }
-            }
-        });
-
-        (appState.loggedAppetiteHelpers || []).forEach((helperId) => {
-            const helper = APPETITE_HELPERS.find((h) => h.id === helperId);
-            if (helper) {
-                consumedKcal += helper.kcal;
-                consumedProtein += helper.protein;
-                consumedCarbs += helper.carbs;
-                consumedFat += helper.fat;
-            }
-        });
-
-        return {
-            consumedKcal: Math.round(consumedKcal),
-            consumedProtein: Math.round(consumedProtein),
-            consumedCarbs: Math.round(consumedCarbs),
-            consumedFat: Math.round(consumedFat),
-            plannedKcal: Math.round(plannedKcal),
-            plannedProtein: Math.round(plannedProtein),
-            proteinFeedingsCount
-        };
-    }, [
-        appState.selectedMealOptions,
-        appState.completedMealSlots,
-        appState.loggedAppetiteHelpers,
-        appState.foodDatabase,
-        appState.profile.dietTrack
-    ]);
 
     const gainAnalysis = useMemo(
         () => analyzeWeeklyGainRate(appState.weightLogs, true),
@@ -3904,37 +4347,89 @@ export default function App() {
         showToast(`Switched diet track to ${newTrack.toUpperCase()} (100% whole foods)`);
     };
 
-    const handleSaveOnboarding = () => {
+    const handleSaveOnboarding = async () => {
         const chosenTrack = onboardingForm.dietTrack || 'non-veg';
         const parsedStartKg = Number(onboardingForm.startWeightKg || 0);
+        const todayStr = getLocalDateStr();
+
+        const updatedProfile = {
+            ...onboardingForm,
+            dietTrack: chosenTrack,
+            goalWeightMinKg: Number(onboardingForm.goalWeightMinKg || 65),
+            goalWeightMaxKg: Number(onboardingForm.goalWeightMaxKg || 68)
+        };
+
+        const shouldCreateBaselineWeight = appState.weightLogs.length === 0 && parsedStartKg > 0;
+
         setAppState((prev) => ({
             ...prev,
             onboarded: true,
-            profile: {
-                ...onboardingForm,
-                dietTrack: chosenTrack,
-                goalWeightMinKg: Number(onboardingForm.goalWeightMinKg || 65),
-                goalWeightMaxKg: Number(onboardingForm.goalWeightMaxKg || 68)
-            },
+            profile: updatedProfile,
             selectedMealOptions: getDefaultSelectedMealsForTrack(chosenTrack),
-            weightLogs:
-                prev.weightLogs.length > 0 || parsedStartKg <= 0
-                    ? prev.weightLogs
-                    : [
-                        {
-                            id: 'w-start',
-                            date: getLocalDateStr(),
-                            label: 'Start',
-                            morningKg: parsedStartKg,
-                            nightKg: null,
-                            weightKg: parsedStartKg,
-                            notes: 'Initial baseline'
-                        }
-                    ]
+            weightLogs: shouldCreateBaselineWeight
+                ? [
+                      {
+                          id: 'w-start',
+                          date: todayStr,
+                          label: 'Start',
+                          morningKg: parsedStartKg,
+                          nightKg: null,
+                          weightKg: parsedStartKg,
+                          notes: 'Initial baseline'
+                      }
+                  ]
+                : prev.weightLogs
         }));
         setShowOnboarding(false);
-        showToast(`Profile saved (${chosenTrack.toUpperCase()})!`);
+
+        if (shouldCreateBaselineWeight) {
+            await runCloudMutation(
+                () =>
+                    vtaperApi.saveWeightLog(todayStr, {
+                        morningKg: parsedStartKg,
+                        nightKg: null,
+                        notes: 'Initial baseline'
+                    }),
+                'Baseline weight sync failed'
+            );
+        }
+
+        showToast(`Profile saved to PostgreSQL (${chosenTrack.toUpperCase()})!`);
     };
+
+    const handleMigrateLocalToCloud = async () => {
+        if (!localMigrationCandidate) return;
+        const res = await runCloudMutation(
+            () => vtaperApi.importState(localMigrationCandidate),
+            'Migration failed'
+        );
+        if (res?.state) {
+            skipNextConfigSyncRef.current = true;
+            skipNextDailySyncRef.current = true;
+            const merged = hydrateMergedState(res.state);
+            setAppState(merged);
+            setLocalMigrationCandidate(null);
+            setShowOnboarding(!merged.onboarded);
+            fetchDayRecall(selectedDayIndex);
+            showToast('Poora purana LocalStorage data PostgreSQL mein migrate ho gaya!');
+        }
+    };
+
+    const syncPillColor =
+        syncStatus === 'synced'
+            ? colors.success
+            : syncStatus === 'offline'
+              ? colors.danger
+              : colors.warning;
+
+    const syncPillLabel =
+        syncStatus === 'synced'
+            ? 'DB Synced'
+            : syncStatus === 'syncing'
+              ? 'Saving...'
+              : syncStatus === 'loading'
+                ? 'Loading DB...'
+                : 'Offline Cache';
 
     return (
         <div
@@ -3976,6 +4471,52 @@ export default function App() {
                         className="vt-icon-btn-44"
                     >
                         {isDark ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
+                </div>
+
+                {/* Live PostgreSQL Sync Status Strip */}
+                <div style={{ padding: '0.625rem 0.875rem 0' }}>
+                    <button
+                        type="button"
+                        onClick={() => loadFromBackend(false)}
+                        title={
+                            lastSyncedAt
+                                ? `Last synced: ${new Date(lastSyncedAt).toLocaleTimeString()} (Click to refresh)`
+                                : syncErrorMsg || 'Click to sync with PostgreSQL'
+                        }
+                        style={{
+                            width: '100%',
+                            backgroundColor: colors.elevated,
+                            borderColor: syncStatus === 'offline' ? colors.danger : colors.border,
+                            color: colors.text,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '0.45rem 0.7rem',
+                            borderRadius: '0.75rem',
+                            borderWidth: '1px',
+                            borderStyle: 'solid',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            cursor: 'pointer'
+                        }}
+                        className="font-mono-num"
+                    >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            {syncStatus === 'offline' ? (
+                                <CloudOff size={14} style={{ color: syncPillColor }} />
+                            ) : (
+                                <Database size={14} style={{ color: syncPillColor }} />
+                            )}
+                            <span style={{ color: syncPillColor }}>{syncPillLabel}</span>
+                        </span>
+                        <RefreshCw
+                            size={13}
+                            style={{
+                                color: colors.muted,
+                                animation: syncStatus === 'syncing' || syncStatus === 'loading' ? 'spin 1s linear infinite' : 'none'
+                            }}
+                        />
                     </button>
                 </div>
 
@@ -4106,13 +4647,25 @@ export default function App() {
                         <div style={{ minWidth: 0 }}>
                             <div className="vt-mobile-title font-display">VTAPER</div>
                             <div style={{ color: colors.muted }} className="vt-mobile-sub">
-                                Clean: {disciplineStats.currentStreak}d • Goal {appState.profile.goalWeightMinKg}–
-                                {appState.profile.goalWeightMaxKg}kg
+                                Clean: {disciplineStats.currentStreak}d •{' '}
+                                <span style={{ color: syncPillColor, fontWeight: 700 }}>{syncPillLabel}</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="vt-mobile-actions">
+                        <button
+                            onClick={() => loadFromBackend(false)}
+                            aria-label="Sync with PostgreSQL"
+                            style={{
+                                backgroundColor: colors.elevated,
+                                borderColor: syncStatus === 'offline' ? colors.danger : colors.border,
+                                color: syncPillColor
+                            }}
+                            className="vt-icon-btn-44"
+                        >
+                            {syncStatus === 'offline' ? <CloudOff size={16} /> : <Cloud size={16} />}
+                        </button>
                         <button
                             onClick={() =>
                                 setAppState((prev) => ({
@@ -4141,7 +4694,7 @@ export default function App() {
                     </div>
                 </header>
 
-                {/* Toast Notification Banner (Syntax Fixed) */}
+                {/* Toast Notification Banner */}
                 {toast && (
                     <div className="vt-toast-wrap">
                         <div
@@ -4242,6 +4795,45 @@ export default function App() {
 
                 {/* Page Container */}
                 <main className="vt-page-main">
+                    {/* 1-Click LocalStorage-to-PostgreSQL Migration Banner (only if DB is empty & old local data found) */}
+                    {localMigrationCandidate && (
+                        <div
+                            style={{
+                                backgroundColor: colors.accentSurface,
+                                borderColor: colors.accentBorder,
+                                marginBottom: '1rem'
+                            }}
+                            className="vt-card-b2 vt-p-4 vt-resp-row-md"
+                        >
+                            <div className="vt-stack-0-5">
+                                <div className="vt-text-xs vt-font-extrabold vt-uppercase">
+                                    Purana LocalStorage Data Detected!
+                                </div>
+                                <div className="vt-text-xs" style={{ color: colors.muted }}>
+                                    PostgreSQL database abhi empty hai par browser mein purana VTaper progress mila hai. 1 click mein poora data PostgreSQL mein shift kar lo.
+                                </div>
+                            </div>
+                            <div className="vt-flex vt-items-center vt-gap-2 vt-shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={handleMigrateLocalToCloud}
+                                    style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                                    className="vt-btn vt-h-40 vt-px-3-5 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase"
+                                >
+                                    Migrate to PostgreSQL
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setLocalMigrationCandidate(null)}
+                                    style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
+                                    className="vt-btn vt-h-40 vt-px-3 vt-box-xl vt-text-xs vt-font-bold"
+                                >
+                                    Dismiss
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {activeTab === 'today' && (
                         <TodayView
                             colors={colors}
@@ -4252,16 +4844,20 @@ export default function App() {
                             setSelectedDayIndex={setSelectedDayIndex}
                             currentWeekdayIndex={currentWeekdayIndex}
                             activeDayPlan={activeDayPlan}
+                            dayRecall={dayRecall}
+                            recallLoading={recallLoading}
                             workoutRunning={workoutRunning}
                             setWorkoutRunning={setWorkoutRunning}
                             workoutElapsedSec={workoutElapsedSec}
                             setWorkoutElapsedSec={setWorkoutElapsedSec}
+                            savingWorkout={savingWorkout}
                             formatTime={formatTime}
                             formatWeight={formatWeight}
                             getEffectiveSetCount={getEffectiveSetCount}
                             handleSetInputChange={handleSetInputChange}
                             handleToggleSetComplete={handleToggleSetComplete}
                             handleApplyOverloadWeight={handleApplyOverloadWeight}
+                            handleCopyLastSessionSets={handleCopyLastSessionSets}
                             handleFinishWorkout={handleFinishWorkout}
                             setRestTimer={setRestTimer}
                             showToast={showToast}
@@ -4275,6 +4871,7 @@ export default function App() {
                             appState={appState}
                             setAppState={setAppState}
                             disciplineStats={disciplineStats}
+                            runCloudMutation={runCloudMutation}
                             showToast={showToast}
                         />
                     )}
@@ -4297,6 +4894,7 @@ export default function App() {
                             isDark={isDark}
                             appState={appState}
                             setAppState={setAppState}
+                            runCloudMutation={runCloudMutation}
                             showToast={showToast}
                         />
                     )}
@@ -4320,6 +4918,7 @@ export default function App() {
                             isDark={isDark}
                             appState={appState}
                             setAppState={setAppState}
+                            runCloudMutation={runCloudMutation}
                             showToast={showToast}
                         />
                     )}
@@ -4335,6 +4934,7 @@ export default function App() {
                             gainAnalysis={gainAnalysis}
                             vTaperRatio={vTaperRatio}
                             latestMeasurement={latestMeasurement}
+                            runCloudMutation={runCloudMutation}
                             showToast={showToast}
                         />
                     )}
@@ -4347,6 +4947,7 @@ export default function App() {
                             disciplineStats={disciplineStats}
                             formatWeight={formatWeight}
                             formatTime={formatTime}
+                            overviewRefreshKey={overviewRefreshKey}
                         />
                     )}
 
@@ -4359,6 +4960,17 @@ export default function App() {
                             setShowOnboarding={setShowOnboarding}
                             setOnboardingForm={setOnboardingForm}
                             handleDietTrackChange={handleDietTrackChange}
+                            syncStatus={syncStatus}
+                            lastSyncedAt={lastSyncedAt}
+                            loadFromBackend={loadFromBackend}
+                            runCloudMutation={runCloudMutation}
+                            onStateReplaced={(nextState) => {
+                                skipNextConfigSyncRef.current = true;
+                                skipNextDailySyncRef.current = true;
+                                setAppState(hydrateMergedState(nextState));
+                                fetchDayRecall(selectedDayIndex);
+                                bumpOverview();
+                            }}
                             showToast={showToast}
                         />
                     )}
@@ -4397,7 +5009,7 @@ export default function App() {
             </nav>
 
             {/* ==================================================================== */}
-            {/* ONBOARDING & PROFILE EDITOR MODAL (ZERO DEFAULTS — ONLY 65-68 GOAL) */}
+            {/* ONBOARDING & PROFILE EDITOR MODAL                                    */}
             {/* ==================================================================== */}
             {showOnboarding && (
                 <div
@@ -4418,13 +5030,13 @@ export default function App() {
                                     }}
                                     className="vt-badge-accent"
                                 >
-                                    Fresh Day-0 Setup • Goal 65–68 kg
+                                    PostgreSQL Cloud Sync • Goal 65–68 kg
                                 </span>
                                 <h2 className="vt-section-title vt-section-title-lg font-display">
                                     Athlete Profile Setup
                                 </h2>
                                 <p style={{ color: colors.muted, fontSize: '0.8125rem', margin: '0.25rem 0 0 0' }}>
-                                    Sab kuch 0 se start hai. Sirf 65–68 kg lean-bulk goal band preset hai — apni current details daalein ya skip karke baad mein fill karein.
+                                    Har workout, weight, nutrition aur discipline log seedha PostgreSQL database mein save hoga. Apni current details daalein:
                                 </p>
                             </div>
                             <button
@@ -4441,7 +5053,6 @@ export default function App() {
                         </div>
 
                         <div className="vt-modal-form-grid tabular-nums">
-                            {/* Indian Diet Track Selector */}
                             <div className="vt-col-span-2-sm">
                                 <label
                                     style={{
@@ -4700,7 +5311,7 @@ export default function App() {
                             }}
                             className="vt-primary-cta"
                         >
-                            Start From Day 0 & Launch VTaper
+                            Save to PostgreSQL & Launch VTaper
                         </button>
                     </div>
                 </div>
@@ -4744,7 +5355,7 @@ export default function App() {
                                         color: isDark ? colors.accent : colors.text
                                     }}
                                 >
-                                    Session Complete
+                                    Session Complete {workoutSummary.savedToCloud ? '• Saved in PostgreSQL ✓' : '• Cached Locally'}
                                 </div>
                                 <h3 className="vt-section-title vt-section-title-lg font-display">
                                     {workoutSummary.dayTitle}
@@ -4887,22 +5498,29 @@ export default function App() {
 }
 
 // ============================================================================
-// NEW DEDICATED PAGE: DISCIPLINE VIEW (NO PORN & NO MASTURBATION TRACKER)
-// Daily 1-Tap Check-In, 90s Urge SOS Timer, Trigger Analytics & Modern Growth Graph
+// SECTION 9: DISCIPLINE VIEW (NO PORN / NO MASTURBATION + 90s SOS + DB SYNC)
 // ============================================================================
 
-function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats, showToast }) {
+function DisciplineView({
+    colors,
+    isDark,
+    appState,
+    setAppState,
+    disciplineStats,
+    runCloudMutation,
+    showToast
+}) {
     const todayStr = useMemo(() => getLocalDateStr(), []);
     const [selectedDate, setSelectedDate] = useState(todayStr);
     const [urgeLevel, setUrgeLevel] = useState(0);
     const [selectedTrigger, setSelectedTrigger] = useState('');
     const [dailyNote, setDailyNote] = useState('');
-    const [growthChartMode, setGrowthChartMode] = useState('growth'); // 'growth' | 'urges'
+    const [growthChartMode, setGrowthChartMode] = useState('growth');
     const [confirmRelapse, setConfirmRelapse] = useState(false);
 
-    // Live 90-second Urge SOS Emergency Reset Timer
     const [sosActive, setSosActive] = useState(false);
     const [sosSecLeft, setSosSecLeft] = useState(90);
+    const [sosTipIdx, setSosTipIdx] = useState(0);
 
     const existingForSelected = appState.disciplineLogs?.[selectedDate] || null;
 
@@ -4919,106 +5537,120 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
         setConfirmRelapse(false);
     }, [selectedDate, existingForSelected]);
 
+    const persistUrgeVictory = useCallback(
+        async (triggerLabel) => {
+            const newUrge = {
+                id: `urge-${Date.now()}`,
+                date: todayStr,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                trigger: triggerLabel || 'Instant Control',
+                defeated: true
+            };
+            setAppState((prev) => ({
+                ...prev,
+                urgeLogs: [newUrge, ...(prev.urgeLogs || [])]
+            }));
+            await runCloudMutation(() => vtaperApi.logUrge(newUrge), 'Urge log sync failed');
+        },
+        [todayStr, setAppState, runCloudMutation]
+    );
+
     useEffect(() => {
         if (!sosActive) return;
         if (sosSecLeft <= 0) {
             setSosActive(false);
             setSosSecLeft(90);
-            setAppState((prev) => ({
-                ...prev,
-                urgeLogs: [
-                    {
-                        id: `urge-${Date.now()}`,
-                        date: todayStr,
-                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        trigger: selectedTrigger || 'SOS Protocol Completed',
-                        defeated: true
-                    },
-                    ...(prev.urgeLogs || [])
-                ]
-            }));
+            persistUrgeVictory(selectedTrigger || 'SOS Protocol Completed');
             navigator.vibrate?.([150, 80, 150]);
-            showToast('90s Urge Wave Defeated! +1 Victory logged to your daily growth.');
+            showToast('90s Urge Wave Defeated! +1 Victory saved to PostgreSQL.');
             return;
         }
         const timer = setInterval(() => {
-            setSosSecLeft((prev) => Math.max(0, prev - 1));
-            setSosTipIdx((prev) => (sosSecLeft % 22 === 0 ? (prev + 1) % URGE_SOS_ACTIONS.length : prev));
+            setSosSecLeft((prev) => {
+                const next = Math.max(0, prev - 1);
+                if (next > 0 && next % 22 === 0) {
+                    setSosTipIdx((idx) => (idx + 1) % URGE_SOS_ACTIONS.length);
+                }
+                return next;
+            });
         }, 1000);
         return () => clearInterval(timer);
-    }, [sosActive, sosSecLeft, selectedTrigger, todayStr, setAppState, showToast]);
+    }, [sosActive, sosSecLeft, selectedTrigger, persistUrgeVictory, showToast]);
 
-    const handleMarkCleanDay = () => {
+    const handleMarkCleanDay = async () => {
+        const entry = {
+            date: selectedDate,
+            status: 'clean',
+            noPorn: true,
+            noFap: true,
+            urgeLevel: Number(urgeLevel || 0),
+            trigger: selectedTrigger || '',
+            note: dailyNote.trim()
+        };
+
         setAppState((prev) => ({
             ...prev,
             disciplineLogs: {
                 ...(prev.disciplineLogs || {}),
-                [selectedDate]: {
-                    date: selectedDate,
-                    status: 'clean',
-                    noPorn: true,
-                    noFap: true,
-                    urgeLevel: Number(urgeLevel || 0),
-                    trigger: selectedTrigger || '',
-                    note: dailyNote.trim(),
-                    updatedAt: Date.now()
-                }
+                [selectedDate]: { ...entry, updatedAt: Date.now() }
             }
         }));
         setConfirmRelapse(false);
         navigator.vibrate?.([120, 60, 120]);
+
+        await runCloudMutation(
+            () => vtaperApi.saveDiscipline(selectedDate, entry),
+            'Discipline sync failed'
+        );
+
         showToast(
             selectedDate === todayStr
-                ? 'LOCKED IN! Aaj ka din 100% Clean (No Porn + No Masturbation) marked.'
-                : `${selectedDate} marked 100% Clean!`
+                ? 'LOCKED IN! Aaj ka din 100% Clean (No Porn + No Masturbation) saved.'
+                : `${selectedDate} marked 100% Clean & saved!`
         );
     };
 
-    const handleLogRelapse = () => {
+    const handleLogRelapse = async () => {
+        const entry = {
+            date: selectedDate,
+            status: 'relapse',
+            noPorn: false,
+            noFap: false,
+            urgeLevel: Math.max(5, Number(urgeLevel || 7)),
+            trigger: selectedTrigger || 'Unspecified Trigger',
+            note: dailyNote.trim()
+        };
+
         setAppState((prev) => ({
             ...prev,
             disciplineLogs: {
                 ...(prev.disciplineLogs || {}),
-                [selectedDate]: {
-                    date: selectedDate,
-                    status: 'relapse',
-                    noPorn: false,
-                    noFap: false,
-                    urgeLevel: Math.max(5, Number(urgeLevel || 7)),
-                    trigger: selectedTrigger || 'Unspecified Trigger',
-                    note: dailyNote.trim(),
-                    updatedAt: Date.now()
-                }
+                [selectedDate]: { ...entry, updatedAt: Date.now() }
             }
         }));
         setConfirmRelapse(false);
+
+        await runCloudMutation(
+            () => vtaperApi.saveDiscipline(selectedDate, entry),
+            'Discipline sync failed'
+        );
+
         showToast('Honest log saved. Trigger identify karke turant comeback karein — guilt nahi, data use karein.');
     };
 
-    const handleBeatUrgeQuick = () => {
-        setAppState((prev) => ({
-            ...prev,
-            urgeLogs: [
-                {
-                    id: `urge-${Date.now()}`,
-                    date: todayStr,
-                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    trigger: selectedTrigger || 'Instant Control',
-                    defeated: true
-                },
-                ...(prev.urgeLogs || [])
-            ]
-        }));
+    const handleBeatUrgeQuick = async () => {
+        await persistUrgeVictory(selectedTrigger || 'Instant Control');
         navigator.vibrate?.([100]);
         showToast('Urge Defeated (+1)! Aapka prefrontal cortex har baar stronger ho raha hai.');
     };
 
-    const handleDeleteDisciplineDate = (dateKey) => {
+    const handleDeleteDisciplineDate = async (dateKey) => {
         setAppState((prev) => {
             const next = { ...(prev.disciplineLogs || {}) };
             delete next[dateKey];
             return { ...prev, disciplineLogs: next };
         });
+        await runCloudMutation(() => vtaperApi.deleteDiscipline(dateKey), 'Delete failed');
         showToast(`Removed discipline entry for ${dateKey}`);
     };
 
@@ -5035,7 +5667,7 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
             <div
                 style={{
                     backgroundColor: colors.card,
-
+                    borderColor: isSelectedClean ? colors.accentBorder : colors.border
                 }}
                 className="vt-card-b2 vt-p-card vt-stack-4"
             >
@@ -5052,7 +5684,7 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                                 style={{
                                     backgroundColor: colors.elevated,
                                     borderColor: colors.border,
-                                    color: colors.accent
+                                    color: isDark ? colors.accent : colors.text
                                 }}
                                 className="vt-meta-pill font-mono-num"
                             >
@@ -5064,11 +5696,10 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                             Daily Discipline Lock-In & Permanent Habit Elimination
                         </h2>
                         <p className="vt-text-xs" style={{ color: colors.muted }}>
-                            Roz raat sone se pehle (ya subah pledge ke baad) 1 tap mein apna clean din lock karein. Har clean din aapka daily growth curve upar le jayega.
+                            Roz raat sone se pehle (ya subah pledge ke baad) 1 tap mein apna clean din lock karein. Har entry directly PostgreSQL mein store hoti hai.
                         </p>
                     </div>
 
-                    {/* Date selector for Today or backfilling */}
                     <div className="vt-flex vt-items-center vt-gap-1-5 vt-shrink-0">
                         <input
                             type="date"
@@ -5104,9 +5735,9 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                         type="button"
                         onClick={handleMarkCleanDay}
                         style={{
-                            backgroundColor: isSelectedClean ? colors.accent : colors.accent,
-                            color: isSelectedClean ? 'white' : 'black',
-                            borderColor: isSelectedClean ? colors.accent : colors.accentBorder,
+                            backgroundColor: isSelectedClean ? colors.success : colors.accent,
+                            color: isSelectedClean ? '#FFFFFF' : colors.accentText,
+                            borderColor: isSelectedClean ? colors.success : colors.accentBorder,
                             minHeight: 60
                         }}
                         className="vt-btn vt-col-span-md-2 vt-px-4 vt-py-3 vt-box-xl vt-gap-2-5"
@@ -5118,7 +5749,7 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                                     ? `100% CLEAN LOCKED (${selectedDate}) ✓`
                                     : `MARK ${selectedDate === todayStr ? 'TODAY' : selectedDate} 100% CLEAN`}
                             </div>
-                            <div style={{ fontSize: 11, fontWeight: 700 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.9 }}>
                                 Zero Porn + Zero Masturbation + Growth Streak
                             </div>
                         </div>
@@ -5147,10 +5778,112 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                     </button>
                 </div>
 
-                {/* Urge Intensity, Trigger Chips & Relapse Controls */}
+                {/* Urge Level, Trigger Selector & Honest Slip Log */}
+                <div
+                    style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                    className="vt-p-3-5 vt-box-xl vt-stack-3"
+                >
+                    <div className="vt-between-center vt-flex-wrap vt-gap-2">
+                        <span className="vt-text-11 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                            Urge Intensity Today ({urgeLevel}/10)
+                        </span>
+                        <input
+                            type="range"
+                            min="0"
+                            max="10"
+                            value={urgeLevel}
+                            onChange={(e) => setUrgeLevel(Number(e.target.value))}
+                            style={{ width: 170, accentColor: colors.accent }}
+                        />
+                    </div>
+
+                    <div className="vt-row-wrap vt-gap-1-5">
+                        {COMMON_URGE_TRIGGERS.map((trig) => {
+                            const active = selectedTrigger === trig;
+                            return (
+                                <button
+                                    key={trig}
+                                    type="button"
+                                    onClick={() => setSelectedTrigger(active ? '' : trig)}
+                                    style={{
+                                        backgroundColor: active ? colors.accent : colors.card,
+                                        color: active ? colors.accentText : colors.text,
+                                        borderColor: active ? colors.accentBorder : colors.border
+                                    }}
+                                    className="vt-btn vt-h-32 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-bold"
+                                >
+                                    {trig}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="vt-between-center vt-flex-wrap vt-gap-2">
+                        <input
+                            type="text"
+                            placeholder="Short reflection or note (optional)..."
+                            value={dailyNote}
+                            onChange={(e) => setDailyNote(e.target.value)}
+                            style={{
+                                backgroundColor: colors.card,
+                                borderColor: colors.border,
+                                color: colors.text,
+                                flex: 1,
+                                minWidth: 190
+                            }}
+                            className="vt-input vt-h-38 vt-px-3 vt-text-xs"
+                        />
+
+                        <div className="vt-flex vt-items-center vt-gap-1-5">
+                            {existingForSelected && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleDeleteDisciplineDate(selectedDate)}
+                                    style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.muted }}
+                                    className="vt-btn vt-h-38 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-bold"
+                                >
+                                    Clear Date
+                                </button>
+                            )}
+                            {!confirmRelapse ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmRelapse(true)}
+                                    style={{
+                                        backgroundColor: isSelectedRelapse ? colors.danger : colors.card,
+                                        color: isSelectedRelapse ? '#FFFFFF' : colors.danger,
+                                        borderColor: colors.danger
+                                    }}
+                                    className="vt-btn vt-h-38 vt-px-3 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase"
+                                >
+                                    {isSelectedRelapse ? 'Slip Logged' : 'Log Honest Slip'}
+                                </button>
+                            ) : (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={handleLogRelapse}
+                                        style={{ backgroundColor: colors.danger, color: '#FFFFFF' }}
+                                        className="vt-btn vt-h-38 vt-px-3 vt-rounded-lg vt-text-11 vt-font-extrabold vt-uppercase"
+                                    >
+                                        Confirm Slip
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setConfirmRelapse(false)}
+                                        style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
+                                        className="vt-btn vt-h-38 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-bold"
+                                    >
+                                        Cancel
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {/* 2. TOP 4 LIVE DISCIPLINE KPI CARDS (START AT 0) */}
+            {/* 2. TOP 4 LIVE DISCIPLINE KPI CARDS */}
             <div className="vt-grid-kpi vt-gap-3 vt-tabular">
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -5406,7 +6139,6 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                     </div>
                 </div>
 
-                {/* 90-Day Neural Reboot Radial Chart */}
                 <RebootRadialGauge
                     pct={disciplineStats.rebootPct}
                     currentStreak={disciplineStats.currentStreak}
@@ -5417,6 +6149,81 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
 
             {/* 4. URGE SOS 90-SECOND EMERGENCY BREAKER + 35-DAY HEATMAP */}
             <div className="vt-grid-lg-3 vt-gap-4">
+                <div
+                    style={{
+                        backgroundColor: colors.card,
+                        borderColor: sosActive ? colors.danger : colors.border
+                    }}
+                    className="vt-card vt-p-card vt-stack-3 vt-col-between"
+                >
+                    <div className="vt-stack-1">
+                        <div className="vt-flex vt-items-center vt-gap-2">
+                            <ShieldAlert size={18} style={{ color: colors.danger }} />
+                            <span className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.danger }}>
+                                Emergency Circuit Breaker
+                            </span>
+                        </div>
+                        <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                            90-Sec Urge SOS Timer
+                        </h3>
+                        <p className="vt-text-xs" style={{ color: colors.muted }}>
+                            Jab strong urge aaye, turant SOS start karein — 90 second survive karne par dopamine wave 80% gir jaati hai.
+                        </p>
+                    </div>
+
+                    <div
+                        style={{
+                            backgroundColor: colors.elevated,
+                            borderColor: sosActive ? colors.danger : colors.border,
+                            textAlign: 'center'
+                        }}
+                        className="vt-p-4 vt-box-xl vt-stack-2"
+                    >
+                        <div
+                            className="font-display tabular-nums"
+                            style={{
+                                fontSize: 44,
+                                fontWeight: 900,
+                                lineHeight: 1,
+                                color: sosActive ? colors.danger : colors.text
+                            }}
+                        >
+                            {sosSecLeft}s
+                        </div>
+                        <p className="vt-text-xs vt-font-semibold" style={{ color: colors.text }}>
+                            {URGE_SOS_ACTIONS[sosTipIdx]}
+                        </p>
+                    </div>
+
+                    <div className="vt-flex vt-gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setSosActive((p) => !p)}
+                            style={{
+                                backgroundColor: sosActive ? colors.elevated : colors.danger,
+                                color: sosActive ? colors.text : '#FFFFFF',
+                                borderColor: colors.danger,
+                                flex: 1
+                            }}
+                            className="vt-btn vt-h-44 vt-rounded-xl vt-border vt-text-xs vt-font-extrabold vt-uppercase"
+                        >
+                            {sosActive ? 'Pause SOS' : 'Start 90s SOS'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSosActive(false);
+                                setSosSecLeft(90);
+                                setSosTipIdx((i) => (i + 1) % URGE_SOS_ACTIONS.length);
+                            }}
+                            aria-label="Reset SOS timer"
+                            style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+                            className="vt-icon-btn-44"
+                        >
+                            <RotateCcw size={16} />
+                        </button>
+                    </div>
+                </div>
 
                 {/* 35-Day Clean Consistency Heatmap + Trigger Breakdown */}
                 <div
@@ -5429,13 +6236,13 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                                 35-Day Clean Wall (5-Week Matrix)
                             </h3>
                             <p className="vt-text-xs" style={{ color: colors.muted }}>
-                                Har square ek din hai — goal hai poori deewar ko solid green bharna. Kisi bhi din par tap karke log edit karein.
+                                Har square ek din hai — kisi bhi din par tap karke log edit karein.
                             </p>
                         </div>
 
                         <div className="vt-row-wrap vt-gap-3 vt-text-11 vt-font-bold">
                             <span className="vt-flex vt-items-center vt-gap-1-5">
-                                <span className="vt-legend-dot" style={{ backgroundColor: colors.success }} />
+                                <span className="vt-legend-dot" style={{ backgroundColor: colors.accent }} />
                                 Clean
                             </span>
                             <span className="vt-flex vt-items-center vt-gap-1-5">
@@ -5461,9 +6268,9 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                                 cell.status === 'clean'
                                     ? colors.accent
                                     : cell.status === 'relapse'
-                                        ? colors.danger
-                                        : colors.elevated;
-                           
+                                      ? colors.danger
+                                      : colors.elevated;
+
                             return (
                                 <button
                                     key={cell.date}
@@ -5472,9 +6279,18 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                                     title={`${cell.date} — ${cell.status.toUpperCase()}`}
                                     style={{
                                         backgroundColor: bg,
+                                        border:
+                                            cell.date === selectedDate
+                                                ? `2px solid ${colors.text}`
+                                                : `1px solid ${colors.border}`,
                                         borderRadius: 8,
                                         height: 36,
-                                        color: cell.status === 'unlogged' ? 'white' : '#000000',
+                                        color:
+                                            cell.status === 'clean'
+                                                ? colors.accentText
+                                                : cell.status === 'relapse'
+                                                  ? '#FFFFFF'
+                                                  : colors.muted,
                                         fontSize: 10,
                                         fontWeight: 800,
                                         cursor: 'pointer'
@@ -5487,7 +6303,6 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                         })}
                     </div>
 
-                    {/* Trigger Pattern Bar Chart (only if triggers exist) */}
                     {disciplineStats.triggerBreakdown.length > 0 && (
                         <div className="vt-stack-2 vt-pt-2 vt-border-t" style={{ borderColor: colors.border }}>
                             <div className="vt-text-xs vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
@@ -5513,7 +6328,7 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                 </div>
             </div>
 
-            {/* 5. MILESTONES ROADMAP (DAY 1 TO DAY 365) */}
+            {/* 5. MILESTONES ROADMAP */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-card vt-stack-3"
@@ -5547,7 +6362,7 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
                                     <span
                                         style={{
                                             backgroundColor: unlocked ? colors.accent : colors.card,
-                                            color: unlocked ? '#0A0A0B' : colors.muted,
+                                            color: unlocked ? colors.accentText : colors.muted,
                                             borderColor: colors.border
                                         }}
                                         className="vt-badge-xs vt-border font-mono-num vt-text-10 vt-font-extrabold"
@@ -5568,7 +6383,7 @@ function DisciplineView({ colors, isDark, appState, setAppState, disciplineStats
 }
 
 // ============================================================================
-// FULL-SCREEN VISUAL FORM CHART MODAL (ZOOM + DAY SWITCHER + PANEL FOCUS)
+// SECTION 10: FULL-SCREEN VISUAL FORM CHART MODAL
 // ============================================================================
 
 function FormChartModal({
@@ -5779,7 +6594,7 @@ function FormChartModal({
 }
 
 // ============================================================================
-// 1. TODAY VIEW COMPONENT (ZERO-DEFAULT WORKING WEIGHTS & VISUAL FORM CHARTS)
+// SECTION 11: TODAY VIEW (EXACT LAST WORKOUT RECALL + ALL-TIME PR + HISTORY)
 // ============================================================================
 
 function TodayView({
@@ -5790,21 +6605,26 @@ function TodayView({
     selectedDayIndex,
     setSelectedDayIndex,
     activeDayPlan,
+    dayRecall,
+    recallLoading,
     workoutRunning,
     setWorkoutRunning,
     workoutElapsedSec,
     setWorkoutElapsedSec,
+    savingWorkout,
     formatTime,
     formatWeight,
     getEffectiveSetCount,
     handleSetInputChange,
     handleToggleSetComplete,
     handleApplyOverloadWeight,
+    handleCopyLastSessionSets,
     handleFinishWorkout,
     setRestTimer,
     showToast
 }) {
     const [openGuides, setOpenGuides] = useState({});
+    const [openHistory, setOpenHistory] = useState({});
     const [chartModalState, setChartModalState] = useState(null);
     const [thumbFailed, setThumbFailed] = useState(false);
 
@@ -5813,32 +6633,26 @@ function TodayView({
     }, [activeDayPlan.dayIndex]);
 
     const toggleGuide = (exerciseId) => {
-        setOpenGuides((prev) => ({
-            ...prev,
-            [exerciseId]: !prev[exerciseId]
-        }));
+        setOpenGuides((prev) => ({ ...prev, [exerciseId]: !prev[exerciseId] }));
     };
 
-    const allGuidesExpanded = useMemo(() => {
-        if (activeDayPlan.isRest || !activeDayPlan.exercises.length) return false;
-        return activeDayPlan.exercises.every((ex) => Boolean(openGuides[ex.id]));
-    }, [activeDayPlan, openGuides]);
-
-    const handleToggleAllGuides = () => {
-        if (activeDayPlan.isRest) return;
-        const nextVal = !allGuidesExpanded;
-        setOpenGuides((prev) => {
-            const updated = { ...prev };
-            activeDayPlan.exercises.forEach((ex) => {
-                updated[ex.id] = nextVal;
-            });
-            return updated;
-        });
+    const toggleHistory = (exerciseId) => {
+        setOpenHistory((prev) => ({ ...prev, [exerciseId]: !prev[exerciseId] }));
     };
 
     const orderedDays = [1, 2, 3, 4, 5, 6, 0].map((idx) =>
         WORKOUT_PLAN.find((d) => d.dayIndex === idx)
     );
+
+    // Fallback recall from local state if offline
+    const fallbackLastSession = useMemo(() => {
+        const matches = (appState.workoutHistory || []).filter(
+            (h) => Number(h.dayIndex) === Number(activeDayPlan.dayIndex)
+        );
+        return matches[0] || null;
+    }, [appState.workoutHistory, activeDayPlan.dayIndex]);
+
+    const effectiveLastSession = dayRecall?.lastSession || fallbackLastSession;
 
     const sessionProgress = useMemo(() => {
         if (activeDayPlan.isRest) {
@@ -5852,7 +6666,11 @@ function TodayView({
         activeDayPlan.exercises.forEach((ex) => {
             const limit = getEffectiveSetCount(ex);
             const sets = (appState.activeDrafts[ex.id] || []).slice(0, limit);
-            const prev = appState.lastSessionLogs[ex.id] || [];
+            const exRecall = dayRecall?.exercises?.[ex.id];
+            const prev =
+                exRecall?.lastSets?.length > 0
+                    ? exRecall.lastSets
+                    : appState.lastSessionLogs[ex.id] || [];
             const activeVar = appState.variantChoices?.[ex.id] || null;
             if (
                 calculateProgressiveOverload(ex, prev, appState.customSteps || {}, activeVar)
@@ -5878,17 +6696,18 @@ function TodayView({
         appState.lastSessionLogs,
         appState.customSteps,
         appState.variantChoices,
+        dayRecall,
         getEffectiveSetCount
     ]);
 
-    // Zero-default: only calculates ramp weights once user enters working weight in Exercise #1
     const firstCompoundWorkingWeightKg = useMemo(() => {
         if (activeDayPlan.isRest || !activeDayPlan.exercises.length) return 0;
         const firstEx = activeDayPlan.exercises[0];
         const draft = appState.activeDrafts[firstEx.id]?.[0]?.weight;
+        const recallW = dayRecall?.exercises?.[firstEx.id]?.lastSets?.[0]?.weight;
         const prev = appState.lastSessionLogs[firstEx.id]?.[0]?.weight;
-        return Number(draft || prev || 0);
-    }, [activeDayPlan, appState.activeDrafts, appState.lastSessionLogs]);
+        return Number(draft || recallW || prev || 0);
+    }, [activeDayPlan, appState.activeDrafts, appState.lastSessionLogs, dayRecall]);
 
     const roundToPlate = (kg) => Math.max(0, Math.round(kg / 2.5) * 2.5);
 
@@ -5922,6 +6741,88 @@ function TodayView({
                     );
                 })}
             </div>
+
+            {/* LAST TIME YOU DID THIS EXACT WORKOUT DAY — RECALL CARD */}
+            {!activeDayPlan.isRest && (effectiveLastSession || recallLoading) && (
+                <div
+                    style={{
+                        backgroundColor: colors.accentSurface,
+                        borderColor: colors.accentBorder
+                    }}
+                    className="vt-card-b2 vt-p-4 vt-resp-row-md vt-tabular"
+                >
+                    <div className="vt-stack-1">
+                        <div className="vt-flex vt-items-center vt-gap-2 vt-flex-wrap">
+                            <History size={16} style={{ color: isDark ? colors.accent : colors.text }} />
+                            <span className="vt-text-xs vt-font-extrabold vt-uppercase vt-tracking-wider">
+                                Last {activeDayPlan.title} Recall
+                                {dayRecall?.totalCompletedSessions
+                                    ? ` (${dayRecall.totalCompletedSessions} Sessions Logged)`
+                                    : ''}
+                            </span>
+                            {effectiveLastSession?.date && (
+                                <span
+                                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                                    className="vt-badge-xs vt-border font-mono-num vt-text-10 vt-font-extrabold"
+                                >
+                                    {effectiveLastSession.date}
+                                    {typeof effectiveLastSession.daysAgo === 'number'
+                                        ? effectiveLastSession.daysAgo === 0
+                                            ? ' (Today)'
+                                            : ` (${effectiveLastSession.daysAgo}d ago)`
+                                        : ''}
+                                </span>
+                            )}
+                        </div>
+                        {recallLoading && !effectiveLastSession ? (
+                            <p className="vt-text-xs" style={{ color: colors.muted }}>
+                                Loading previous session weights from PostgreSQL...
+                            </p>
+                        ) : (
+                            <p className="vt-text-xs" style={{ color: colors.muted }}>
+                                Pichli baar tumne{' '}
+                                <strong style={{ color: colors.text }}>
+                                    {formatWeight(effectiveLastSession.totalVolumeKg)} {appState.unit}
+                                </strong>{' '}
+                                volume ({effectiveLastSession.setsCompleted} sets
+                                {effectiveLastSession.prsCount > 0 ? `, ${effectiveLastSession.prsCount} PRs` : ''}) lift kiya tha.
+                                {typeof dayRecall?.volumeDiffKg === 'number' && (
+                                    <>
+                                        {' '}
+                                        Usse pehle se{' '}
+                                        <strong
+                                            style={{
+                                                color: dayRecall.volumeDiffKg >= 0 ? colors.success : colors.danger
+                                            }}
+                                        >
+                                            {dayRecall.volumeDiffKg >= 0 ? '+' : ''}
+                                            {formatWeight(dayRecall.volumeDiffKg)} {appState.unit}
+                                        </strong>
+                                        .
+                                    </>
+                                )}{' '}
+                                Neeche har exercise mein exact pichli baar ka weight × reps aur PR dikha raha hai!
+                            </p>
+                        )}
+                    </div>
+
+                    {effectiveLastSession && (
+                        <div className="vt-flex vt-items-center vt-gap-3 vt-shrink-0 font-mono-num">
+                            <div className="vt-text-right">
+                                <div className="vt-text-10 vt-uppercase vt-font-bold" style={{ color: colors.muted }}>
+                                    Target To Beat
+                                </div>
+                                <div
+                                    className="font-display vt-text-2xl vt-font-black"
+                                    style={{ color: isDark ? colors.accent : colors.text }}
+                                >
+                                    {formatWeight(effectiveLastSession.totalVolumeKg)} {appState.unit}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Bento Header Summary + Warm-up & Ramp-in Controls */}
             <div className="vt-bento-3">
@@ -6013,16 +6914,18 @@ function TodayView({
                                     </button>
                                 )}
                                 <button
+                                    disabled={savingWorkout}
                                     onClick={handleFinishWorkout}
                                     style={{
                                         backgroundColor: colors.accent,
                                         color: colors.accentText,
-                                        borderColor: colors.accentBorder
+                                        borderColor: colors.accentBorder,
+                                        opacity: savingWorkout ? 0.7 : 1
                                     }}
                                     className="vt-finish-btn"
                                 >
                                     <Check size={16} strokeWidth={2.5} />
-                                    <span>Finish Workout</span>
+                                    <span>{savingWorkout ? 'Saving DB...' : 'Finish Workout'}</span>
                                 </button>
                             </div>
                         )}
@@ -6224,7 +7127,6 @@ function TodayView({
                             </div>
                         </div>
                     </div>
-
                 </div>
             )}
 
@@ -6250,7 +7152,7 @@ function TodayView({
                         <button
                             onClick={() => {
                                 setAppState((prev) => ({ ...prev, sundayWalkDone: !prev.sundayWalkDone }));
-                                showToast('Sunday 20–30 min walk status updated!');
+                                showToast('Sunday 20–30 min walk status saved to PostgreSQL!');
                             }}
                             style={{
                                 backgroundColor: appState.sundayWalkDone ? colors.accent : colors.elevated,
@@ -6296,7 +7198,14 @@ function TodayView({
                                 completed: false
                             };
                         });
-                        const prevSets = appState.lastSessionLogs[exercise.id] || [];
+
+                        const exRecall = dayRecall?.exercises?.[exercise.id] || null;
+                        const prevSets =
+                            exRecall?.lastSets?.length > 0
+                                ? exRecall.lastSets
+                                : appState.lastSessionLogs[exercise.id] || [];
+                        const recentSessions = exRecall?.recentSessions || [];
+
                         const activeVariantId =
                             appState.variantChoices?.[exercise.id] ||
                             exercise.flags?.variants?.[0]?.id ||
@@ -6312,6 +7221,7 @@ function TodayView({
                             activeVariantObj ? activeVariantObj.assisted : exercise.flags?.assisted
                         );
                         const isGuideOpen = Boolean(openGuides[exercise.id]);
+                        const isHistOpen = Boolean(openHistory[exercise.id]);
                         const allSetsDone = draftSets.length > 0 && draftSets.every((s) => s.completed);
 
                         const overload = calculateProgressiveOverload(
@@ -6401,15 +7311,21 @@ function TodayView({
                                             >
                                                 {exercise.type} • {exercise.restSec}s rest • Step {activeStepCode}
                                             </span>
-                                            {exercise.flags?.unilateral && (
+                                            {exRecall && exRecall.allTimeBestWeightKg > 0 && (
                                                 <span
                                                     style={{
                                                         backgroundColor: colors.accentSurface,
-                                                        borderColor: colors.accentBorder
+                                                        borderColor: colors.accentBorder,
+                                                        color: isDark ? colors.accent : colors.text
                                                     }}
-                                                    className="vt-badge vt-border vt-text-11 vt-font-extrabold vt-uppercase"
+                                                    className="vt-badge vt-border vt-text-11 vt-font-extrabold font-mono-num"
                                                 >
-                                                    Unilateral (Per Side)
+                                                    PR: {isAssisted ? 'Assist ' : ''}
+                                                    {formatWeight(exRecall.allTimeBestWeightKg)}
+                                                    {appState.unit} × {exRecall.allTimeBestReps}
+                                                    {!isAssisted && exRecall.allTimeBestE1RM > 0
+                                                        ? ` (e1RM ${formatWeight(exRecall.allTimeBestE1RM)})`
+                                                        : ''}
                                                 </span>
                                             )}
                                         </div>
@@ -6527,7 +7443,7 @@ function TodayView({
                                     </div>
                                 </div>
 
-                                {/* Form Guide */}
+                                {/* Form Guide & Photo Button */}
                                 {exercise.guide && (
                                     <div className="vt-guide-wrap">
                                         <div className="vt-guide-action-row">
@@ -6657,70 +7573,144 @@ function TodayView({
                                     </div>
                                 )}
 
-                                {/* Last Session & Progressive Overload Banner */}
+                                {/* EXACT LAST SESSION RECALL + PROGRESSIVE OVERLOAD BANNER */}
                                 <div
                                     style={{
                                         backgroundColor: overload.shouldIncrease ? colors.accentSurface : colors.elevated,
                                         borderColor: overload.shouldIncrease ? colors.accentBorder : colors.border
                                     }}
-                                    className="vt-p-3 vt-box-xl vt-resp-row vt-tabular"
+                                    className="vt-p-3 vt-box-xl vt-stack-2 vt-tabular"
                                 >
-                                    <div className="vt-stack-0-5">
-                                        <div className="vt-text-xs vt-font-bold vt-uppercase vt-tracking-wider vt-row-wrap vt-gap-1-5">
-                                            <span>Last Session:</span>
-                                            <span style={{ color: colors.muted }} className="font-mono-num">
-                                                {prevSets.length > 0
-                                                    ? prevSets
-                                                        .map(
-                                                            (s) =>
-                                                                `${isAssisted ? 'Assist ' : ''}${formatWeight(s.weight)}${appState.unit} × ${s.reps}`
-                                                        )
-                                                        .join('  |  ')
-                                                    : 'First session — enter your starting weights & reps'}
-                                            </span>
+                                    <div className="vt-resp-row">
+                                        <div className="vt-stack-0-5">
+                                            <div className="vt-text-xs vt-font-bold vt-uppercase vt-tracking-wider vt-row-wrap vt-gap-1-5">
+                                                <span>
+                                                    Last Time
+                                                    {exRecall?.lastDate ? ` (${exRecall.lastDate})` : ''}:
+                                                </span>
+                                                <span style={{ color: colors.text }} className="font-mono-num">
+                                                    {prevSets.length > 0
+                                                        ? prevSets
+                                                              .map(
+                                                                  (s) =>
+                                                                      `${isAssisted ? 'Assist ' : ''}${formatWeight(s.weight)}${appState.unit} × ${s.reps}`
+                                                              )
+                                                              .join('  |  ')
+                                                        : 'First session — enter your starting weights & reps'}
+                                                </span>
+                                            </div>
+                                            <div className="vt-text-xs vt-font-semibold" style={{ color: colors.muted }}>
+                                                {overload.reason}
+                                                {exRecall?.lastVolumeKg > 0
+                                                    ? ` • Last Vol: ${formatWeight(exRecall.lastVolumeKg)} ${appState.unit}`
+                                                    : ''}
+                                            </div>
                                         </div>
-                                        <div className="vt-text-xs vt-font-semibold" style={{ color: colors.muted }}>
-                                            {overload.reason}
+
+                                        <div className="vt-overload-actions">
+                                            {prevSets.length > 0 && !overload.shouldIncrease && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleCopyLastSessionSets(exercise, prevSets)}
+                                                    style={{
+                                                        backgroundColor: colors.card,
+                                                        borderColor: colors.border,
+                                                        color: colors.text
+                                                    }}
+                                                    className="vt-btn vt-h-36 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase vt-shrink-0"
+                                                >
+                                                    Load Last
+                                                </button>
+                                            )}
+
+                                            {overload.shouldIncrease && (
+                                                <>
+                                                    <span
+                                                        style={{
+                                                            backgroundColor: colors.accent,
+                                                            color: colors.accentText
+                                                        }}
+                                                        className="vt-pill-lg vt-text-xs vt-font-extrabold vt-uppercase vt-gap-1 font-mono-num"
+                                                    >
+                                                        {overload.mode === 'assist' ? (
+                                                            <ArrowDownRight className="vt-icon-4 vt-stroke-2-5" />
+                                                        ) : (
+                                                            <ArrowUpRight className="vt-icon-4 vt-stroke-2-5" />
+                                                        )}
+                                                        <span>
+                                                            {overload.mode === 'assist'
+                                                                ? `${formatWeight(overload.incrementKg)} ${appState.unit} Assist → ${formatWeight(
+                                                                      overload.suggestedWeightKg
+                                                                  )} ${appState.unit}`
+                                                                : `+${formatWeight(overload.incrementKg)} ${appState.unit} → ${formatWeight(
+                                                                      overload.suggestedWeightKg
+                                                                  )} ${appState.unit}`}
+                                                        </span>
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleApplyOverloadWeight(exercise, overload.suggestedWeightKg)
+                                                        }
+                                                        style={{
+                                                            backgroundColor: colors.card,
+                                                            borderColor: colors.accentBorder,
+                                                            color: colors.text
+                                                        }}
+                                                        className="vt-btn vt-h-40 vt-px-3 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-shrink-0"
+                                                    >
+                                                        Apply
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {recentSessions.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleHistory(exercise.id)}
+                                                    style={{
+                                                        backgroundColor: isHistOpen ? colors.accentSurface : colors.card,
+                                                        borderColor: isHistOpen ? colors.accentBorder : colors.border,
+                                                        color: colors.text
+                                                    }}
+                                                    className="vt-btn vt-h-36 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-gap-1"
+                                                >
+                                                    <History size={13} />
+                                                    <span>Last {recentSessions.length}</span>
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
 
-                                    {overload.shouldIncrease && (
-                                        <div className="vt-overload-actions">
-                                            <span
-                                                style={{
-                                                    backgroundColor: colors.accent,
-                                                    color: colors.accentText
-                                                }}
-                                                className="vt-pill-lg vt-text-xs vt-font-extrabold vt-uppercase vt-gap-1 font-mono-num"
-                                            >
-                                                {overload.mode === 'assist' ? (
-                                                    <ArrowDownRight className="vt-icon-4 vt-stroke-2-5" />
-                                                ) : (
-                                                    <ArrowUpRight className="vt-icon-4 vt-stroke-2-5" />
-                                                )}
-                                                <span>
-                                                    {overload.mode === 'assist'
-                                                        ? `${formatWeight(overload.incrementKg)} ${appState.unit} Assist → ${formatWeight(
-                                                            overload.suggestedWeightKg
-                                                        )} ${appState.unit}`
-                                                        : `+${formatWeight(overload.incrementKg)} ${appState.unit} → ${formatWeight(
-                                                            overload.suggestedWeightKg
-                                                        )} ${appState.unit}`}
-                                                </span>
-                                            </span>
-                                            <button
-                                                onClick={() =>
-                                                    handleApplyOverloadWeight(exercise, overload.suggestedWeightKg)
-                                                }
-                                                style={{
-                                                    backgroundColor: colors.card,
-                                                    borderColor: colors.accentBorder,
-                                                    color: colors.text
-                                                }}
-                                                className="vt-btn vt-h-44 vt-px-3 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-shrink-0"
-                                            >
-                                                Apply
-                                            </button>
+                                    {/* Expandable Recent 4 Sessions Mini-History */}
+                                    {isHistOpen && recentSessions.length > 0 && (
+                                        <div
+                                            style={{ borderColor: colors.border }}
+                                            className="vt-pt-2 vt-border-t vt-stack-1-5"
+                                        >
+                                            <div className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                                Previous {recentSessions.length} Sessions Progression
+                                            </div>
+                                            {recentSessions.map((rs, idx) => (
+                                                <div
+                                                    key={`${rs.date}-${idx}`}
+                                                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                                                    className="vt-p-2 vt-rounded-lg vt-border vt-between-center vt-flex-wrap vt-gap-2 vt-text-11 font-mono-num"
+                                                >
+                                                    <span style={{ color: colors.muted, fontWeight: 700 }}>{rs.date}</span>
+                                                    <span style={{ fontWeight: 800 }}>
+                                                        {(rs.sets || [])
+                                                            .map(
+                                                                (s) =>
+                                                                    `${formatWeight(s.weight)}${appState.unit}×${s.reps}`
+                                                            )
+                                                            .join(' | ')}
+                                                    </span>
+                                                    <span style={{ color: isDark ? colors.accent : colors.text, fontWeight: 700 }}>
+                                                        Vol: {formatWeight(rs.volumeKg)} {appState.unit}
+                                                    </span>
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
                                 </div>
@@ -6759,7 +7749,7 @@ function TodayView({
                                                             className="vt-text-10 font-mono-num vt-leading-tight"
                                                             style={{ color: colors.muted }}
                                                         >
-                                                            {formatWeight(prevSet.weight)}×{prevSet.reps}
+                                                            Last: {formatWeight(prevSet.weight)}×{prevSet.reps}
                                                         </div>
                                                     )}
                                                 </div>
@@ -6769,7 +7759,7 @@ function TodayView({
                                                         type="number"
                                                         inputMode="decimal"
                                                         step="0.5"
-                                                        placeholder="0"
+                                                        placeholder={prevSet ? String(formatWeight(prevSet.weight)) : '0'}
                                                         aria-label={`${displayName} set ${sIdx + 1} weight`}
                                                         value={
                                                             setRow.weight === '' || setRow.weight === 0
@@ -6792,7 +7782,7 @@ function TodayView({
                                                     <input
                                                         type="number"
                                                         inputMode="numeric"
-                                                        placeholder="0"
+                                                        placeholder={prevSet ? String(prevSet.reps) : '0'}
                                                         aria-label={`${displayName} set ${sIdx + 1} reps`}
                                                         value={setRow.reps === '' || setRow.reps === 0 ? '' : setRow.reps}
                                                         onChange={(e) =>
@@ -6845,11 +7835,11 @@ function TodayView({
 }
 
 // ============================================================================
-// END OF PART 2 — REPLY "OK" FOR PART 3 (Final Part: Plan, Nutrition, Progress, Stats, Settings, Cardio & Pelvic)
+// END OF PART 2 — REPLY "OK" FOR PART 3 (FINAL PART: Weekly/Monthly Complete Overview, Plan, Nutrition, Progress, Settings, Cardio & Pelvic)
 // ============================================================================
 
 // ============================================================================
-// 2. PLAN VIEW COMPONENT (PART 3 START — FINAL PART)
+// SECTION 12: PLAN VIEW COMPONENT (PART 3 START — FINAL PART)
 // ============================================================================
 
 function PlanView({ colors, isDark, onSelectWorkoutDay }) {
@@ -6898,7 +7888,6 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                     </div>
                 </div>
 
-                {/* Muscle Filter Pills */}
                 <div className="vt-flex vt-items-center vt-gap-1-5 vt-overflow-x-auto vt-pt-1">
                     {muscleCategories.map((cat) => {
                         const active = muscleFilter === cat;
@@ -6920,17 +7909,16 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                 </div>
             </div>
 
-            {/* Days Grid */}
             <div className="vt-grid-1 vt-gap-4">
                 {orderedDays.map((day) => {
                     const filteredExercises =
                         muscleFilter === 'All'
                             ? day.exercises
                             : day.exercises.filter(
-                                (ex) =>
-                                    ex.primaryGroup === muscleFilter ||
-                                    (ex.secondaryGroups || []).includes(muscleFilter)
-                            );
+                                  (ex) =>
+                                      ex.primaryGroup === muscleFilter ||
+                                      (ex.secondaryGroups || []).includes(muscleFilter)
+                              );
 
                     if (muscleFilter !== 'All' && filteredExercises.length === 0 && !day.isRest) {
                         return null;
@@ -7038,7 +8026,7 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
 }
 
 // ============================================================================
-// 3. NUTRITION VIEW COMPONENT (100% WHOLE-FOOD INDIAN SYSTEM)
+// SECTION 13: NUTRITION VIEW (100% WHOLE-FOOD INDIAN + SLEEP + AUTO DB ARCHIVE)
 // ============================================================================
 
 function NutritionView({
@@ -7055,6 +8043,7 @@ function NutritionView({
     const kcalTarget = appState.profile.targetCalories || SCIENCE_RULES.TARGET_KCAL;
     const proteinTarget = appState.profile.targetProteinG || SCIENCE_RULES.TARGET_PROTEIN_G;
     const waterTarget = appState.profile.targetWaterMl || SCIENCE_RULES.TARGET_WATER_ML;
+    const sleepTarget = appState.profile.targetSleepHours || SCIENCE_RULES.TARGET_SLEEP_HOURS;
 
     const kcalPercent = Math.min(100, Math.round((nutritionTotals.consumedKcal / kcalTarget) * 100));
     const proteinPercent = Math.min(
@@ -7118,7 +8107,7 @@ function NutritionView({
                         style={{ backgroundColor: colors.accent, color: colors.accentText }}
                         className="vt-badge-lg vt-text-11 vt-font-extrabold vt-uppercase"
                     >
-                        Zero Supplements • 100% Indian Kitchen
+                        Zero Supplements • Auto-Archived Daily in PostgreSQL
                     </span>
                     <h2 className="font-display vt-text-resp-3xl-4xl vt-font-black vt-uppercase vt-mt-1">
                         Whole-Food Lean Bulk Nutrition
@@ -7188,7 +8177,7 @@ function NutritionView({
                 ))}
             </div>
 
-            {/* Macro & Hydration Bento Grid */}
+            {/* Macro, Hydration & Sleep Bento Grid */}
             <div className="vt-grid-md-3 vt-gap-4 vt-tabular">
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -7261,15 +8250,15 @@ function NutritionView({
                 >
                     <div className="vt-between-center">
                         <span className="vt-text-xs vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
-                            Water (3.5L) & Sleep
+                            Water ({(waterTarget / 1000).toFixed(1)}L) & Sleep ({sleepTarget}h)
                         </span>
                         <Droplets className="vt-icon-5" style={{ color: isDark ? colors.accent : colors.text }} />
                     </div>
                     <div className="vt-flex vt-items-baseline vt-justify-between">
                         <div className="font-display vt-text-resp-3xl-4xl vt-font-black">
                             {(appState.waterMl / 1000).toFixed(2)}L{' '}
-                            <span className="vt-text-lg vt-font-bold" style={{ color: colors.muted }}>
-                                / {(waterTarget / 1000).toFixed(1)}L
+                            <span className="vt-text-sm vt-font-bold" style={{ color: colors.muted }}>
+                                • {appState.sleepHours || 0}h sleep
                             </span>
                         </div>
                         <span className="vt-text-xs vt-font-extrabold font-mono-num">{waterPercent}%</span>
@@ -7280,7 +8269,7 @@ function NutritionView({
                                 setAppState((prev) => ({ ...prev, waterMl: prev.waterMl + 250 }))
                             }
                             style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
-                            className="vt-btn vt-h-38 vt-box-xl vt-text-xs vt-font-extrabold"
+                            className="vt-btn vt-h-36 vt-box-xl vt-text-xs vt-font-extrabold"
                         >
                             +250ml
                         </button>
@@ -7289,17 +8278,50 @@ function NutritionView({
                                 setAppState((prev) => ({ ...prev, waterMl: prev.waterMl + 500 }))
                             }
                             style={{ backgroundColor: colors.accent, color: colors.accentText }}
-                            className="vt-btn vt-h-38 vt-rounded-xl vt-text-xs vt-font-extrabold"
+                            className="vt-btn vt-h-36 vt-rounded-xl vt-text-xs vt-font-extrabold"
                         >
                             +500ml
                         </button>
                         <button
                             onClick={() => setAppState((prev) => ({ ...prev, waterMl: 0 }))}
                             style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
-                            className="vt-btn vt-h-38 vt-box-xl vt-text-xs vt-font-bold"
+                            className="vt-btn vt-h-36 vt-box-xl vt-text-xs vt-font-bold"
                         >
                             Reset
                         </button>
+                    </div>
+                    <div className="vt-between-center vt-gap-2 vt-pt-1 vt-border-t" style={{ borderColor: colors.border }}>
+                        <span className="vt-text-11 vt-font-bold" style={{ color: colors.muted }}>
+                            Sleep Logged:
+                        </span>
+                        <div className="vt-flex vt-items-center vt-gap-1">
+                            {[6.5, 7.5, 8, 8.5].map((hrs) => (
+                                <button
+                                    key={hrs}
+                                    type="button"
+                                    onClick={() =>
+                                        setAppState((prev) => ({ ...prev, sleepHours: hrs }))
+                                    }
+                                    style={{
+                                        backgroundColor:
+                                            Number(appState.sleepHours) === hrs
+                                                ? colors.accent
+                                                : colors.elevated,
+                                        color:
+                                            Number(appState.sleepHours) === hrs
+                                                ? colors.accentText
+                                                : colors.text,
+                                        borderColor:
+                                            Number(appState.sleepHours) === hrs
+                                                ? colors.accentBorder
+                                                : colors.border
+                                    }}
+                                    className="vt-btn vt-h-30 vt-px-2 vt-rounded-lg vt-border vt-text-10 vt-font-extrabold font-mono-num"
+                                >
+                                    {hrs}h
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -7424,7 +8446,6 @@ function NutritionView({
                         })}
                     </div>
 
-                    {/* Appetite Helpers (Typo Fixed: vt-btn) */}
                     <div
                         style={{ backgroundColor: colors.card, borderColor: colors.border }}
                         className="vt-card vt-p-card-md vt-stack-3"
@@ -7585,7 +8606,7 @@ function NutritionView({
 }
 
 // ============================================================================
-// 4. PROGRESS VIEW COMPONENT (ZERO DEFAULTS + MODERN GRADIENT CHARTS)
+// SECTION 14: PROGRESS VIEW (POSTGRESQL WEIGHTS, MEASUREMENTS & CHARTS)
 // ============================================================================
 
 function ProgressView({
@@ -7598,6 +8619,7 @@ function ProgressView({
     gainAnalysis,
     vTaperRatio,
     latestMeasurement,
+    runCloudMutation,
     showToast
 }) {
     const todayStr = useMemo(() => getLocalDateStr(), []);
@@ -7608,7 +8630,6 @@ function ProgressView({
     const [reportTab, setReportTab] = useState('weekly');
     const [chartMode, setChartMode] = useState('trajectory');
 
-    // 100% Zero Defaults for Body Measurements
     const [measForm, setMeasForm] = useState({
         shoulders: latestMeasurement?.shoulders || 0,
         chest: latestMeasurement?.chest || 0,
@@ -7624,8 +8645,8 @@ function ProgressView({
                     item.morningKg !== undefined && item.morningKg !== null
                         ? Number(item.morningKg)
                         : item.weightKg !== undefined
-                            ? Number(item.weightKg)
-                            : null;
+                          ? Number(item.weightKg)
+                          : null;
                 const nKg =
                     item.nightKg !== undefined && item.nightKg !== null ? Number(item.nightKg) : null;
                 const primaryKg = mKg || nKg || Number(item.weightKg || 0);
@@ -7664,7 +8685,7 @@ function ProgressView({
         }
     }, [weightDate, normalizedLogs, formatWeight]);
 
-    const handleSaveDualWeightLog = (e) => {
+    const handleSaveDualWeightLog = async (e) => {
         e.preventDefault();
         const hasMorning = morningInput !== '' && !Number.isNaN(Number(morningInput));
         const hasNight = nightInput !== '' && !Number.isNaN(Number(nightInput));
@@ -7687,27 +8708,25 @@ function ProgressView({
 
         const morningKg = mVal !== null ? toKg(mVal) : null;
         const nightKg = nVal !== null ? toKg(nVal) : null;
-        const primaryKg = morningKg || nightKg;
+        const existingForDate = (appState.weightLogs || []).find((w) => w.date === weightDate);
+        const finalMorningKg =
+            morningKg !== null
+                ? morningKg
+                : existingForDate?.morningKg ?? existingForDate?.weightKg ?? null;
+        const finalNightKg = nightKg !== null ? nightKg : existingForDate?.nightKg ?? null;
+        const finalPrimaryKg = finalMorningKg || finalNightKg;
+
+        const updatedEntry = {
+            id: existingForDate?.id || `w-${Date.now()}`,
+            date: weightDate,
+            label: weightDate.slice(5),
+            morningKg: finalMorningKg,
+            nightKg: finalNightKg,
+            weightKg: finalPrimaryKg,
+            notes: noteInput.trim()
+        };
 
         setAppState((prev) => {
-            const existingForDate = (prev.weightLogs || []).find((w) => w.date === weightDate);
-            const finalMorningKg =
-                morningKg !== null
-                    ? morningKg
-                    : existingForDate?.morningKg ?? existingForDate?.weightKg ?? null;
-            const finalNightKg = nightKg !== null ? nightKg : existingForDate?.nightKg ?? null;
-            const finalPrimaryKg = finalMorningKg || finalNightKg || primaryKg;
-
-            const updatedEntry = {
-                id: existingForDate?.id || `w-${Date.now()}`,
-                date: weightDate,
-                label: weightDate.slice(5),
-                morningKg: finalMorningKg,
-                nightKg: finalNightKg,
-                weightKg: finalPrimaryKg,
-                notes: noteInput.trim()
-            };
-
             const nextLogs = [
                 ...(prev.weightLogs || []).filter((w) => w.date !== weightDate),
                 updatedEntry
@@ -7724,21 +8743,32 @@ function ProgressView({
                         prev.profile.startWeightKg > 0
                             ? prev.profile.startWeightKg
                             : firstLog
-                                ? firstLog.weightKg
-                                : finalPrimaryKg,
+                              ? firstLog.weightKg
+                              : finalPrimaryKg,
                     currentWeightKg: latestLog ? latestLog.weightKg : finalPrimaryKg
                 },
                 weightLogs: nextLogs
             };
         });
 
+        await runCloudMutation(
+            () =>
+                vtaperApi.saveWeightLog(weightDate, {
+                    morningKg: finalMorningKg,
+                    nightKg: finalNightKg,
+                    weightKg: finalPrimaryKg,
+                    notes: updatedEntry.notes
+                }),
+            'Weight log sync failed'
+        );
+
         const parts = [];
         if (mVal !== null) parts.push(`Subah: ${mVal}${appState.unit}`);
         if (nVal !== null) parts.push(`Raat: ${nVal}${appState.unit}`);
-        showToast(`Saved (${weightDate}) — ${parts.join(' | ')}`);
+        showToast(`Saved to PostgreSQL (${weightDate}) — ${parts.join(' | ')}`);
     };
 
-    const handleDeleteWeightLog = (dateToDelete) => {
+    const handleDeleteWeightLog = async (dateToDelete) => {
         setAppState((prev) => {
             const nextLogs = (prev.weightLogs || []).filter((w) => w.date !== dateToDelete);
             const latestLog = nextLogs[nextLogs.length - 1];
@@ -7751,6 +8781,11 @@ function ProgressView({
                 weightLogs: nextLogs
             };
         });
+
+        await runCloudMutation(
+            () => vtaperApi.deleteWeightLog(dateToDelete),
+            'Weight delete failed'
+        );
         showToast(`Deleted weight log for ${dateToDelete}`);
     };
 
@@ -7891,7 +8926,6 @@ function ProgressView({
             .reverse();
     }, [normalizedLogs]);
 
-    // Zero-Safe KPI Summary (Handles 0 start weight cleanly)
     const kpiSummary = useMemo(() => {
         const firstLoggedKg = normalizedLogs.length > 0 ? normalizedLogs[0].weightKg : 0;
         const startKg =
@@ -7909,8 +8943,8 @@ function ProgressView({
         const dualDays = normalizedLogs.filter((w) => w.fluctuationKg !== null);
         const overallAvgSwingKg = dualDays.length
             ? Number(
-                (dualDays.reduce((acc, w) => acc + w.fluctuationKg, 0) / dualDays.length).toFixed(2)
-            )
+                  (dualDays.reduce((acc, w) => acc + w.fluctuationKg, 0) / dualDays.length).toFixed(2)
+              )
             : null;
 
         const weeklyVelocity =
@@ -7946,14 +8980,13 @@ function ProgressView({
         }));
     }, [normalizedLogs, formatWeight]);
 
-    const handleSaveMeasurements = (e) => {
+    const handleSaveMeasurements = async (e) => {
         e.preventDefault();
         if (Number(measForm.shoulders || 0) <= 0 || Number(measForm.waist || 0) <= 0) {
             showToast('Shoulders aur Waist measurements (cm) enter karein.');
             return;
         }
-        const entry = {
-            id: `m-${Date.now()}`,
+        const payload = {
             date: getLocalDateStr(),
             shoulders: Number(measForm.shoulders || 0),
             chest: Number(measForm.chest || 0),
@@ -7961,12 +8994,23 @@ function ProgressView({
             arms: Number(measForm.arms || 0),
             thighs: Number(measForm.thighs || 0)
         };
+
+        const res = await runCloudMutation(
+            () => vtaperApi.addMeasurement(payload),
+            'Measurement sync failed'
+        );
+
+        const entry = res?.measurement || {
+            id: `m-${Date.now()}`,
+            ...payload
+        };
+
         setAppState((prev) => ({
             ...prev,
             measurements: [...prev.measurements, entry]
         }));
         const ratio = (entry.shoulders / Math.max(1, entry.waist)).toFixed(2);
-        showToast(`Measurements saved! V-Taper Ratio: ${ratio}x`);
+        showToast(`Measurements saved to PostgreSQL! V-Taper Ratio: ${ratio}x`);
     };
 
     const liveRatio =
@@ -7994,8 +9038,8 @@ function ProgressView({
                         gainAnalysis.status === 'FAST_GAIN_WARNING'
                             ? colors.danger
                             : gainAnalysis.status === 'PLATEAU_SUGGESTION'
-                                ? colors.accentBorder
-                                : colors.border
+                              ? colors.accentBorder
+                              : colors.border
                 }}
                 className="vt-card-b2 vt-p-card vt-resp-row-lg"
             >
@@ -8008,8 +9052,8 @@ function ProgressView({
                                     gainAnalysis.status === 'FAST_GAIN_WARNING'
                                         ? colors.danger
                                         : isDark
-                                            ? colors.accent
-                                            : colors.text
+                                          ? colors.accent
+                                          : colors.text
                             }}
                         />
                         <span className="vt-text-xs vt-font-extrabold vt-uppercase vt-tracking-wider">
@@ -8044,7 +9088,7 @@ function ProgressView({
                 )}
             </div>
 
-            {/* 2. Top 4 Quick KPI Summary Cards (Zero-Safe) */}
+            {/* 2. Top 4 Quick KPI Summary Cards */}
             <div className="vt-grid-kpi vt-gap-3 vt-tabular">
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -8091,8 +9135,8 @@ function ProgressView({
                     <div className="font-display vt-text-3xl vt-font-black vt-mt-1" style={{ color: colors.accent }}>
                         {kpiSummary.overallAvgSwingKg !== null
                             ? `${kpiSummary.overallAvgSwingKg >= 0 ? '+' : ''}${formatWeight(
-                                kpiSummary.overallAvgSwingKg
-                            )} ${appState.unit}`
+                                  kpiSummary.overallAvgSwingKg
+                              )} ${appState.unit}`
                             : '0'}
                     </div>
                     <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
@@ -8111,8 +9155,8 @@ function ProgressView({
                         {kpiSummary.currentKg <= 0
                             ? 'Day 0'
                             : kpiSummary.remainingToGoalKg <= 0
-                                ? 'Goal Hit ✓'
-                                : `~${kpiSummary.estWeeksToGoal} Wks`}
+                              ? 'Goal Hit ✓'
+                              : `~${kpiSummary.estWeeksToGoal} Wks`}
                     </div>
                     <div className="vt-text-11 font-mono-num" style={{ color: colors.muted }}>
                         {kpiSummary.currentKg > 0
@@ -8266,7 +9310,7 @@ function ProgressView({
                         style={{ backgroundColor: colors.accent, color: colors.accentText }}
                         className="vt-btn vt-w-full vt-h-46 vt-rounded-xl vt-font-extrabold vt-text-xs vt-uppercase vt-tracking-wider"
                     >
-                        Save Weigh-In
+                        Save Weigh-In to PostgreSQL
                     </button>
                 </form>
 
@@ -8455,7 +9499,7 @@ function ProgressView({
                 </div>
             </div>
 
-            {/* 4. WEEKLY & MONTHLY DETAILED REPORTS SECTION */}
+            {/* 4. WEEKLY & MONTHLY WEIGHT PROGRESS REPORTS */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-card vt-stack-4"
@@ -8517,22 +9561,22 @@ function ProgressView({
                                     wk.status === 'OPTIMAL'
                                         ? colors.accent
                                         : wk.status === 'FAST_GAIN'
-                                            ? colors.danger
-                                            : colors.elevated;
+                                          ? colors.danger
+                                          : colors.elevated;
                                 const badgeColor =
                                     wk.status === 'OPTIMAL'
                                         ? colors.accentText
                                         : wk.status === 'FAST_GAIN'
-                                            ? '#FFFFFF'
-                                            : colors.text;
+                                          ? '#FFFFFF'
+                                          : colors.text;
                                 const badgeText =
                                     wk.status === 'BASELINE'
                                         ? 'Baseline Week'
                                         : wk.status === 'OPTIMAL'
-                                            ? 'Optimal Gain ✓'
-                                            : wk.status === 'FAST_GAIN'
-                                                ? 'Fast Gain'
-                                                : 'Slow / Plateau';
+                                          ? 'Optimal Gain ✓'
+                                          : wk.status === 'FAST_GAIN'
+                                            ? 'Fast Gain'
+                                            : 'Slow / Plateau';
 
                                 return (
                                     <div
@@ -8752,7 +9796,7 @@ function ProgressView({
                 )}
             </div>
 
-            {/* 5. V-Taper Body Measurements (Zero Defaults) + V-Taper Gauge */}
+            {/* 5. V-Taper Body Measurements + V-Taper Gauge */}
             <div className="vt-grid-lg-3 vt-gap-4">
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -8840,16 +9884,412 @@ function ProgressView({
 }
 
 // ============================================================================
-// 5. STATS VIEW COMPONENT (MUSCLE VOLUMES, RADAR, DISCIPLINE & UNIT TESTS)
+// SECTION 15: STATS VIEW (COMPLETE WEEKLY & MONTHLY OVERVIEW + MUSCLE RADAR)
 // ============================================================================
 
-function StatsView({ colors, isDark, appState, disciplineStats }) {
+function StatsView({
+    colors,
+    isDark,
+    appState,
+    disciplineStats,
+    formatWeight,
+    overviewRefreshKey
+}) {
     const volumes = useMemo(() => computeWeeklyMuscleVolumes(), []);
     const unitTests = useMemo(() => runBuiltInUnitTests(), []);
 
+    const [overviewPeriod, setOverviewPeriod] = useState('weekly');
+    const [overviewData, setOverviewData] = useState(null);
+    const [overviewLoading, setOverviewLoading] = useState(false);
+    const [overviewError, setOverviewError] = useState('');
+
+    const fetchOverview = useCallback(async (period) => {
+        setOverviewLoading(true);
+        setOverviewError('');
+        try {
+            const res = await vtaperApi.getOverview(period);
+            setOverviewData(res);
+        } catch (err) {
+            setOverviewError(err.message || 'Backend overview unavailable');
+        } finally {
+            setOverviewLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchOverview(overviewPeriod);
+    }, [overviewPeriod, overviewRefreshKey, fetchOverview]);
+
+    const currentPeriod = overviewData?.current || null;
+    const previousPeriod = overviewData?.previous || null;
+    const deltas = overviewData?.deltas || null;
+    const highlights = overviewData?.highlights || [];
+    const timeline = overviewData?.timeline || [];
+
+    const formatDeltaChip = (val, suffix = '', invertGood = false) => {
+        if (val === null || val === undefined || Number.isNaN(Number(val))) return null;
+        const num = Number(val);
+        const positive = invertGood ? num <= 0 : num >= 0;
+        const sign = num > 0 ? '+' : '';
+        return (
+            <span
+                style={{
+                    color: num === 0 ? colors.muted : positive ? colors.success : colors.danger,
+                    fontWeight: 800
+                }}
+                className="font-mono-num vt-text-11"
+            >
+                {sign}
+                {num}
+                {suffix} vs {overviewPeriod === 'weekly' ? 'last wk' : 'last mo'}
+            </span>
+        );
+    };
+
     return (
         <div className="vt-stack-5">
-            {/* Top KPI Cards */}
+            {/* 1. COMPLETE WEEKLY & MONTHLY OVERVIEW DASHBOARD (POWERED BY POSTGRESQL) */}
+            <div
+                style={{ backgroundColor: colors.card, borderColor: colors.accentBorder }}
+                className="vt-card-b2 vt-p-card vt-stack-4"
+            >
+                <div className="vt-between-center vt-flex-wrap vt-gap-3">
+                    <div>
+                        <div className="vt-row-wrap vt-gap-2">
+                            <span
+                                style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                                className="vt-badge-lg vt-text-10 vt-font-extrabold vt-uppercase"
+                            >
+                                Complete {overviewPeriod === 'weekly' ? 'Weekly' : 'Monthly'} Overview
+                            </span>
+                            {currentPeriod && (
+                                <span
+                                    style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                    className="vt-badge vt-border font-mono-num vt-text-11 vt-font-extrabold"
+                                >
+                                    {currentPeriod.label}
+                                </span>
+                            )}
+                        </div>
+                        <h2 className="font-display vt-text-resp-3xl-4xl vt-font-black vt-uppercase vt-mt-1">
+                            {overviewPeriod === 'weekly'
+                                ? 'Is Hafte & Pichle Hafte Ka Complete Report'
+                                : 'Is Mahine & Pichle Mahine Ka Complete Report'}
+                        </h2>
+                        <p className="vt-text-xs" style={{ color: colors.muted }}>
+                            Workout volume, sets, PRs, Morning/Night weight, nutrition avg, clean streak, cardio aur pelvic rehab — sab ek jagah PostgreSQL se live calculate hota hai.
+                        </p>
+                    </div>
+
+                    <div className="vt-flex vt-items-center vt-gap-1-5">
+                        {['weekly', 'monthly'].map((p) => {
+                            const active = overviewPeriod === p;
+                            return (
+                                <button
+                                    key={p}
+                                    type="button"
+                                    onClick={() => setOverviewPeriod(p)}
+                                    style={{
+                                        backgroundColor: active ? colors.accent : colors.elevated,
+                                        color: active ? colors.accentText : colors.text,
+                                        borderColor: active ? colors.accentBorder : colors.border
+                                    }}
+                                    className="vt-btn vt-h-40 vt-px-3-5 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase"
+                                >
+                                    {p}
+                                </button>
+                            );
+                        })}
+                        <button
+                            type="button"
+                            onClick={() => fetchOverview(overviewPeriod)}
+                            aria-label="Refresh overview"
+                            style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+                            className="vt-icon-btn-44"
+                        >
+                            <RefreshCw size={16} />
+                        </button>
+                    </div>
+                </div>
+
+                {overviewLoading && !currentPeriod ? (
+                    <div
+                        style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.muted }}
+                        className="vt-p-4 vt-box-xl vt-text-xs vt-font-semibold"
+                    >
+                        Loading {overviewPeriod} overview from PostgreSQL...
+                    </div>
+                ) : overviewError && !currentPeriod ? (
+                    <div
+                        style={{ backgroundColor: colors.elevated, borderColor: colors.danger, color: colors.danger }}
+                        className="vt-p-4 vt-box-xl vt-text-xs vt-font-bold"
+                    >
+                        {overviewError} — Backend start karke refresh button dabayein.
+                    </div>
+                ) : currentPeriod ? (
+                    <>
+                        {/* Consistency Score & Progress Highlights Banner */}
+                        <div
+                            style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                            className="vt-p-4 vt-box-xl vt-resp-row-md vt-gap-3"
+                        >
+                            <div className="vt-stack-1 vt-flex-1">
+                                <div className="vt-text-xs vt-font-extrabold vt-uppercase" style={{ color: isDark ? colors.accent : colors.text }}>
+                                    Progress Summary ({overviewPeriod === 'weekly' ? 'Week-over-Week' : 'Month-over-Month'})
+                                </div>
+                                {highlights.length > 0 ? (
+                                    <div className="vt-stack-1 vt-text-xs">
+                                        {highlights.map((h, i) => (
+                                            <div key={i}>• {h}</div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="vt-text-xs" style={{ color: colors.muted }}>
+                                        {previousPeriod
+                                            ? `Comparing ${currentPeriod.label} against ${previousPeriod.label}.`
+                                            : 'Yeh aapka pehla tracked period hai — agle hafte/mahine se automatic comparison delta aur growth highlights dikhenge.'}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div
+                                style={{
+                                    backgroundColor: colors.card,
+                                    borderColor: colors.accentBorder,
+                                    minWidth: 132,
+                                    textAlign: 'center'
+                                }}
+                                className="vt-p-3 vt-box-xl vt-shrink-0"
+                            >
+                                <div className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                    Consistency Score
+                                </div>
+                                <div
+                                    className="font-display vt-text-3xl vt-font-black"
+                                    style={{ color: isDark ? colors.accent : colors.text }}
+                                >
+                                    {currentPeriod.overallScore}/100
+                                </div>
+                                {deltas && formatDeltaChip(deltas.overallScoreDiff, ' pts')}
+                            </div>
+                        </div>
+
+                        {/* 6-Pillar Current Period Grid */}
+                        <div className="vt-grid-md-3 vt-gap-3 vt-tabular">
+                            {/* Pillar 1: Workouts & Volume */}
+                            <div
+                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                className="vt-p-3-5 vt-box-xl vt-stack-1-5"
+                            >
+                                <div className="vt-between-center">
+                                    <span className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                        Workouts & Volume
+                                    </span>
+                                    <Dumbbell size={15} style={{ color: isDark ? colors.accent : colors.text }} />
+                                </div>
+                                <div className="font-display vt-text-2xl vt-font-black">
+                                    {currentPeriod.workout.sessions} / {currentPeriod.workout.targetSessions} Sessions
+                                </div>
+                                <div className="vt-text-xs font-mono-num">
+                                    Vol: <strong>{formatWeight(currentPeriod.workout.totalVolumeKg)} {appState.unit}</strong> •{' '}
+                                    {currentPeriod.workout.totalSets} sets • {currentPeriod.workout.totalPRs} PRs
+                                </div>
+                                {deltas && (
+                                    <div>
+                                        {formatDeltaChip(
+                                            formatWeight(deltas.volumeDiffKg),
+                                            ` ${appState.unit}${deltas.volumeDiffPct !== null ? ` (${deltas.volumeDiffPct}%)` : ''}`
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Pillar 2: Weight Velocity */}
+                            <div
+                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                className="vt-p-3-5 vt-box-xl vt-stack-1-5"
+                            >
+                                <div className="vt-between-center">
+                                    <span className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                        Body Weight (AM / PM)
+                                    </span>
+                                    <Scale size={15} style={{ color: isDark ? colors.accent : colors.text }} />
+                                </div>
+                                <div className="font-display vt-text-2xl vt-font-black">
+                                    {currentPeriod.weight.avgMorningKg !== null
+                                        ? `${formatWeight(currentPeriod.weight.avgMorningKg)} ${appState.unit} AM`
+                                        : 'No Logs'}
+                                </div>
+                                <div className="vt-text-xs font-mono-num" style={{ color: colors.muted }}>
+                                    PM Avg:{' '}
+                                    <strong style={{ color: colors.text }}>
+                                        {currentPeriod.weight.avgNightKg !== null
+                                            ? `${formatWeight(currentPeriod.weight.avgNightKg)} ${appState.unit}`
+                                            : '--'}
+                                    </strong>{' '}
+                                    • {currentPeriod.weight.daysLogged} weigh-ins
+                                </div>
+                                {deltas && formatDeltaChip(
+                                    deltas.weightAvgDiffKg !== null ? formatWeight(deltas.weightAvgDiffKg) : null,
+                                    ` ${appState.unit}`
+                                )}
+                            </div>
+
+                            {/* Pillar 3: Nutrition & Protein */}
+                            <div
+                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                className="vt-p-3-5 vt-box-xl vt-stack-1-5"
+                            >
+                                <div className="vt-between-center">
+                                    <span className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                        Nutrition Average
+                                    </span>
+                                    <Utensils size={15} style={{ color: isDark ? colors.accent : colors.text }} />
+                                </div>
+                                <div className="font-display vt-text-2xl vt-font-black">
+                                    {currentPeriod.nutrition.avgKcal} kcal • {currentPeriod.nutrition.avgProteinG}g P
+                                </div>
+                                <div className="vt-text-xs font-mono-num" style={{ color: colors.muted }}>
+                                    110g+ Protein: <strong style={{ color: colors.text }}>{currentPeriod.nutrition.proteinFloorHitDays}/{currentPeriod.nutrition.daysLogged}d</strong>
+                                </div>
+                                {deltas && formatDeltaChip(deltas.avgProteinDiffG, 'g P/day')}
+                            </div>
+
+                            {/* Pillar 4: Clean Discipline */}
+                            <div
+                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                className="vt-p-3-5 vt-box-xl vt-stack-1-5"
+                            >
+                                <div className="vt-between-center">
+                                    <span className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                        Clean Discipline
+                                    </span>
+                                    <Brain size={15} style={{ color: isDark ? colors.accent : colors.text }} />
+                                </div>
+                                <div className="font-display vt-text-2xl vt-font-black">
+                                    {currentPeriod.discipline.cleanRatePct}% Clean
+                                </div>
+                                <div className="vt-text-xs font-mono-num" style={{ color: colors.muted }}>
+                                    {currentPeriod.discipline.cleanDays} clean • {currentPeriod.discipline.relapseDays} slips •{' '}
+                                    {currentPeriod.discipline.urgesDefeated} urges beat
+                                </div>
+                                {deltas && formatDeltaChip(deltas.cleanRateDiffPct, '%')}
+                            </div>
+
+                            {/* Pillar 5: Hydration & Sleep */}
+                            <div
+                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                className="vt-p-3-5 vt-box-xl vt-stack-1-5"
+                            >
+                                <div className="vt-between-center">
+                                    <span className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                        Water & Sleep Avg
+                                    </span>
+                                    <Droplets size={15} style={{ color: isDark ? colors.accent : colors.text }} />
+                                </div>
+                                <div className="font-display vt-text-2xl vt-font-black">
+                                    {(currentPeriod.nutrition.avgWaterMl / 1000).toFixed(2)}L • {currentPeriod.nutrition.avgSleepHours || 0}h
+                                </div>
+                                <div className="vt-text-xs font-mono-num" style={{ color: colors.muted }}>
+                                    3.5L Goal Hit: <strong style={{ color: colors.text }}>{currentPeriod.nutrition.waterGoalHitDays} days</strong>
+                                </div>
+                            </div>
+
+                            {/* Pillar 6: Cardio, Pelvic & V-Taper */}
+                            <div
+                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                className="vt-p-3-5 vt-box-xl vt-stack-1-5"
+                            >
+                                <div className="vt-between-center">
+                                    <span className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                        Cardio • Pelvic • Ratio
+                                    </span>
+                                    <Activity size={15} style={{ color: isDark ? colors.accent : colors.text }} />
+                                </div>
+                                <div className="font-display vt-text-2xl vt-font-black">
+                                    {currentPeriod.recovery.cardioSessions} Cardio • {currentPeriod.recovery.pelvicSessions} Rehab
+                                </div>
+                                <div className="vt-text-xs font-mono-num" style={{ color: colors.muted }}>
+                                    V-Taper:{' '}
+                                    <strong style={{ color: colors.text }}>
+                                        {currentPeriod.body.vTaperRatio ? `${currentPeriod.body.vTaperRatio}x` : '--'}
+                                    </strong>{' '}
+                                    • {currentPeriod.recovery.cardioMinutes}m cardio
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Past Weeks / Months Complete Archive Cards */}
+                        {timeline.length > 0 && (
+                            <div className="vt-stack-2-5 vt-pt-2 vt-border-t" style={{ borderColor: colors.border }}>
+                                <div className="vt-text-xs vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                    Complete {overviewPeriod === 'weekly' ? 'Week-by-Week' : 'Month-by-Month'} History ({timeline.length})
+                                </div>
+                                <div className="vt-grid-md-2 vt-gap-3 vt-tabular">
+                                    {timeline.map((item) => (
+                                        <div
+                                            key={item.periodKey}
+                                            style={{
+                                                backgroundColor: item.isCurrent ? colors.accentSurface : colors.elevated,
+                                                borderColor: item.isCurrent ? colors.accentBorder : colors.border
+                                            }}
+                                            className="vt-p-3-5 vt-box-xl vt-stack-2"
+                                        >
+                                            <div className="vt-between-center vt-gap-2">
+                                                <div>
+                                                    <span className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                                        {overviewPeriod === 'weekly' ? `Week #${item.index}` : `Month #${item.index}`}
+                                                        {item.isCurrent ? ' • CURRENT' : ''}
+                                                    </span>
+                                                    <div className="font-display vt-text-xl vt-font-black">{item.label}</div>
+                                                </div>
+                                                <span
+                                                    style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                                                    className="vt-badge font-mono-num vt-text-xs vt-font-extrabold"
+                                                >
+                                                    Score {item.overallScore}
+                                                </span>
+                                            </div>
+
+                                            <div className="vt-grid-2 vt-gap-2 vt-text-11 font-mono-num">
+                                                <div>
+                                                    Gym: <strong>{item.workout.sessions}</strong> ({formatWeight(item.workout.totalVolumeKg)} {appState.unit})
+                                                </div>
+                                                <div>
+                                                    Weight AM:{' '}
+                                                    <strong>
+                                                        {item.weight.avgMorningKg !== null
+                                                            ? `${formatWeight(item.weight.avgMorningKg)} ${appState.unit}`
+                                                            : '--'}
+                                                    </strong>
+                                                </div>
+                                                <div>
+                                                    Diet: <strong>{item.nutrition.avgKcal} kcal / {item.nutrition.avgProteinG}g P</strong>
+                                                </div>
+                                                <div>
+                                                    Clean: <strong>{item.discipline.cleanRatePct}%</strong> ({item.discipline.cleanDays}d)
+                                                </div>
+                                            </div>
+
+                                            {item.workout.topLift && (
+                                                <div
+                                                    className="vt-text-11 vt-pt-1-5 vt-border-t font-mono-num"
+                                                    style={{ color: colors.muted, borderColor: colors.border }}
+                                                >
+                                                    Top Lift: <strong style={{ color: colors.text }}>{item.workout.topLift.name}</strong> (
+                                                    {formatWeight(item.workout.topLift.topWeightKg)} {appState.unit} × {item.workout.topLift.bestReps})
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </>
+                ) : null}
+            </div>
+
+            {/* 2. Top Lifetime KPI Cards */}
             <div className="vt-grid-kpi vt-gap-3 vt-tabular">
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -8900,7 +10340,7 @@ function StatsView({ colors, isDark, appState, disciplineStats }) {
                 </div>
             </div>
 
-            {/* Muscle Balance Radar + Weekly Sets Per Muscle Group */}
+            {/* 3. Muscle Balance Radar + Weekly Sets Per Muscle Group */}
             <div className="vt-grid-lg-3 vt-gap-4">
                 <MuscleRadar colors={colors} isDark={isDark} />
 
@@ -8946,7 +10386,7 @@ function StatsView({ colors, isDark, appState, disciplineStats }) {
                 </div>
             </div>
 
-            {/* Built-in Science & Logic Verification Suite */}
+            {/* 4. Built-in Science & Logic Verification Suite */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-card vt-stack-3"
@@ -8986,7 +10426,7 @@ function StatsView({ colors, isDark, appState, disciplineStats }) {
 }
 
 // ============================================================================
-// 6. SETTINGS VIEW COMPONENT (PROFILE, THEME, UNIT, ICON.SVG, JSON BACKUP, RESET)
+// SECTION 16: SETTINGS VIEW (POSTGRESQL CLOUD BACKUPS, IMPORT, EXPORT, RESET)
 // ============================================================================
 
 function SettingsView({
@@ -8997,9 +10437,54 @@ function SettingsView({
     setShowOnboarding,
     setOnboardingForm,
     handleDietTrackChange,
+    syncStatus,
+    lastSyncedAt,
+    loadFromBackend,
+    runCloudMutation,
+    onStateReplaced,
     showToast
 }) {
     const [confirmReset, setConfirmReset] = useState(false);
+    const [backups, setBackups] = useState([]);
+    const [loadingBackups, setLoadingBackups] = useState(false);
+
+    const fetchBackups = useCallback(async () => {
+        setLoadingBackups(true);
+        try {
+            const res = await vtaperApi.listBackups();
+            setBackups(res.backups || []);
+        } catch {
+            setBackups([]);
+        } finally {
+            setLoadingBackups(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchBackups();
+    }, [fetchBackups]);
+
+    const handleCreateBackupNow = async () => {
+        const res = await runCloudMutation(
+            () => vtaperApi.createBackupNow(),
+            'Cloud backup failed'
+        );
+        if (res?.ok) {
+            fetchBackups();
+            showToast('Instant PostgreSQL Cloud Snapshot created!');
+        }
+    };
+
+    const handleRestoreBackup = async (snapshotDate) => {
+        const res = await runCloudMutation(
+            () => vtaperApi.restoreBackup(snapshotDate),
+            'Restore failed'
+        );
+        if (res?.state) {
+            onStateReplaced(res.state);
+            showToast(`Restored full database from ${snapshotDate} snapshot!`);
+        }
+    };
 
     const handleExportJson = () => {
         const dataStr = JSON.stringify(appState, null, 2);
@@ -9028,26 +10513,48 @@ function SettingsView({
         const file = e.target.files?.[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (ev) => {
+        reader.onload = async (ev) => {
             try {
                 const parsed = JSON.parse(String(ev.target?.result || '{}'));
-                const { name: _legacyName, ...importedProfile } = parsed.profile || {};
-                setAppState((prev) => ({
-                    ...prev,
-                    ...parsed,
-                    profile: { ...DEFAULT_PROFILE, ...importedProfile }
-                }));
-                showToast('Backup restored successfully!');
-            } catch (err) {
+                const res = await runCloudMutation(
+                    () => vtaperApi.importState(parsed),
+                    'Database import failed'
+                );
+                if (res?.state) {
+                    onStateReplaced(res.state);
+                    fetchBackups();
+                    showToast('JSON backup imported directly into PostgreSQL!');
+                } else {
+                    onStateReplaced(parsed);
+                    showToast('Backup restored locally (DB offline).');
+                }
+            } catch {
                 showToast('Invalid JSON backup file.');
             }
         };
         reader.readAsText(file);
     };
 
+    const handleFullReset = async () => {
+        const res = await runCloudMutation(
+            () => vtaperApi.resetAll(appState.theme),
+            'Cloud reset failed'
+        );
+        if (res?.state) {
+            onStateReplaced(res.state);
+            fetchBackups();
+        } else {
+            const fresh = getFreshInitialState(appState.theme);
+            setAppState(fresh);
+        }
+        setConfirmReset(false);
+        setShowOnboarding(true);
+        showToast('All data wiped cleanly to 0 (Safety backup saved in PostgreSQL).');
+    };
+
     return (
         <div className="vt-stack-5">
-            {/* Profile, Units & Theme Quick Controls */}
+            {/* 1. Preferences & Goals */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-card vt-stack-4"
@@ -9139,13 +10646,93 @@ function SettingsView({
                 </div>
             </div>
 
-            {/* Backup & Reset */}
+            {/* 2. PostgreSQL Cloud Sync & 14-Day Automatic Snapshots */}
+            <div
+                style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                className="vt-card vt-p-card vt-stack-4"
+            >
+                <div className="vt-between-center vt-flex-wrap vt-gap-3">
+                    <div>
+                        <div className="vt-flex vt-items-center vt-gap-2">
+                            <Database size={18} style={{ color: isDark ? colors.accent : colors.text }} />
+                            <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                                PostgreSQL Cloud Backups (14-Day Auto Snapshots)
+                            </h3>
+                        </div>
+                        <p className="vt-text-xs font-mono-num" style={{ color: colors.muted }}>
+                            API: {API_BASE_URL} • Status: <strong>{syncStatus.toUpperCase()}</strong>
+                            {lastSyncedAt ? ` • Last Sync: ${new Date(lastSyncedAt).toLocaleTimeString()}` : ''}
+                        </p>
+                    </div>
+
+                    <div className="vt-flex vt-items-center vt-gap-2">
+                        <button
+                            type="button"
+                            onClick={() => loadFromBackend(false)}
+                            style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.text }}
+                            className="vt-btn vt-h-40 vt-px-3 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-1-5"
+                        >
+                            <RefreshCw size={14} />
+                            <span>Reload DB</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleCreateBackupNow}
+                            style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                            className="vt-btn vt-h-40 vt-px-3-5 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase"
+                        >
+                            Backup Now
+                        </button>
+                    </div>
+                </div>
+
+                {loadingBackups ? (
+                    <div className="vt-text-xs" style={{ color: colors.muted }}>
+                        Loading cloud snapshots...
+                    </div>
+                ) : backups.length === 0 ? (
+                    <div
+                        style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.muted }}
+                        className="vt-p-3-5 vt-box-xl vt-text-xs"
+                    >
+                        Abhi koi cloud snapshot nahi hai — "Backup Now" click karo ya apna pehla workout/weight save karo.
+                    </div>
+                ) : (
+                    <div className="vt-stack-2">
+                        {backups.map((b) => (
+                            <div
+                                key={b.id}
+                                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                className="vt-p-3 vt-box-xl vt-between-center vt-flex-wrap vt-gap-2 vt-text-xs"
+                            >
+                                <div className="font-mono-num">
+                                    <strong>{b.snapshotDate}</strong>{' '}
+                                    <span style={{ color: colors.muted }}>
+                                        • {b.meta?.workoutsCount || 0} workouts • {b.meta?.weightLogsCount || 0} weights •{' '}
+                                        {b.meta?.disciplineDaysCount || 0} clean days
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => handleRestoreBackup(b.snapshotDate)}
+                                    style={{ backgroundColor: colors.card, borderColor: colors.accentBorder, color: colors.text }}
+                                    className="vt-btn vt-h-34 vt-px-3 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase"
+                                >
+                                    Restore
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* 3. Local JSON Backup, Icon & Zero Reset */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-card vt-stack-4"
             >
                 <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-                    Local Backup (JSON), App Icon & Zero Reset
+                    JSON Export / Import, App Icon & Zero Reset
                 </h3>
                 <div className="vt-backup-row">
                     <button
@@ -9154,7 +10741,7 @@ function SettingsView({
                         className="vt-btn vt-h-46 vt-px-4 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2"
                     >
                         <Download className="vt-icon-4" />
-                        <span>Export JSON Backup</span>
+                        <span>Export JSON</span>
                     </button>
 
                     <label
@@ -9162,7 +10749,7 @@ function SettingsView({
                         className="vt-btn vt-h-46 vt-px-4 vt-box-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2 vt-cursor-pointer"
                     >
                         <Upload className="vt-icon-4" />
-                        <span>Import JSON Backup</span>
+                        <span>Import JSON → DB</span>
                         <input type="file" accept=".json" onChange={handleImportJson} className="vt-hidden" />
                     </label>
 
@@ -9187,13 +10774,7 @@ function SettingsView({
                     ) : (
                         <div className="vt-flex vt-items-center vt-gap-2 vt-ml-auto">
                             <button
-                                onClick={() => {
-                                    const fresh = getFreshInitialState(appState.theme);
-                                    setAppState(fresh);
-                                    setConfirmReset(false);
-                                    setShowOnboarding(true);
-                                    showToast('All data wiped cleanly to 0 (Goal 65–68 kg kept).');
-                                }}
+                                onClick={handleFullReset}
                                 style={{ backgroundColor: colors.danger, color: '#FFFFFF' }}
                                 className="vt-btn vt-h-46 vt-px-4 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase"
                             >
@@ -9215,7 +10796,7 @@ function SettingsView({
 }
 
 // ============================================================================
-// 7. HOME 30-MIN NO-EQUIPMENT V-TAPER CARDIO & WAIST CONDITIONING PROTOCOL
+// SECTION 17: HOME 30-MIN NO-EQUIPMENT V-TAPER CARDIO PROTOCOL
 // ============================================================================
 
 export const HOME_CARDIO_PROTOCOL = {
@@ -9345,7 +10926,14 @@ export const HOME_CARDIO_PROTOCOL = {
     ]
 };
 
-export function HomeCardioSection({ colors, isDark, appState, setAppState, showToast }) {
+export function HomeCardioSection({
+    colors,
+    isDark,
+    appState,
+    setAppState,
+    runCloudMutation,
+    showToast
+}) {
     const allDrills = useMemo(
         () => HOME_CARDIO_PROTOCOL.phases.flatMap((p) => p.drills),
         []
@@ -9361,7 +10949,6 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
     const cardioLogs = appState.cardioLogs || [];
     const isCompletedToday = cardioLogs.some((log) => log.date === todayStr);
 
-    // StrictMode-safe countdown tick
     useEffect(() => {
         if (!timerRunning || drillSecLeft <= 0) return;
         const interval = setInterval(() => {
@@ -9370,7 +10957,6 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
         return () => clearInterval(interval);
     }, [timerRunning, drillSecLeft]);
 
-    // StrictMode-safe transition when timer reaches 0
     useEffect(() => {
         if (!timerRunning || drillSecLeft > 0) return;
         setCompletedDrills((cd) => ({ ...cd, [currentDrill.id]: true }));
@@ -9403,7 +10989,13 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
     const completedCount = Object.values(completedDrills).filter(Boolean).length;
     const progressPct = Math.round((completedCount / allDrills.length) * 100);
 
-    const handleLogCardioSession = () => {
+    const handleLogCardioSession = async () => {
+        const payload = {
+            durationMin: 30,
+            drillsCompleted: completedCount || allDrills.length,
+            kcalBurned: HOME_CARDIO_PROTOCOL.estimatedKcalBurn
+        };
+
         setAppState((prev) => {
             const existing = prev.cardioLogs || [];
             const filtered = existing.filter((item) => item.date !== todayStr);
@@ -9414,16 +11006,20 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
                     {
                         id: `cardio-${Date.now()}`,
                         date: todayStr,
-                        durationMin: 30,
-                        drillsCompleted: completedCount || allDrills.length,
-                        kcalBurned: HOME_CARDIO_PROTOCOL.estimatedKcalBurn
+                        ...payload
                     },
                     ...filtered
                 ]
             };
         });
+
+        await runCloudMutation(
+            () => vtaperApi.saveCardio(todayStr, payload),
+            'Cardio sync failed'
+        );
+
         if (showToast) {
-            showToast('Logged 30-Min Home V-Taper Cardio! Eat +200 kcal if bulking hard.');
+            showToast('Logged 30-Min Home V-Taper Cardio in PostgreSQL! Eat +200 kcal if bulking hard.');
         }
     };
 
@@ -9488,7 +11084,6 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
                     </button>
                 </div>
 
-                {/* Live Guided Drill Timer Bar */}
                 <div
                     style={{
                         backgroundColor: colors.elevated,
@@ -9551,7 +11146,6 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
                     </div>
                 </div>
 
-                {/* Progress Bar */}
                 <div className="vt-stack-1">
                     <div className="vt-between-center vt-text-11 font-mono-num" style={{ color: colors.muted }}>
                         <span>Circuit Progress: {completedCount} / {allDrills.length} drills checked</span>
@@ -9677,10 +11271,17 @@ export function HomeCardioSection({ colors, isDark, appState, setAppState, showT
 }
 
 // ============================================================================
-// 8. PELVIC ALIGNMENT & POSTURE REHAB SECTION
+// SECTION 18: PELVIC ALIGNMENT & POSTURE REHAB SECTION
 // ============================================================================
 
-export function PelvicRehabSection({ colors, isDark, appState, setAppState, showToast }) {
+export function PelvicRehabSection({
+    colors,
+    isDark,
+    appState,
+    setAppState,
+    runCloudMutation,
+    showToast
+}) {
     const pelvicSide = appState.pelvicSide || 'right';
     const protocol = useMemo(() => buildPelvicProtocol(pelvicSide), [pelvicSide]);
     const allExercises = useMemo(
@@ -9836,7 +11437,13 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
 
     const progressPct = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
 
-    const handleLogPelvicSession = () => {
+    const handleLogPelvicSession = async () => {
+        const payload = {
+            highSide: pelvicSide,
+            durationMin: protocol.totalMinutes,
+            setsCompleted: completedSets || totalSets
+        };
+
         setAppState((prev) => {
             const existing = prev.pelvicLogs || [];
             const filtered = existing.filter((item) => item.date !== todayStr);
@@ -9846,17 +11453,21 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                     {
                         id: `pelvic-${Date.now()}`,
                         date: todayStr,
-                        highSide: pelvicSide,
-                        durationMin: protocol.totalMinutes,
-                        setsCompleted: completedSets || totalSets
+                        ...payload
                     },
                     ...filtered
                 ]
             };
         });
+
+        await runCloudMutation(
+            () => vtaperApi.savePelvic(todayStr, payload),
+            'Pelvic rehab sync failed'
+        );
+
         if (showToast) {
             showToast(
-                `Logged Pelvic Alignment Session (${protocol.highSide} High Protocol)! Consistency for 4–6 wks is key.`
+                `Logged Pelvic Alignment Session (${protocol.highSide} High) in PostgreSQL!`
             );
         }
     };
@@ -9949,7 +11560,6 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                     </div>
                 </div>
 
-                {/* Live Work + Rest Guided Timer */}
                 <div
                     style={{
                         backgroundColor: colors.elevated,
@@ -9979,8 +11589,8 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
                                         timerPhase === 'rest'
                                             ? '#0059FF'
                                             : isDark
-                                                ? colors.accent
-                                                : colors.text
+                                              ? colors.accent
+                                              : colors.text
                                 }}
                             >
                                 {timerPhase === 'rest'
@@ -10298,4 +11908,3 @@ export function PelvicRehabSection({ colors, isDark, appState, setAppState, show
         </section>
     );
 }
-
