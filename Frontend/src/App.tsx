@@ -1874,172 +1874,228 @@ export function computeDayNutritionTotals(state) {
     };
 }
 
-export function buildPelvicProtocol(highSideKey = 'right') {
-    const high = highSideKey === 'right' ? 'Right' : 'Left';
-    const low = highSideKey === 'right' ? 'Left' : 'Right';
+export function buildPelvicProtocol(affectedSideKey = 'right') {
+    const side = affectedSideKey === 'right' ? 'Right' : 'Left';
+    const opp = affectedSideKey === 'right' ? 'Left' : 'Right';
 
     return {
-        highSide: high,
-        lowSide: low,
-        totalMinutes: 18,
+        highSide: side,
+        lowSide: opp,
+        totalMinutes: 24,
         frequency: '5–6 days / week',
+        bestTime: '08:00 PM (Pre-Sleep) ya 06:30 AM (Post-Gym)',
         imbalanceMap: {
             tight: [
-                `${high} Quadratus Lumborum (QL / Side Waist) — pulls ${high} hip upward`,
-                `${high} Inner Thigh (Adductors) — pulls ${high} hip inward/up`,
-                `${low} Outer Hip (Piriformis / TFL) — pulls ${low} hip downward`
+                `${side} Quadratus Lumborum (QL / Side Waist) — ${side} hip ko upar (Lateral Pelvic Tilt) khinchta hai`,
+                `${side} Deep External Rotators (Piriformis) & TFL — ${side} thigh aur foot ko bahar (Duck Foot) ghumaate hain`,
+                `${side} Outer Calf & Ankle Stiffness — chalte aur L-lift karte waqt foot ko seedha rakhne se rokti hai`
             ],
             weak: [
-                `${high} Glute Medius (Outer Hip) — fails to stabilize level pelvis`,
-                `${low} QL & Obliques (Side Core) — fails to lift ${low} hip up`,
-                'Deep Core (Transverse Abdominis) — locks neutral pelvis alignment'
+                `${side} Glute Medius (Anterior Fibers) & Internal Rotators — pelvis level rakhne aur ${side} rotate karne mein weak`,
+                `${side} Inner Thigh (Adductors) & Medial Hamstring — thigh bone (femur) ko center 12 o'clock track par nahi rakhte`,
+                `${side} Foot Arch & Deep Core — standing, walking aur L-shape knee lift mein alignment lock karne ke liye`
             ]
         },
         habits: [
             {
                 id: 'hab-stand',
-                label: 'Stand with 50–50% equal weight on both feet (avoid leaning onto one hip)'
+                label: `Khade hote waqt dono pairo par 50–50% weight rakho aur ${side} foot ko 12 o'clock (seedha aage) set karo`
             },
             {
                 id: 'hab-sit',
-                label: 'Sit evenly on both sit-bones (no crossing legs, no wallet/phone in back pocket)'
+                label: `Baithte waqt dono sit-bones par equal baitho — ${side} leg ko ${opp} knee par cross karke mat baitho`
             },
             {
-                id: 'hab-bag',
-                label: 'Use a dual-strap backpack evenly on both shoulders instead of one-sided bags'
+                id: 'hab-walk',
+                label: `Chalte waqt dhyan do ki ${side} foot big toe (anguthe) se seedha push-off kare, bahar roll na ho`
             },
             {
                 id: 'hab-sleep',
-                label: 'Place a pillow between knees if side-sleeping to keep pelvis neutral overnight'
+                label: `Side-sleeping mein ghutno ke beech pillow rakho aur seedha sote waqt ${side} foot bilkul bahar mat girne do`
             }
         ],
         phases: [
             {
                 id: 'pelvic-p1',
-                title: 'Phase 1: Release & Stretch Tight Muscles',
-                durationMin: 6,
-                focus: 'Unilateral Mobility • Decompress High-Side Waist',
+                title: 'Phase 1: Release Tight Waist, Outer Hip & Ankle',
+                durationMin: 8,
+                focus: 'Pelvic Tilt Decompression + Duck-Foot Release',
                 exercises: [
                     {
                         id: 'pt-1',
-                        name: `${high} Standing QL Side Bend Stretch`,
+                        name: `${side} Standing QL Side Bend Stretch`,
                         standardName: 'Standing Quadratus Lumborum Stretch',
-                        sideTag: `${high} Side Only`,
-                        target: `${high} QL & Side Waist`,
+                        sideTag: `Pelvic Tilt • ${side} Waist`,
+                        target: `${side} QL & Side Waist`,
                         mode: 'hold',
-                        sets: 3,
+                        sets: 2,
                         workSec: 30,
                         restSec: 15,
-                        prescription: '3 sets × 30 sec hold',
+                        prescription: '2 sets × 30 sec hold',
                         tempo: 'Slow nasal breathing into side ribs',
-                        cue: `Stand tall, raise your ${high} arm overhead, and slowly lean your torso toward the ${low} side until you feel a clean stretch along your ${high} waist.`,
-                        mistake: 'Avoid twisting your chest forward or collapsing your shoulder—stay strictly sideways.'
+                        cue: `Dono feet 12 o'clock seedhe rakh kar khade hon. Apna ${side} haath sir ke upar uthayein aur torso ko dheere se ${opp} side lean karein jab tak ${side} kamar ke side mein clean stretch na aaye.`,
+                        feelRight: `${side} side waist aur lower ribs ke neeche gehra decompressing stretch feel hona chahiye.`,
+                        mistake: `Chest ko aage mat ghumaao aur hips ko jhatke se side mat feko — bilkul seedhe sideways lean karo.`
                     },
                     {
                         id: 'pt-2',
-                        name: `${high} Half-Kneeling Adductor Rock-Back`,
-                        standardName: 'Half-Kneeling Adductor Stretch',
-                        sideTag: `${high} Leg Only`,
-                        target: `${high} Inner Thigh (Adductors)`,
+                        name: `${side} Supine Figure-4 Deep Rotator Stretch`,
+                        standardName: 'Reclined Piriformis & External Rotator Stretch',
+                        sideTag: `Duck Foot • ${side} Hip`,
+                        target: `${side} Piriformis & Deep External Rotators`,
                         mode: 'hold',
                         sets: 3,
-                        workSec: 30,
+                        workSec: 35,
                         restSec: 15,
-                        prescription: '3 sets × 30 sec hold',
-                        tempo: 'Gentle rock back on exhale',
-                        cue: `Kneel on your ${low} knee and extend your ${high} leg straight out to the side with foot flat. Keep back flat and push hips gently backward.`,
-                        mistake: 'Do not round your lower back to force depth—stop as soon as the inner thigh feels a moderate stretch.'
+                        prescription: '3 sets × 35 sec hold',
+                        tempo: 'Slow 4s nasal exhale into deep glute',
+                        cue: `Peeth ke bal let kar dono ghutne bend karein. Apna ${side} ankle ${opp} thigh par rakhein aur ${opp} thigh ko dheere se chest ki taraf pull karein jab tak ${side} outer glute mein clean stretch na aaye.`,
+                        feelRight: `${side} hip ke bilkul peeche aur outer glute mein deep releasing stretch feel hoga.`,
+                        mistake: `Agar ${side} front hip crease (groin) mein chubhan/pinch aaye ya knee mein dard ho, toh kam pull karein aur tailbone floor par tika rakhein.`
                     },
                     {
                         id: 'pt-3',
-                        name: `${low} Supine Figure-4 Outer Hip Stretch`,
-                        standardName: 'Supine Piriformis / Reclined Pigeon Stretch',
-                        sideTag: `${low} Hip Only`,
-                        target: `${low} Outer Hip / Piriformis`,
+                        name: `${side} Half-Kneeling Hip Flexor & TFL Release`,
+                        standardName: 'Posterior-Tilt Hip Flexor Stretch',
+                        sideTag: `${side} Knee Down`,
+                        target: `${side} Front/Outer Hip Flexor & TFL`,
                         mode: 'hold',
-                        sets: 3,
+                        sets: 2,
                         workSec: 30,
                         restSec: 15,
-                        prescription: '3 sets × 30 sec hold',
-                        tempo: 'Relax tailbone into the floor',
-                        cue: `Lie on your back with knees bent. Cross your ${low} ankle over your ${high} knee, then pull your ${high} thigh toward your chest.`,
-                        mistake: 'Keep your tailbone and head resting on the mat—do not yank hard if you feel knee discomfort.'
+                        prescription: '2 sets × 30 sec hold',
+                        tempo: 'Glute squeeze + steady breathing',
+                        cue: `${side} ghutne par mat/pillow ke upar baithein aur ${opp} pair aage 90° rakhein. Peeche wala ${side} foot bilkul seedha peeche point kare. ${side} glute ko tight squeeze karke hips ko sirf 1–2 inch aage le jayein.`,
+                        feelRight: `${side} thigh ke upar aur front-outer hip mein clean vertical stretch feel hoga.`,
+                        mistake: `Lower back ko arch karke aage mat jhukein — pehle pelvis tuck (glute tight) karein.`
+                    },
+                    {
+                        id: 'pt-4',
+                        name: `${side} Knee-to-Wall Ankle Dorsiflexion`,
+                        standardName: 'Closed-Chain Ankle Mobility Drill',
+                        sideTag: `Duck Foot • ${side} Ankle`,
+                        target: `${side} Soleus, Lateral Calf & Ankle Track`,
+                        mode: 'reps',
+                        sets: 2,
+                        workSec: 40,
+                        restSec: 15,
+                        prescription: '2 sets × 12 slow reps (~40s)',
+                        tempo: '2s knee forward • 1s hold • 2s back',
+                        cue: `Deewar ke saamne khade hon, ${side} foot deewar se 3–4 inch door bilkul seedha (12 o'clock) rakhein. Heel zameen se uthaye bina ${side} ghutne ko seedha 2nd/3rd toe ke upar se deewar touch karne le jayein.`,
+                        feelRight: `${side} pindli ke neeche (Achilles/calf) mein smooth stretch feel hoga — yahi duck foot ki ankle stiffness kholta hai.`,
+                        mistake: `Heel mat uthne dein aur ghutne ko andar collapse mat hone dein.`
                     }
                 ]
             },
             {
                 id: 'pelvic-p2',
-                title: 'Phase 2: Strengthen & Level the Pelvis',
-                durationMin: 9,
-                focus: 'Activate Weak Glute Medius & Opposite Side Core',
+                title: 'Phase 2: Unlock Pain-Free Rotation & Neutral Pelvis',
+                durationMin: 6,
+                focus: 'Hip Internal Rotation + Pelvic Centering',
                 exercises: [
                     {
-                        id: 'pt-4',
-                        name: `${high}-Leg Standing Pelvic Drop & Hike`,
-                        standardName: 'Single-Leg Hip Hike (Step Drill)',
-                        sideTag: `Stand on ${high} Leg`,
-                        target: `${high} Glute Medius + ${low} QL`,
+                        id: 'pt-5',
+                        name: `${side} Supine Windshield Wipers (Gentle IR)`,
+                        standardName: 'Pain-Free Hip Internal Rotation Mobilization',
+                        sideTag: `Rotation Fix • ${side} IR`,
+                        target: `${side} Hip Joint Internal Rotation`,
                         mode: 'reps',
                         sets: 3,
                         workSec: 45,
-                        restSec: 45,
-                        prescription: '3 sets × 12 reps (~45s / set)',
-                        tempo: '2s lift • 2s pause at level • 2s lower',
-                        cue: `Stand with your ${high} foot on a 2–4 inch step/book and let your ${low} leg hang off the edge (hold a wall lightly). Keep both knees straight; drop the ${low} hip slightly, then squeeze your ${high} outer glute to hike the ${low} hip back to level.`,
-                        mistake: 'Do not bend the standing knee or lean your upper body sideways—all motion comes purely from the pelvis.'
-                    },
-                    {
-                        id: 'pt-5',
-                        name: `${high} Side-Lying Clamshells`,
-                        standardName: 'Side-Lying Clamshell (Glute Medius Isolation)',
-                        sideTag: `${high} Leg On Top`,
-                        target: `${high} Glute Medius`,
-                        mode: 'reps',
-                        sets: 3,
-                        workSec: 50,
-                        restSec: 40,
-                        prescription: '3 sets × 15 reps (~50s / set)',
-                        tempo: '1s open • 2s squeeze at top • 2s lower',
-                        cue: `Lie on your ${low} side with hips and knees bent ~45–90° and feet stacked together. Open your top (${high}) knee upward without letting your pelvis roll backward.`,
-                        mistake: 'Rolling your hips backward turns this into a hip-flexor move—keep your back near a wall to check form.'
+                        restSec: 20,
+                        prescription: '3 sets × 10 slow reps (~45s)',
+                        tempo: '3s slow drop inward • 1s pause • 2s return',
+                        cue: `Peeth ke bal let jayein, ghutne bend aur dono pair shoulder-width se thode wide rakhein. ${opp} leg ko stable rakh kar sirf ${side} ghutne ko dheere se andar floor ki taraf girayein — sirf utna jitna 100% pain-free ho.`,
+                        feelRight: `${side} outer hip/glute mein halka stretch aur smooth joint rotation feel hona chahiye — zero sharp pinch.`,
+                        mistake: `Kamar mat uthayein aur front hip mein jahan bhi pinch ya dard lage, usse 10% pehle ruk jayein — kabhi force mat karein.`
                     },
                     {
                         id: 'pt-6',
-                        name: `${low}-Side Modified Side Plank`,
-                        standardName: 'Short-Lever Side Plank (Hip Lift)',
-                        sideTag: `${low} Side Down`,
-                        target: `${low} QL & Lateral Obliques`,
+                        name: '90/90 Wall Hip Shift + Pillow Squeeze',
+                        standardName: 'Supine 90/90 Pelvic Neutral Reset (PRI Style)',
+                        sideTag: `Pelvis + ${side} Adductor`,
+                        target: `${side} Inner Thigh, Medial Hamstring & Neutral Pelvis`,
                         mode: 'hold',
                         sets: 3,
-                        workSec: 25,
-                        restSec: 40,
-                        prescription: '3 sets × 25–30 sec hold',
-                        tempo: 'Steady brace • breathe through ribs',
-                        cue: `Lie on your ${low} forearm with knees bent (or legs straight if strong). Drive your ${low} hip up toward the ceiling so your body forms a straight line from shoulder to knees.`,
-                        mistake: 'Do not let your bottom shoulder shrug into your ear or allow your hips to sag.'
+                        workSec: 35,
+                        restSec: 25,
+                        prescription: '3 sets × 35 sec (5 deep breaths)',
+                        tempo: 'Slow 5s exhale • steady pillow press',
+                        cue: `Peeth ke bal let kar dono pair deewar par 90° rakhein (hips 90°, knees 90°, feet seedhe parallel). Ghutno ke beech folded pillow/towel dabayein. Heels se deewar ko halka neeche pull karein taaki tailbone 1 inch uthe, phir ${side} hip ko halka neeche-peeche slide karke pillow squeeze hold karein.`,
+                        feelRight: `Dono inner thighs (khaaskar ${side} adductor), hamstrings aur deep abs mein strong centering feel hogi.`,
+                        mistake: `Lower back ko mat se bridge mat banao — sirf tailbone halka tuck karna hai aur neck relaxed rakhni hai.`
                     }
                 ]
             },
             {
                 id: 'pelvic-p3',
-                title: 'Phase 3: Neutral Pelvis Core Lock',
-                durationMin: 3,
-                focus: 'Anti-Rotation & Bilateral Symmetry Integration',
+                title: 'Phase 3: Level Pelvis & Retrain Straight-Foot Control',
+                durationMin: 10,
+                focus: 'Pelvic Leveling + Exact L-Shape Lift Retraining',
                 exercises: [
                     {
                         id: 'pt-7',
-                        name: 'Slow Controlled Dead Bug',
-                        standardName: 'Supine Dead Bug (Core Stabilization)',
-                        sideTag: 'Both Sides',
-                        target: 'Deep Core (TVA) & Neutral Pelvis',
+                        name: `${side}-Leg Standing Step Hip Hike`,
+                        standardName: 'Single-Leg Pelvic Drop & Hike',
+                        sideTag: `Pelvic Tilt • Stand on ${side}`,
+                        target: `${side} Glute Medius + ${opp} Side Core`,
+                        mode: 'reps',
+                        sets: 2,
+                        workSec: 45,
+                        restSec: 35,
+                        prescription: '2 sets × 12 slow reps (~45s)',
+                        tempo: '2s hike level • 2s hold • 2s lower',
+                        cue: `${side} foot (bilkul seedha 12 o'clock) ek 2–4 inch step/book par rakhein aur ${opp} leg edge ke bahar latka dein (wall ko halka pakad sakte hain). Dono ghutne seedhe rakh kar ${opp} hip halka neeche drop karein, phir ${side} outer glute squeeze karke ${opp} hip ko level tak upar hike karein.`,
+                        feelRight: `${side} outer hip (Glute Medius) mein sharp stabilizing burn feel hoga — yahi tilted pelvis ko seedha karta hai.`,
+                        mistake: `Standing ghutna bend mat karo, torso ko sideways mat jhukao, aur ${side} foot bahar mat ghumne do.`
+                    },
+                    {
+                        id: 'pt-8',
+                        name: `${side} Wall-Supported Neutral L-Shape March`,
+                        standardName: 'Controlled Hip Flexion with Neutral Tibia',
+                        sideTag: `Exact Fix • ${side} L-Lift`,
+                        target: `${side} Deep Hip Flexor + Neutral Rotation Control`,
                         mode: 'reps',
                         sets: 3,
-                        workSec: 50,
-                        restSec: 35,
-                        prescription: '3 sets × 10 reps / side (~50s / set)',
-                        tempo: '3s slow reach • exhale on extension',
-                        cue: 'Lie on your back, arms vertical, knees at 90°. Press your lower back flat into the floor, then slowly lower opposite arm and leg near the ground without arching your spine.',
-                        mistake: 'If your lower back lifts off the floor, reduce how far you extend your leg.'
+                        workSec: 45,
+                        restSec: 25,
+                        prescription: '3 sets × 10 strict reps (~45s)',
+                        tempo: '2s lift • 2s hold at 90° • 2s lower',
+                        cue: `Deewar ke side haath tika kar seedhe khade hon. Core tight karein aur ${side} ghutne ko dheere se 90° (L-shape) tak upar uthayein. Top par 2 second ruk kar neeche dekhein: aapka ${side} shin bilkul vertical aur foot strictly seedha (12 o'clock) hona chahiye — duck-foot bahar flare nahi hone dena hai.`,
+                        feelRight: `${side} front hip aur standing glute mein clean controlled stability feel hogi — yeh directly L-shape foot twist fix karta hai.`,
+                        mistake: `Knee uthate waqt ${side} foot ko bahar mat ghumne dein aur kamar ko peeche mat lean karein.`
+                    },
+                    {
+                        id: 'pt-9',
+                        name: 'Glute Bridge + Pillow Squeeze (Toes 12:00)',
+                        standardName: 'Neutral-Alignment Adductor Glute Bridge',
+                        sideTag: 'Both Legs • Parallel Feet',
+                        target: 'Glute Max + Adductor Co-Contraction',
+                        mode: 'reps',
+                        sets: 3,
+                        workSec: 45,
+                        restSec: 25,
+                        prescription: '3 sets × 12 reps (~45s)',
+                        tempo: '1s up • 2s glute + pillow squeeze • 2s down',
+                        cue: `Peeth ke bal let kar dono pair bilkul parallel (12 o'clock) rakhein aur ghutno ke beech pillow dabayein. Pillow ko lagatar press karte hue heels se hips upar uthayein aur top par 2 second glutes hard squeeze karein.`,
+                        feelRight: `Glutes aur inner thighs dono mein solid burn feel hoga — yeh ${side} leg ko hip extension mein bahar ghumne se rokta hai.`,
+                        mistake: `Top par lower back arch mat karein aur ${side} toes ko bahar mat sarakne dein.`
+                    },
+                    {
+                        id: 'pt-10',
+                        name: `${side} Single-Leg Tripod Balance (Neutral Foot)`,
+                        standardName: 'Short-Foot Tripod & Level Pelvis Hold',
+                        sideTag: `Stand on ${side} Leg`,
+                        target: `${side} Foot Arch, Glute Medius & Level Pelvis`,
+                        mode: 'hold',
+                        sets: 2,
+                        workSec: 30,
+                        restSec: 20,
+                        prescription: '2 sets × 30 sec hold',
+                        tempo: 'Level hips • 3-point foot grip',
+                        cue: `${side} foot ko zameen par bilkul seedha (12 o'clock) rakhein. Big toe mound, pinky toe aur heel — teeno points ko floor mein grip karein. ${opp} pair halka zameen se utha kar 30 second level hips ke saath balance hold karein.`,
+                        feelRight: `${side} foot arch aur ${side} outer glute mein steady stabilizing burn feel hoga.`,
+                        mistake: `${side} hip ko side mein bahar mat girne dein aur toes ko claws ki tarah mat sikodein.`
                     }
                 ]
             }
@@ -11889,6 +11945,7 @@ export function PelvicRehabSection({
     const [timerPhase, setTimerPhase] = useState('work');
     const [secLeft, setSecLeft] = useState(allExercises[0].workSec);
     const [timerRunning, setTimerRunning] = useState(false);
+    const [openTips, setOpenTips] = useState({});
 
     const [setChecks, setSetChecks] = useState(() => {
         const init = {};
@@ -11903,6 +11960,24 @@ export function PelvicRehabSection({
     const pelvicLogs = appState.pelvicLogs || [];
     const isLoggedToday = pelvicLogs.some((log) => log.date === todayStr);
     const dailyHabits = appState.pelvicHabits || {};
+
+    // Last 7 days consistency strip (directly from PostgreSQL `pelvicLogs`)
+    const last7DaysStrip = useMemo(() => {
+        const loggedDates = new Set(pelvicLogs.map((l) => l.date));
+        return Array.from({ length: 7 }, (_, i) => {
+            const dStr = addDaysToDateStr(todayStr, -(6 - i));
+            const dt = new Date(`${dStr}T00:00:00`);
+            const shortDay = dt.toLocaleDateString('en-US', { weekday: 'short' });
+            return {
+                date: dStr,
+                shortDay,
+                done: loggedDates.has(dStr),
+                isToday: dStr === todayStr
+            };
+        });
+    }, [pelvicLogs, todayStr]);
+
+    const doneLast7Count = last7DaysStrip.filter((d) => d.done).length;
 
     useEffect(() => {
         if (!timerRunning || secLeft <= 0) return;
@@ -11925,6 +12000,7 @@ export function PelvicRehabSection({
             if (activeSetNum < currentEx.sets) {
                 setTimerPhase('rest');
                 setSecLeft(currentEx.restSec);
+                navigator.vibrate?.([120]);
                 if (showToast) {
                     showToast(
                         `${currentEx.name} — Set ${activeSetNum}/${currentEx.sets} done! Rest ${currentEx.restSec}s.`
@@ -11935,14 +12011,18 @@ export function PelvicRehabSection({
                 setActiveExIdx(nextIdx);
                 setActiveSetNum(1);
                 setTimerPhase('rest');
-                setSecLeft(Math.min(30, currentEx.restSec));
+                setSecLeft(Math.min(25, currentEx.restSec));
+                navigator.vibrate?.([150, 80, 150]);
                 if (showToast) {
                     showToast(`Finished ${currentEx.name}! Up next: ${allExercises[nextIdx].name}`);
                 }
             } else {
                 setTimerRunning(false);
+                navigator.vibrate?.([200, 100, 200]);
                 if (showToast) {
-                    showToast('All 7 Pelvic Rehab exercises complete! Tap "Complete Rehab Session" to log.');
+                    showToast(
+                        `All ${allExercises.length} Alignment drills complete! Tap "Complete Rehab Session" to save.`
+                    );
                 }
             }
         } else {
@@ -11974,15 +12054,17 @@ export function PelvicRehabSection({
     };
 
     const handleSideSwitch = (newSide) => {
+        const nextProto = buildPelvicProtocol(newSide);
+        const nextFirst = nextProto.phases[0].exercises[0];
         setTimerRunning(false);
         setAppState((prev) => ({ ...prev, pelvicSide: newSide }));
         setActiveExIdx(0);
         setActiveSetNum(1);
         setTimerPhase('work');
-        setSecLeft(allExercises[0].workSec);
+        setSecLeft(nextFirst.workSec);
         if (showToast) {
             showToast(
-                `Switched protocol for ${newSide.toUpperCase()} High Pelvis (all cues auto-mirrored).`
+                `Switched Complete Pelvic + Duck-Foot protocol to ${newSide.toUpperCase()} side.`
             );
         }
     };
@@ -12004,6 +12086,10 @@ export function PelvicRehabSection({
             arr[setIdx] = !arr[setIdx];
             return { ...prev, [ex.id]: arr };
         });
+    };
+
+    const handleToggleTip = (exId) => {
+        setOpenTips((prev) => ({ ...prev, [exId]: !prev[exId] }));
     };
 
     const handleToggleHabit = (habitId) => {
@@ -12030,6 +12116,7 @@ export function PelvicRehabSection({
         [allExercises, setChecks]
     );
 
+    const completedHabitsCount = protocol.habits.filter((h) => Boolean(dailyHabits[h.id])).length;
     const progressPct = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
 
     const handleLogPelvicSession = async () => {
@@ -12057,18 +12144,19 @@ export function PelvicRehabSection({
 
         await runCloudMutation(
             () => vtaperApi.savePelvic(todayStr, payload),
-            'Pelvic rehab sync failed'
+            'Hip alignment sync failed'
         );
 
         if (showToast) {
             showToast(
-                `Logged Pelvic Alignment Session (${protocol.highSide} High) in PostgreSQL!`
+                `Saved ${protocol.highSide} Pelvic + Duck-Foot Alignment Session in PostgreSQL!`
             );
         }
     };
 
     return (
         <section className="vt-cardio-section vt-stack-4">
+            {/* 1. HERO COMMAND CARD + SCHEDULE + 7-DAY CONSISTENCY + GUIDED TIMER */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-card vt-cardio-hero"
@@ -12080,7 +12168,7 @@ export function PelvicRehabSection({
                                 style={{ backgroundColor: colors.accent, color: colors.accentText }}
                                 className="vt-badge-accent"
                             >
-                                Lateral Pelvic Tilt Rehab
+                                Pelvic Tilt + Duck Foot + Hip IR
                             </span>
                             <span
                                 style={{
@@ -12107,18 +12195,18 @@ export function PelvicRehabSection({
                         </div>
 
                         <h2 className="vt-hero-heading font-display">
-                            Pelvic Alignment & Posture Correction ({protocol.highSide} Hip High)
+                            Complete {protocol.highSide} Pelvis, Hip Rotation & Duck-Foot Fix
                         </h2>
                         <p className="vt-text-xs" style={{ color: colors.muted }}>
-                            Targeted 3-phase protocol: releases tight {protocol.highSide} waist/adductors & {protocol.lowSide} outer hip, then strengthens weak {protocol.highSide} Glute Medius & {protocol.lowSide} side core.
+                            All-in-one 10-drill protocol (zero clamshells): levels {protocol.highSide} tilted pelvis, releases tight external rotators & ankle, unlocks pain-free {protocol.highSide} rotation, and retrains straight 12-o'clock L-shape knee lift.
                         </p>
                     </div>
 
                     <div className="vt-stack-2 vt-shrink-0">
                         <div className="vt-flex vt-items-center vt-gap-1-5">
                             {[
-                                { id: 'right', label: 'Right Hip High' },
-                                { id: 'left', label: 'Left Hip High' }
+                                { id: 'right', label: 'Right Side Fix' },
+                                { id: 'left', label: 'Left Side Fix' }
                             ].map((opt) => {
                                 const active = pelvicSide === opt.id;
                                 return (
@@ -12155,6 +12243,58 @@ export function PelvicRehabSection({
                     </div>
                 </div>
 
+                {/* Daily Timing & Consistency Strip */}
+                <div className="vt-grid-sm-2 vt-gap-2-5">
+                    <div
+                        style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                        className="vt-p-3 vt-box-xl vt-stack-1"
+                    >
+                        <div className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: isDark ? colors.accent : colors.text }}>
+                            Daily Routine Timing (5 AM Gym Schedule)
+                        </div>
+                        <div className="vt-text-xs" style={{ color: colors.muted }}>
+                            <strong style={{ color: colors.text }}>1× / day ({protocol.totalMinutes} min) • 5–6 days/wk.</strong>{' '}
+                            Best time: <strong style={{ color: colors.text }}>{protocol.bestTime}</strong>. Heavy lifting se pehle poora 24 min mat karo (Leg day warm-up mein sirf Drill #4 & #5 karo).
+                        </div>
+                    </div>
+
+                    <div
+                        style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                        className="vt-p-3 vt-box-xl vt-stack-2"
+                    >
+                        <div className="vt-between-center vt-text-10 font-mono-num">
+                            <span className="vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                                Last 7 Days Consistency
+                            </span>
+                            <span style={{ color: isDark ? colors.accent : colors.text, fontWeight: 800 }}>
+                                {doneLast7Count} / 7 Days
+                            </span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 5 }}>
+                            {last7DaysStrip.map((d) => (
+                                <div
+                                    key={d.date}
+                                    style={{
+                                        backgroundColor: d.done ? colors.accent : colors.card,
+                                        color: d.done ? colors.accentText : colors.muted,
+                                        borderColor: d.isToday ? colors.accentBorder : colors.border,
+                                        borderWidth: 1,
+                                        borderStyle: 'solid',
+                                        borderRadius: 7,
+                                        padding: '5px 2px',
+                                        textAlign: 'center'
+                                    }}
+                                    className="font-mono-num vt-text-10 vt-font-extrabold"
+                                >
+                                    <div>{d.shortDay.slice(0, 2)}</div>
+                                    <div>{d.done ? '✓' : '·'}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Live Guided Work / Rest Timer */}
                 <div
                     style={{
                         backgroundColor: colors.elevated,
@@ -12184,13 +12324,13 @@ export function PelvicRehabSection({
                                         timerPhase === 'rest'
                                             ? '#0059FF'
                                             : isDark
-                                                ? colors.accent
-                                                : colors.text
+                                              ? colors.accent
+                                              : colors.text
                                 }}
                             >
                                 {timerPhase === 'rest'
-                                    ? `REST PERIOD (${currentEx.restSec}s) • NEXT SET READY`
-                                    : `EXERCISE ${activeExIdx + 1}/${allExercises.length} • SET ${activeSetNum}/${currentEx.sets} • ${currentEx.sideTag}`}
+                                    ? `REST (${currentEx.restSec}s) • NEXT SET READY`
+                                    : `DRILL ${activeExIdx + 1}/${allExercises.length} • SET ${activeSetNum}/${currentEx.sets} • ${currentEx.sideTag}`}
                             </div>
                             <div className="vt-cardio-active-name">{currentEx.name}</div>
                             <div className="vt-text-11" style={{ color: colors.muted }}>
@@ -12227,7 +12367,7 @@ export function PelvicRehabSection({
                             className="vt-cardio-ctrl-btn"
                         >
                             {timerRunning ? <Pause size={16} /> : <Play size={16} />}
-                            <span>{timerRunning ? 'Pause' : timerPhase === 'rest' ? 'Resume Rest' : 'Start Set'}</span>
+                            <span>{timerRunning ? 'Pause' : timerPhase === 'rest' ? 'Resume Rest' : 'Start Drill'}</span>
                         </button>
                         <button
                             type="button"
@@ -12236,7 +12376,7 @@ export function PelvicRehabSection({
                                 setTimerPhase('work');
                                 setSecLeft(currentEx.workSec);
                             }}
-                            aria-label="Reset current set timer"
+                            aria-label="Reset current drill timer"
                             style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
                             className="vt-icon-btn-44"
                         >
@@ -12245,7 +12385,7 @@ export function PelvicRehabSection({
                         <button
                             type="button"
                             onClick={() => handleSelectExercise((activeExIdx + 1) % allExercises.length)}
-                            aria-label="Next pelvic exercise"
+                            aria-label="Next alignment drill"
                             style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.text }}
                             className="vt-icon-btn-44"
                         >
@@ -12254,9 +12394,10 @@ export function PelvicRehabSection({
                     </div>
                 </div>
 
+                {/* Progress Bar */}
                 <div className="vt-stack-1">
                     <div className="vt-between-center vt-text-11 font-mono-num" style={{ color: colors.muted }}>
-                        <span>Session Progress: {completedSets} / {totalSets} total sets completed</span>
+                        <span>Session Progress: {completedSets} / {totalSets} sets done</span>
                         <span>{progressPct}%</span>
                     </div>
                     <div style={{ backgroundColor: colors.elevated }} className="vt-progress-track-sm">
@@ -12268,13 +12409,14 @@ export function PelvicRehabSection({
                 </div>
             </div>
 
+            {/* 2. ROOT CAUSE MAP */}
             <div className="vt-grid-sm-2 vt-gap-3">
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
                     className="vt-card vt-p-4 vt-stack-2"
                 >
                     <div className="vt-text-xs vt-font-extrabold vt-uppercase vt-tracking-wider" style={{ color: colors.warning }}>
-                        Tight / Shortened (Phase 1: Stretch)
+                        Tight / Pulling Hip Up & Foot Out (Phase 1: Release)
                     </div>
                     <div className="vt-stack-1-5 vt-text-xs" style={{ color: colors.muted }}>
                         {protocol.imbalanceMap.tight.map((line, i) => (
@@ -12289,9 +12431,9 @@ export function PelvicRehabSection({
                 >
                     <div
                         className="vt-text-xs vt-font-extrabold vt-uppercase vt-tracking-wider"
-                        style={{ color: isDark ? colors.accent : colors.accent }}
+                        style={{ color: isDark ? colors.accent : colors.success }}
                     >
-                        Weak / Lengthened (Phase 2–3: Strengthen)
+                        Weak / Needs Alignment Control (Phase 2–3: Retrain)
                     </div>
                     <div className="vt-stack-1-5 vt-text-xs" style={{ color: colors.muted }}>
                         {protocol.imbalanceMap.weak.map((line, i) => (
@@ -12301,6 +12443,7 @@ export function PelvicRehabSection({
                 </div>
             </div>
 
+            {/* 3. 3-PHASE TARGETED PROTOCOL CARDS (10 DRILLS) */}
             <div className="vt-stack-4">
                 {protocol.phases.map((phase) => (
                     <div
@@ -12338,6 +12481,7 @@ export function PelvicRehabSection({
                                 const isCurrent = globalIdx === activeExIdx;
                                 const checks = setChecks[ex.id] || Array(ex.sets).fill(false);
                                 const allDone = checks.every(Boolean);
+                                const tipOpen = Boolean(openTips[ex.id]);
 
                                 return (
                                     <div
@@ -12360,9 +12504,17 @@ export function PelvicRehabSection({
                                                     >
                                                         {ex.sideTag}
                                                     </span>
+                                                    {allDone && (
+                                                        <span
+                                                            style={{ backgroundColor: colors.card, borderColor: colors.accentBorder }}
+                                                            className="vt-badge-xs vt-border vt-text-10 vt-font-extrabold vt-uppercase"
+                                                        >
+                                                            Done ✓
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="vt-text-11" style={{ color: colors.muted }}>
-                                                    Standard Name: <strong style={{ color: colors.text }}>{ex.standardName}</strong> • Target: {ex.target}
+                                                    <strong style={{ color: colors.text }}>{ex.standardName}</strong> • Target: {ex.target}
                                                 </div>
                                             </div>
 
@@ -12377,7 +12529,7 @@ export function PelvicRehabSection({
                                                 className="vt-btn vt-h-34 vt-px-3 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase vt-gap-1"
                                             >
                                                 <Play size={12} />
-                                                <span>{isCurrent ? 'Loaded in Timer' : 'Load Timer'}</span>
+                                                <span>{isCurrent ? 'In Timer' : 'Load Timer'}</span>
                                             </button>
                                         </div>
 
@@ -12398,19 +12550,65 @@ export function PelvicRehabSection({
                                                 style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.muted }}
                                                 className="vt-badge vt-border"
                                             >
-                                                Tempo: {ex.tempo}
+                                                {ex.tempo}
                                             </span>
                                         </div>
 
-                                        <div className="vt-stack-1 vt-text-xs" style={{ color: colors.muted }}>
-                                            <p>
-                                                <strong style={{ color: colors.text }}>How to do it:</strong> {ex.cue}
-                                            </p>
-                                            <p>
-                                                <strong style={{ color: colors.warning }}>Avoid:</strong> {ex.mistake}
-                                            </p>
+                                        <p className="vt-text-xs" style={{ color: colors.muted }}>
+                                            <strong style={{ color: colors.text }}>Kaise Karein:</strong> {ex.cue}
+                                        </p>
+
+                                        {/* Collapsible Feel Right vs Pinch Warning Guide */}
+                                        <div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleToggleTip(ex.id)}
+                                                style={{
+                                                    backgroundColor: colors.card,
+                                                    borderColor: tipOpen ? colors.accentBorder : colors.border,
+                                                    color: colors.text
+                                                }}
+                                                className="vt-guide-toggle-btn"
+                                            >
+                                                <span className="vt-flex vt-items-center vt-gap-1-5">
+                                                    <Info size={14} style={{ color: isDark ? colors.accent : colors.text }} />
+                                                    <span>{tipOpen ? 'Hide Feel & Pinch Check' : 'Sahi Feel vs Pinch Warning'}</span>
+                                                </span>
+                                                <ChevronRight size={15} className={tipOpen ? 'vt-chevron-open' : 'vt-chevron'} />
+                                            </button>
+
+                                            {tipOpen && (
+                                                <div className="vt-grid-sm-2 vt-gap-2 vt-mt-2">
+                                                    <div
+                                                        style={{ backgroundColor: colors.card, borderColor: colors.success }}
+                                                        className="vt-p-3 vt-box-xl vt-stack-1"
+                                                    >
+                                                        <div className="vt-text-10 vt-font-extrabold vt-uppercase vt-flex vt-items-center vt-gap-1" style={{ color: colors.success }}>
+                                                            <CheckCircle2 size={13} />
+                                                            <span>Sahi Feel</span>
+                                                        </div>
+                                                        <p className="vt-text-xs" style={{ color: colors.text }}>
+                                                            {ex.feelRight}
+                                                        </p>
+                                                    </div>
+
+                                                    <div
+                                                        style={{ backgroundColor: colors.card, borderColor: colors.warning }}
+                                                        className="vt-p-3 vt-box-xl vt-stack-1"
+                                                    >
+                                                        <div className="vt-text-10 vt-font-extrabold vt-uppercase vt-flex vt-items-center vt-gap-1" style={{ color: colors.warning }}>
+                                                            <AlertTriangle size={13} />
+                                                            <span>Avoid / Stop If Pinch</span>
+                                                        </div>
+                                                        <p className="vt-text-xs" style={{ color: colors.muted }}>
+                                                            {ex.mistake}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
+                                        {/* Set Checkboxes */}
                                         <div
                                             className="vt-row-wrap vt-gap-2 vt-pt-2 vt-border-t"
                                             style={{ borderColor: colors.border }}
@@ -12443,17 +12641,21 @@ export function PelvicRehabSection({
                 ))}
             </div>
 
+            {/* 4. DAILY FOOT & PELVIS ALIGNMENT HABITS */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-card vt-stack-3"
             >
-                <div>
-                    <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-                        Daily Posture Habits (Keeps Your Progress Locked In)
-                    </h3>
-                    <p className="vt-text-xs" style={{ color: colors.muted }}>
-                        18 minutes of exercise cannot beat 12 hours of asymmetrical standing or sitting. Check these off daily:
-                    </p>
+                <div className="vt-between-center vt-flex-wrap vt-gap-2">
+                    <div>
+                        <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                            Daily Alignment Habits ({completedHabitsCount}/{protocol.habits.length})
+                        </h3>
+                        <p className="vt-text-xs" style={{ color: colors.muted }}>
+                            24 min drills tabhi permanent result dengi jab baaki din bhar {protocol.highSide} foot aur hips ko neutral rakhoge:
+                        </p>
+                    </div>
+                    <Footprints size={18} style={{ color: isDark ? colors.accent : colors.text }} />
                 </div>
 
                 <div className="vt-grid-sm-2 vt-gap-2-5">
@@ -12489,15 +12691,47 @@ export function PelvicRehabSection({
                 </div>
             </div>
 
+            {/* 5. BOTTOM COMPLETE & SAVE BAR */}
+            <div
+                style={{ backgroundColor: colors.card, borderColor: colors.accentBorder }}
+                className="vt-card-b2 vt-p-4 vt-resp-row-md vt-tabular"
+            >
+                <div className="vt-stack-0-5">
+                    <div className="vt-text-xs vt-font-extrabold vt-uppercase">
+                        {completedSets} / {totalSets} Sets Done • ~{protocol.totalMinutes} Min Protocol
+                    </div>
+                    <div className="vt-text-xs" style={{ color: colors.muted }}>
+                        Session complete hone par tap karke PostgreSQL mein aaj ka alignment log save kar do.
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    onClick={handleLogPelvicSession}
+                    style={{
+                        backgroundColor: isLoggedToday ? colors.accentSurface : colors.accent,
+                        color: isLoggedToday ? colors.text : colors.accentText,
+                        borderColor: colors.accentBorder
+                    }}
+                    className="vt-finish-btn vt-shrink-0"
+                >
+                    <Check size={16} strokeWidth={2.5} />
+                    <span>{isLoggedToday ? 'Logged Today ✓' : 'Complete & Save Session'}</span>
+                </button>
+            </div>
+
+            {/* 6. GYM + PAIN-FREE SAFETY RULE */}
             <div
                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 className="vt-card vt-p-4 vt-flex vt-items-start vt-gap-3"
             >
-                <AlertTriangle size={20} className="vt-shrink-0 vt-mt-0-5" style={{ color: colors.warning }} />
-                <div className="vt-text-xs" style={{ color: colors.muted }}>
-                    <strong style={{ color: colors.text }}>Safety & Rehab Rule:</strong> Stop immediately if any drill causes sharp lower-back pain, hip pinching, or leg tingling/numbness. Muscular lateral pelvic tilt typically improves within{' '}
-                    <strong style={{ color: colors.text }}>4–6 weeks</strong> of consistent practice. If asymmetry persists or you notice a rib hump on forward bending, get evaluated by a licensed{' '}
-                    <strong style={{ color: colors.text }}>Physiotherapist or Orthopedic Doctor</strong> to rule out structural scoliosis or leg-length discrepancy.
+                <ShieldCheck size={20} className="vt-shrink-0 vt-mt-0-5" style={{ color: colors.warning }} />
+                <div className="vt-text-xs vt-stack-1" style={{ color: colors.muted }}>
+                    <div>
+                        <strong style={{ color: colors.text }}>Gym Leg Day Rule:</strong> Leg Press, Hack Squat ya Bulgarian Split Squat mein {protocol.highSide} foot ko zabardasti 0° mat ghumaao — jo angle 100% pain-free ho wahi rakho, aur 4–8 weeks mein jab hip mobility khule tab dheere-dheere straight lao.
+                    </div>
+                    <div>
+                        <strong style={{ color: colors.text }}>Pain-Free Stop Rule:</strong> Agar kisi bhi drill (khaaskar Windshield Wipers ya Figure-4) mein front hip crease mein sharp chubhan/pinch ya lower back dard aaye, toh range kam karo ya stop kar do. 4–6 weeks regular karne ke baad bhi right rotation dard ya duck foot same rahe, toh Physiotherapist ya Orthopedic Doctor se hip structure check karwana zaroori hai.
+                    </div>
                 </div>
             </div>
         </section>
