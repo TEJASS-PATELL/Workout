@@ -4043,9 +4043,9 @@ export default function App() {
                       accentText: '#0A0A0B',
                       accentSurface: '#1A2205',
                       accentBorder: '#CCFF00',
-                      danger: '#EF4444',
-                      warning: '#FBBF24',
-                      success: '#22C55E'
+                      danger: '#fd0000',
+                      warning: '#ff5500',
+                      success: '#11ff00'
                   }
                 : {
                       bg: '#F4F4F2',
@@ -4058,9 +4058,9 @@ export default function App() {
                       accentText: '#FFFFFF',
                       accentSurface: '#DBEAFE',
                       accentBorder: '#0059FF',
-                      danger: '#DC2626',
-                      warning: '#D97706',
-                      success: '#16A34A'
+                      danger: '#fd0000',
+                      warning: '#ff5500',
+                      success: '#11ff00'
                   },
         [isDark]
     );
@@ -4725,7 +4725,7 @@ export default function App() {
                                 {item.id === 'today' && workoutRunning && (
                                     <span
                                         style={{
-                                            backgroundColor: isActive ? '#0A0A0B' : colors.accent,
+                                            backgroundColor: isActive ? '#000000' : colors.accent,
                                             color: isActive ? colors.accent : colors.accentText
                                         }}
                                         className="vt-nav-timer-badge font-mono-num"
@@ -6402,13 +6402,13 @@ function WeightEasyGraph({
                             {(viewMode === 'morning' || viewMode === 'both') && (
                                 <span className="vt-flex vt-items-center vt-gap-1-5">
                                     <span className="vt-legend-dot" style={{ backgroundColor: morningStroke }} />
-                                    Subah (Fasted AM)
+                                    Morning (AM)
                                 </span>
                             )}
                             {(viewMode === 'night' || viewMode === 'both') && (
                                 <span className="vt-flex vt-items-center vt-gap-1-5">
                                     <span className="vt-legend-dot" style={{ backgroundColor: nightStroke }} />
-                                    Raat (Bedtime PM)
+                                    Night (PM)
                                 </span>
                             )}
                         </div>
@@ -9660,9 +9660,9 @@ function ProgressView({
             ? Number((Number(nightInput) - Number(morningInput)).toFixed(2))
             : null;
 
-    const morningStroke = isDark ? colors.accent : '#16A34A';
-    const nightStroke = isDark ? '#38BDF8' : '#2563EB';
-    const trendStroke = '#FF7A1A';
+    const morningStroke = isDark ? colors.accent : '#ff00a2';
+    const nightStroke = isDark ? '#00b3ff' : '#2563EB';
+    const trendStroke = '#ff6a00';
 
     return (
         <div className="vt-stack-5">
