@@ -4600,26 +4600,12 @@ export default function App() {
                     <div className="vt-brand-group">
                         <BrandLogo size={42} isDark={isDark} colors={colors} />
                         <div>
-                            <h1 className="vt-brand-title font-display">VTAPER</h1>
+                            <h1 className="vt-brand-title font-display">V-TAPER</h1>
                             <p style={{ color: colors.muted }} className="vt-brand-sub">
                                 Goal Band • {appState.profile.goalWeightMinKg}–{appState.profile.goalWeightMaxKg} kg
                             </p>
                         </div>
                     </div>
-
-                    <button
-                        onClick={() =>
-                            setAppState((prev) => ({
-                                ...prev,
-                                theme: prev.theme === 'dark' ? 'light' : 'dark'
-                            }))
-                        }
-                        aria-label="Toggle color theme"
-                        style={{ backgroundColor: 'none', borderColor: 'none', color: colors.text }}
-                        className="vt-icon-btn-44"
-                    >
-                        {isDark ? <Sun size={20} /> : <Moon size={20} />}
-                    </button>
                 </div>
 
                 {/* Live PostgreSQL Sync Status Strip */}
@@ -4793,7 +4779,7 @@ export default function App() {
                     <div className="vt-mobile-brand">
                         <BrandLogo size={36} isDark={isDark} colors={colors} />
                         <div style={{ minWidth: 0 }}>
-                            <div className="vt-mobile-title font-display">VTAPER</div>
+                            <div className="vt-mobile-title font-display">V-TAPER</div>
                             <div style={{ color: colors.muted }} className="vt-mobile-sub">
                                 Clean: {disciplineStats.currentStreak}d •{' '}
                                 <span style={{ color: syncPillColor, fontWeight: 700 }}>{syncPillLabel}</span>
@@ -5780,7 +5766,7 @@ function DisciplineView({
 
     const primaryStroke = isDark ? colors.accent : '#0059FF';
     const momentumStroke = colors.success;
-    const consistencyStroke = '#FF7A1A';
+    const consistencyStroke = '#ff6a00';
 
     const isSelectedClean = existingForSelected?.status === 'clean';
     const isSelectedRelapse = existingForSelected?.status === 'relapse';
@@ -6217,6 +6203,412 @@ function DisciplineView({
                     })}
                 </div>
             </div>
+        </div>
+    );
+}
+
+function WeightEasyGraph({
+    chartData,
+    kpiSummary,
+    appState,
+    formatWeight,
+    colors,
+    isDark,
+    morningStroke,
+    nightStroke
+}) {
+    const [viewMode, setViewMode] = useState('both'); // 'morning' | 'night' | 'both'
+    const [rangeDays, setRangeDays] = useState(7); // 7 | 14 | 30
+    const [selectedDate, setSelectedDate] = useState(null);
+
+    const visibleData = useMemo(() => {
+        const sliced = rangeDays >= 30 ? chartData : chartData.slice(-rangeDays);
+        return sliced.map((item, idx) => {
+            const prev = idx > 0 ? sliced[idx - 1] : null;
+            const currPrimary = item.morning ?? item.night ?? null;
+            const prevPrimary = prev ? prev.morning ?? prev.night ?? null : null;
+            const dayDelta =
+                currPrimary !== null && prevPrimary !== null
+                    ? Number((currPrimary - prevPrimary).toFixed(2))
+                    : null;
+            return { ...item, dayDelta };
+        });
+    }, [chartData, rangeDays]);
+
+    const activeEntry = useMemo(() => {
+        if (!visibleData.length) return null;
+        return (
+            visibleData.find((d) => d.fullDate === selectedDate) ||
+            visibleData[visibleData.length - 1]
+        );
+    }, [visibleData, selectedDate]);
+
+    const scale = useMemo(() => {
+        const vals = [];
+        visibleData.forEach((d) => {
+            if ((viewMode === 'morning' || viewMode === 'both') && typeof d.morning === 'number') {
+                vals.push(d.morning);
+            }
+            if ((viewMode === 'night' || viewMode === 'both') && typeof d.night === 'number') {
+                vals.push(d.night);
+            }
+        });
+
+        if (!vals.length) {
+            return { min: 0, max: 100, avg: null };
+        }
+
+        const rawMin = Math.min(...vals);
+        const rawMax = Math.max(...vals);
+        const span = rawMax - rawMin;
+        const pad = Math.max(0.6, span * 0.35);
+        const avg = Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2));
+
+        return {
+            min: Math.max(0, Number((rawMin - pad).toFixed(2))),
+            max: Number((rawMax + pad * 0.85).toFixed(2)),
+            avg
+        };
+    }, [visibleData, viewMode]);
+
+    const getBarHeightPct = (val) => {
+        if (typeof val !== 'number' || scale.max <= scale.min) return 0;
+        const ratio = (val - scale.min) / (scale.max - scale.min);
+        return Math.max(18, Math.min(94, Math.round(ratio * 100)));
+    };
+
+    const avgLinePct =
+        scale.avg !== null && scale.max > scale.min
+            ? Math.max(10, Math.min(90, Math.round(((scale.avg - scale.min) / (scale.max - scale.min)) * 100)))
+            : null;
+
+    // Goal journey bar (Start -> Current -> Goal Min 65kg)
+    const startW = formatWeight(kpiSummary.startKg || 0);
+    const currentW = formatWeight(kpiSummary.currentKg || 0);
+    const goalMinW = formatWeight(appState.profile.goalWeightMinKg || 65);
+    const goalMaxW = formatWeight(appState.profile.goalWeightMaxKg || 68);
+    const goalPct =
+        currentW > 0 && startW > 0 && goalMinW > startW
+            ? Math.max(0, Math.min(100, Math.round(((currentW - startW) / (goalMinW - startW)) * 100)))
+            : currentW >= goalMinW && currentW > 0
+              ? 100
+              : 0;
+
+    return (
+        <div
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+            className="vt-col-span-lg-2 vt-card vt-p-card vt-col-between vt-stack-3-5 vt-tabular"
+        >
+            {/* Header + Easy Mode & Range Toggles */}
+            <div className="vt-between-center vt-flex-wrap vt-gap-2">
+                <div>
+                    <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                        Daily Weight Bars ({appState.unit})
+                    </h3>
+                    <p className="vt-text-xs" style={{ color: colors.muted }}>
+                        Kisi bhi din ke bar par tap karo — exact Subah, Raat aur change turant dikhega.
+                    </p>
+                </div>
+
+                <div className="vt-flex vt-items-center vt-gap-1-5 vt-flex-wrap">
+                    {[
+                        { id: 'both', label: 'Dono' },
+                        { id: 'morning', label: 'Subah' },
+                        { id: 'night', label: 'Raat' }
+                    ].map((m) => (
+                        <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => setViewMode(m.id)}
+                            style={{
+                                backgroundColor: viewMode === m.id ? colors.accent : colors.elevated,
+                                color: viewMode === m.id ? colors.accentText : colors.text,
+                                borderColor: viewMode === m.id ? colors.accentBorder : colors.border
+                            }}
+                            className="vt-btn vt-h-32 vt-px-2-5 vt-rounded-lg vt-border vt-text-10 vt-font-extrabold vt-uppercase"
+                        >
+                            {m.label}
+                        </button>
+                    ))}
+
+                    <span style={{ width: 1, height: 18, backgroundColor: colors.border }} />
+
+                    {[
+                        { id: 7, label: '7D' },
+                        { id: 14, label: '14D' },
+                        { id: 30, label: 'All' }
+                    ].map((r) => (
+                        <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => setRangeDays(r.id)}
+                            style={{
+                                backgroundColor: rangeDays === r.id ? colors.accentSurface : colors.elevated,
+                                color: colors.text,
+                                borderColor: rangeDays === r.id ? colors.accentBorder : colors.border
+                            }}
+                            className="vt-btn vt-h-32 vt-px-2 vt-rounded-lg vt-border vt-text-10 vt-font-extrabold font-mono-num"
+                        >
+                            {r.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Bulk Journey Progress Strip (Start -> Current -> 65-68 kg) */}
+            <div
+                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                className="vt-p-3 vt-box-xl vt-stack-1-5"
+            >
+                <div className="vt-between-center vt-text-11 font-mono-num">
+                    <span style={{ color: colors.muted }}>
+                        Start: <strong style={{ color: colors.text }}>{startW} {appState.unit}</strong>
+                    </span>
+                    <span style={{ color: isDark ? colors.accent : colors.text, fontWeight: 800 }}>
+                        {currentW > 0 ? `${currentW} ${appState.unit} (${goalPct}% to goal)` : 'Log 1st weight'}
+                    </span>
+                    <span style={{ color: colors.muted }}>
+                        Goal: <strong style={{ color: colors.text }}>{goalMinW}–{goalMaxW} {appState.unit}</strong>
+                    </span>
+                </div>
+                <div style={{ backgroundColor: colors.card }} className="vt-progress-track-sm">
+                    <div
+                        style={{ width: `${goalPct}%`, backgroundColor: colors.accent }}
+                        className="vt-progress-fill"
+                    />
+                </div>
+            </div>
+
+
+            {/* Main Easy-to-Read Interactive Vertical Bars */}
+            {visibleData.length > 0 ? (
+                <div className="vt-stack-2">
+                    <div
+                        style={{
+                            position: 'relative',
+                            backgroundColor: colors.elevated,
+                            borderColor: colors.border,
+                            borderWidth: 1,
+                            borderStyle: 'solid',
+                            borderRadius: 12,
+                            padding: '16px 10px 10px',
+                            overflowX: 'auto'
+                        }}
+                    >
+                        {/* Dashed Average Reference Line */}
+                        {avgLinePct !== null && (
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    left: 10,
+                                    right: 10,
+                                    bottom: `${Math.round(34 + avgLinePct * 1.65)}px`,
+                                    borderTop: `1px dashed ${colors.muted}`,
+                                    opacity: 0.45,
+                                    pointerEvents: 'none',
+                                    zIndex: 1
+                                }}
+                            >
+                                <span
+                                    className="font-mono-num"
+                                    style={{
+                                        position: 'absolute',
+                                        right: 0,
+                                        top: -16,
+                                        fontSize: 10,
+                                        fontWeight: 800,
+                                        color: colors.muted,
+                                        backgroundColor: colors.elevated,
+                                        padding: '0 4px'
+                                    }}
+                                >
+                                    Avg {scale.avg} {appState.unit}
+                                </span>
+                            </div>
+                        )}
+
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'flex-end',
+                                justifyContent: visibleData.length <= 7 ? 'space-around' : 'flex-start',
+                                gap: 8,
+                                minWidth: visibleData.length > 7 ? visibleData.length * 64 : '100%',
+                                height: 210,
+                                position: 'relative',
+                                zIndex: 2
+                            }}
+                        >
+                            {visibleData.map((d) => {
+                                const isSelected = activeEntry?.fullDate === d.fullDate;
+                                const showAM =
+                                    (viewMode === 'morning' || viewMode === 'both') &&
+                                    typeof d.morning === 'number';
+                                const showPM =
+                                    (viewMode === 'night' || viewMode === 'both') &&
+                                    typeof d.night === 'number';
+
+                                return (
+                                    <button
+                                        key={d.fullDate}
+                                        type="button"
+                                        onClick={() => setSelectedDate(d.fullDate)}
+                                        style={{
+                                            flex: visibleData.length <= 7 ? '1 1 0' : '0 0 56px',
+                                            maxWidth: 76,
+                                            height: '100%',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'flex-end',
+                                            gap: 6,
+                                            padding: '6px 4px',
+                                            borderRadius: 10,
+                                            border: isSelected
+                                                ? `1px solid ${colors.accentBorder}`
+                                                : '1px solid transparent',
+                                            backgroundColor: isSelected ? colors.card : 'transparent',
+                                            transition: 'background-color 140ms ease, border-color 140ms ease'
+                                        }}
+                                    >
+                                        {/* Bars Track */}
+                                        <div
+                                            style={{
+                                                width: '100%',
+                                                height: 162,
+                                                display: 'flex',
+                                                alignItems: 'flex-end',
+                                                justifyContent: 'center',
+                                                gap: 4
+                                            }}
+                                        >
+                                            {showAM && (
+                                                <div
+                                                    style={{
+                                                        flex: 1,
+                                                        maxWidth: viewMode === 'both' ? 22 : 34,
+                                                        height: '100%',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'flex-end',
+                                                        gap: 3
+                                                    }}
+                                                >
+                                                    <span
+                                                        className="font-mono-num"
+                                                        style={{
+                                                            fontSize: 9.5,
+                                                            fontWeight: 800,
+                                                            color: isSelected ? morningStroke : colors.muted,
+                                                            lineHeight: 1
+                                                        }}
+                                                    >
+                                                        {d.morning}
+                                                    </span>
+                                                    <div
+                                                        style={{
+                                                            width: '100%',
+                                                            height: `${getBarHeightPct(d.morning)}%`,
+                                                            backgroundColor: morningStroke,
+                                                            opacity: isSelected ? 1 : 0.78,
+                                                            borderRadius: '6px 6px 2px 2px',
+                                                            transition: 'height 320ms cubic-bezier(.16, 1, .3, 1)'
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {showPM && (
+                                                <div
+                                                    style={{
+                                                        flex: 1,
+                                                        maxWidth: viewMode === 'both' ? 22 : 34,
+                                                        height: '100%',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'flex-end',
+                                                        gap: 3
+                                                    }}
+                                                >
+                                                    <span
+                                                        className="font-mono-num"
+                                                        style={{
+                                                            fontSize: 9.5,
+                                                            fontWeight: 800,
+                                                            color: isSelected ? nightStroke : colors.muted,
+                                                            lineHeight: 1
+                                                        }}
+                                                    >
+                                                        {d.night}
+                                                    </span>
+                                                    <div
+                                                        style={{
+                                                            width: '100%',
+                                                            height: `${getBarHeightPct(d.night)}%`,
+                                                            backgroundColor: nightStroke,
+                                                            opacity: isSelected ? 1 : 0.78,
+                                                            borderRadius: '6px 6px 2px 2px',
+                                                            transition: 'height 320ms cubic-bezier(.16, 1, .3, 1)'
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Date Label */}
+                                        <span
+                                            className="font-mono-num"
+                                            style={{
+                                                fontSize: 10,
+                                                fontWeight: isSelected ? 800 : 600,
+                                                color: isSelected ? colors.text : colors.muted,
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            {d.date}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Simple 2-Dot Legend */}
+                    <div className="vt-between-center vt-flex-wrap vt-gap-2 vt-text-11 vt-font-bold">
+                        <div className="vt-row-wrap vt-gap-3">
+                            {(viewMode === 'morning' || viewMode === 'both') && (
+                                <span className="vt-flex vt-items-center vt-gap-1-5">
+                                    <span className="vt-legend-dot" style={{ backgroundColor: morningStroke }} />
+                                    Subah (Fasted AM)
+                                </span>
+                            )}
+                            {(viewMode === 'night' || viewMode === 'both') && (
+                                <span className="vt-flex vt-items-center vt-gap-1-5">
+                                    <span className="vt-legend-dot" style={{ backgroundColor: nightStroke }} />
+                                    Raat (Bedtime PM)
+                                </span>
+                            )}
+                        </div>
+                        <span className="font-mono-num" style={{ color: colors.muted }}>
+                            Showing {visibleData.length} of {chartData.length} logs
+                        </span>
+                    </div>
+                </div>
+            ) : (
+                <div
+                    style={{
+                        backgroundColor: colors.elevated,
+                        borderColor: colors.border,
+                        color: colors.muted,
+                        minHeight: 210
+                    }}
+                    className="vt-box-xl vt-flex vt-items-center vt-justify-center vt-text-xs vt-font-semibold vt-p-4 vt-text-center"
+                >
+                    0 weight entries yet — left form mein apna Subah & Raat ka weight log karo, yahan clean interactive bars turant ban jayenge.
+                </div>
+            )}
         </div>
     );
 }
@@ -9313,8 +9705,6 @@ function ProgressView({
                         </div>
                     </div>
 
-
-
                     {liveFormSwing !== null && (
                         <div
                             style={{
@@ -9341,188 +9731,16 @@ function ProgressView({
                 </form>
 
                 {/* Modern Multi-Series Gradient Trajectory & Swing Chart */}
-                <div
-                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                    className="vt-col-span-lg-2 vt-card vt-p-card vt-col-between vt-stack-3"
-                >
-                    <div className="vt-between-center vt-flex-wrap vt-gap-2">
-                        <div>
-                            <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-                                {chartMode === 'trajectory'
-                                    ? `Morning vs Night + 7-Day True Trend (${appState.unit})`
-                                    : `Daily Night − Morning Swing (${appState.unit})`}
-                            </h3>
-                            <p className="vt-text-xs" style={{ color: colors.muted }}>
-                                {chartMode === 'trajectory'
-                                    ? 'Shaded Goal Band = 65–68 kg • Smooth Area = Fasted Morning • Orange = 7-Day Moving Avg'
-                                    : 'Tracks daily food, water & glycogen weight carried by bedtime'}
-                            </p>
-                        </div>
-
-                        <div className="vt-flex vt-items-center vt-gap-1-5">
-                            <button
-                                type="button"
-                                onClick={() => setChartMode('trajectory')}
-                                style={{
-                                    backgroundColor: chartMode === 'trajectory' ? colors.accent : colors.elevated,
-                                    color: chartMode === 'trajectory' ? colors.accentText : colors.text,
-                                    borderColor: chartMode === 'trajectory' ? colors.accentBorder : colors.border
-                                }}
-                                className="vt-btn vt-h-34 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase"
-                            >
-                                AM/PM Trend
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setChartMode('fluctuation')}
-                                style={{
-                                    backgroundColor: chartMode === 'fluctuation' ? colors.accent : colors.elevated,
-                                    color: chartMode === 'fluctuation' ? colors.accentText : colors.text,
-                                    borderColor: chartMode === 'fluctuation' ? colors.accentBorder : colors.border
-                                }}
-                                className="vt-btn vt-h-34 vt-px-2-5 vt-rounded-lg vt-border vt-text-11 vt-font-extrabold vt-uppercase"
-                            >
-                                Daily Swing
-                            </button>
-                        </div>
-                    </div>
-
-                    {chartMode === 'trajectory' && (
-                        <div className="vt-row-wrap vt-gap-3 vt-text-11 vt-font-bold">
-                            <span className="vt-flex vt-items-center vt-gap-1-5">
-                                <span className="vt-legend-dot" style={{ backgroundColor: morningStroke }} />
-                                Morning (AM)
-                            </span>
-                            <span className="vt-flex vt-items-center vt-gap-1-5">
-                                <span className="vt-legend-dot" style={{ backgroundColor: trendStroke }} />
-                                7-Day True Trend
-                            </span>
-                            <span className="vt-flex vt-items-center vt-gap-1-5">
-                                <span className="vt-legend-dot" style={{ backgroundColor: nightStroke }} />
-                                Night (PM)
-                            </span>
-                        </div>
-                    )}
-
-                    <div className="vt-chart-h-60" style={{ width: '100%', height: 265 }}>
-                        {chartData.length > 0 ? (
-                            chartMode === 'trajectory' ? (
-                                (() => {
-                                    const allVals = chartData
-                                        .flatMap((d) => [d.morning, d.night, d.trend])
-                                        .filter((v) => typeof v === 'number' && !Number.isNaN(v));
-                                    const yMin = allVals.length
-                                        ? Math.floor((Math.min(...allVals) - 0.8) * 10) / 10
-                                        : 'auto';
-                                    const yMax = allVals.length
-                                        ? Math.ceil((Math.max(...allVals) + 0.8) * 10) / 10
-                                        : 'auto';
-
-                                    return (
-                                        <ResponsiveContainer width="100%" height={265}>
-                                            <ComposedChart data={chartData} margin={{ top: 12, right: 16, left: -10, bottom: 0 }}>
-                                                <defs>
-                                                    <linearGradient id="vtMorningAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="0%" stopColor={morningStroke} stopOpacity={0.34} />
-                                                        <stop offset="100%" stopColor={morningStroke} stopOpacity={0.02} />
-                                                    </linearGradient>
-                                                </defs>
-                                                <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
-                                                <XAxis dataKey="date" stroke={colors.muted} fontSize={11} tickLine={false} axisLine={false} />
-                                                <YAxis stroke={colors.muted} fontSize={11} tickLine={false} axisLine={false} domain={[yMin, yMax]} />
-                                                <Tooltip
-                                                    content={
-                                                        <ModernChartTooltip
-                                                            colors={colors}
-                                                            suffixMap={{
-                                                                morning: appState.unit,
-                                                                trend: appState.unit,
-                                                                night: appState.unit
-                                                            }}
-                                                        />
-                                                    }
-                                                />
-                                                <ReferenceArea
-                                                    y1={formatWeight(appState.profile.goalWeightMinKg)}
-                                                    y2={formatWeight(appState.profile.goalWeightMaxKg)}
-                                                    fill={colors.accent}
-                                                    fillOpacity={0.12}
-                                                />
-                                                <ReferenceLine
-                                                    y={formatWeight(appState.profile.goalWeightMinKg)}
-                                                    stroke={colors.accentBorder}
-                                                    strokeDasharray="4 4"
-                                                />
-                                                <Area
-                                                    type="monotone"
-                                                    dataKey="morning"
-                                                    name="Morning (AM)"
-                                                    stroke={morningStroke}
-                                                    strokeWidth={2.8}
-                                                    fill="url(#vtMorningAreaGrad)"
-                                                    connectNulls
-                                                    dot={{ r: 4.5, fill: morningStroke, stroke: colors.card, strokeWidth: 1.5 }}
-                                                    activeDot={{ r: 7 }}
-                                                />
-                                                <Line
-                                                    type="monotone"
-                                                    dataKey="trend"
-                                                    name="7-Day Avg Trend"
-                                                    stroke={trendStroke}
-                                                    strokeWidth={2.5}
-                                                    strokeDasharray="5 4"
-                                                    dot={false}
-                                                />
-                                                <Line
-                                                    type="monotone"
-                                                    dataKey="night"
-                                                    name="Night (PM)"
-                                                    stroke={nightStroke}
-                                                    strokeWidth={2.5}
-                                                    connectNulls
-                                                    dot={{ r: 4.5, fill: nightStroke, stroke: colors.card, strokeWidth: 1.5 }}
-                                                    activeDot={{ r: 6.5 }}
-                                                />
-                                            </ComposedChart>
-                                        </ResponsiveContainer>
-                                    );
-                                })()
-                            ) : (
-                                <ResponsiveContainer width="100%" height={265}>
-                                    <BarChart data={chartData} margin={{ top: 12, right: 16, left: -10, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="vtSwingBarGrad" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor={nightStroke} stopOpacity={0.95} />
-                                                <stop offset="100%" stopColor={nightStroke} stopOpacity={0.25} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="date" stroke={colors.muted} fontSize={11} tickLine={false} axisLine={false} />
-                                        <YAxis stroke={colors.muted} fontSize={11} tickLine={false} axisLine={false} />
-                                        <Tooltip
-                                            content={<ModernChartTooltip colors={colors} suffixMap={{ swing: appState.unit }} />}
-                                        />
-                                        <ReferenceLine y={0} stroke={colors.border} />
-                                        <Bar
-                                            dataKey="swing"
-                                            name="PM − AM Delta"
-                                            fill="url(#vtSwingBarGrad)"
-                                            radius={[8, 8, 2, 2]}
-                                            maxBarSize={36}
-                                        />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            )
-                        ) : (
-                            <div
-                                style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.muted }}
-                                className="vt-h-full vt-box-xl vt-flex vt-items-center vt-justify-center vt-text-xs vt-font-semibold vt-p-4 vt-text-center"
-                            >
-                                0 weight entries yet — left form mein apna Morning & Bedtime weight log karein aur 65–68 kg goal trajectory dekhein.
-                            </div>
-                        )}
-                    </div>
-                </div>
+                <WeightEasyGraph
+                    chartData={chartData}
+                    kpiSummary={kpiSummary}
+                    appState={appState}
+                    formatWeight={formatWeight}
+                    colors={colors}
+                    isDark={isDark}
+                    morningStroke={morningStroke}
+                    nightStroke={nightStroke}
+                />
             </div>
 
             {/* 4. WEEKLY & MONTHLY WEIGHT PROGRESS REPORTS */}
