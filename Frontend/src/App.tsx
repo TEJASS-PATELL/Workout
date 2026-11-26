@@ -5960,190 +5960,11 @@ function DisciplineView({
 
             {/* 3. MODERN DAILY GROWTH GRAPH + 90-DAY RADIAL REBOOT GAUGE */}
             <div className="vt-grid-lg-3 vt-gap-4">
-                <div
-                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                    className="vt-col-span-lg-2 vt-card vt-p-card vt-stack-3 vt-col-between"
-                >
-                    <div className="vt-between-center vt-flex-wrap vt-gap-2">
-                        <div>
-                            <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-                                {growthChartMode === 'growth'
-                                    ? 'Daily Growth Curve (Momentum • Streak • 7-Day Consistency)'
-                                    : 'Daily Urge Intensity & Victories Control Chart'}
-                            </h3>
-                            <p className="vt-text-xs" style={{ color: colors.muted }}>
-                                {growthChartMode === 'growth'
-                                    ? 'Rozana clean check-in ke saath aapka Discipline Momentum Score aur Active Streak live grow hota hai.'
-                                    : 'Green bars = Clean din par urge control • Red bars = Relapse din par urge spike.'}
-                            </p>
-                        </div>
-
-                        <div className="vt-flex vt-items-center vt-gap-1-5">
-                            <button
-                                type="button"
-                                onClick={() => setGrowthChartMode('growth')}
-                                style={{
-                                    backgroundColor: growthChartMode === 'growth' ? colors.accent : colors.elevated,
-                                    color: growthChartMode === 'growth' ? colors.accentText : colors.text,
-                                    borderColor: growthChartMode === 'growth' ? colors.accentBorder : colors.border
-                                }}
-                                className="vt-btn vt-h-34 vt-px-2-5 vt-rounded-lg vt-border vt-text-10 vt-font-extrabold vt-uppercase"
-                            >
-                                Growth Curve
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setGrowthChartMode('urges')}
-                                style={{
-                                    backgroundColor: growthChartMode === 'urges' ? colors.accent : colors.elevated,
-                                    color: growthChartMode === 'urges' ? colors.accentText : colors.text,
-                                    borderColor: growthChartMode === 'urges' ? colors.accentBorder : colors.border
-                                }}
-                                className="vt-btn vt-h-34 vt-px-2-5 vt-rounded-lg vt-border vt-text-10 vt-font-extrabold vt-uppercase"
-                            >
-                                Urge Control
-                            </button>
-                        </div>
-                    </div>
-
-                    {growthChartMode === 'growth' && (
-                        <div className="vt-row-wrap vt-gap-3 vt-text-11 vt-font-bold">
-                            <span className="vt-flex vt-items-center vt-gap-1-5">
-                                <span className="vt-legend-dot" style={{ backgroundColor: momentumStroke }} />
-                                Growth Momentum Score
-                            </span>
-                            <span className="vt-flex vt-items-center vt-gap-1-5">
-                                <span className="vt-legend-dot" style={{ backgroundColor: primaryStroke }} />
-                                Active Clean Streak (Days)
-                            </span>
-                            <span className="vt-flex vt-items-center vt-gap-1-5">
-                                <span className="vt-legend-dot" style={{ backgroundColor: consistencyStroke }} />
-                                7-Day Consistency (%)
-                            </span>
-                        </div>
-                    )}
-
-                    <div style={{ width: '100%', height: 270 }}>
-                        {disciplineStats.dailyGrowthSeries.length > 0 ? (
-                            growthChartMode === 'growth' ? (
-                                <ResponsiveContainer width="100%" height={270}>
-                                    <ComposedChart
-                                        data={disciplineStats.dailyGrowthSeries}
-                                        margin={{ top: 12, right: 12, left: -12, bottom: 0 }}
-                                    >
-                                        <defs>
-                                            <linearGradient id="vtCleanMomentumGrad" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor={momentumStroke} stopOpacity={0.38} />
-                                                <stop offset="100%" stopColor={momentumStroke} stopOpacity={0.02} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="date" stroke={colors.muted} fontSize={10} tickLine={false} axisLine={false} />
-                                        <YAxis yAxisId="left" stroke={colors.muted} fontSize={10} tickLine={false} axisLine={false} />
-                                        <YAxis
-                                            yAxisId="right"
-                                            orientation="right"
-                                            domain={[0, 100]}
-                                            stroke={colors.muted}
-                                            fontSize={10}
-                                            tickLine={false}
-                                            axisLine={false}
-                                        />
-                                        <Tooltip
-                                            content={
-                                                <ModernChartTooltip
-                                                    colors={colors}
-                                                    suffixMap={{
-                                                        momentum: 'pts',
-                                                        streak: 'days',
-                                                        consistency7d: '%'
-                                                    }}
-                                                />
-                                            }
-                                        />
-                                        <Area
-                                            yAxisId="left"
-                                            type="monotone"
-                                            dataKey="momentum"
-                                            name="Growth Score"
-                                            stroke={momentumStroke}
-                                            strokeWidth={2.8}
-                                            fill="url(#vtCleanMomentumGrad)"
-                                            dot={{ r: 4, fill: momentumStroke, stroke: colors.card, strokeWidth: 1.5 }}
-                                            activeDot={{ r: 6.5 }}
-                                        />
-                                        <Line
-                                            yAxisId="left"
-                                            type="monotone"
-                                            dataKey="streak"
-                                            name="Clean Streak"
-                                            stroke={primaryStroke}
-                                            strokeWidth={2.5}
-                                            dot={{ r: 4, fill: primaryStroke, stroke: colors.card, strokeWidth: 1.5 }}
-                                        />
-                                        <Line
-                                            yAxisId="right"
-                                            type="monotone"
-                                            dataKey="consistency7d"
-                                            name="7-Day Consistency"
-                                            stroke={consistencyStroke}
-                                            strokeWidth={2}
-                                            strokeDasharray="4 4"
-                                            dot={false}
-                                        />
-                                    </ComposedChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <ResponsiveContainer width="100%" height={270}>
-                                    <ComposedChart
-                                        data={disciplineStats.dailyGrowthSeries}
-                                        margin={{ top: 12, right: 12, left: -12, bottom: 0 }}
-                                    >
-                                        <CartesianGrid stroke={colors.border} strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="date" stroke={colors.muted} fontSize={10} tickLine={false} axisLine={false} />
-                                        <YAxis domain={[0, 10]} stroke={colors.muted} fontSize={10} tickLine={false} axisLine={false} />
-                                        <Tooltip
-                                            content={
-                                                <ModernChartTooltip
-                                                    colors={colors}
-                                                    suffixMap={{ urgeLevel: '/ 10', urgesDefeated: 'wins' }}
-                                                />
-                                            }
-                                        />
-                                        <Bar
-                                            dataKey="urgeLevel"
-                                            name="Urge Level"
-                                            radius={[8, 8, 2, 2]}
-                                            maxBarSize={34}
-                                        >
-                                            {disciplineStats.dailyGrowthSeries.map((entry, idx) => (
-                                                <Cell
-                                                    key={`cell-${idx}`}
-                                                    fill={entry.status === 'clean' ? colors.success : colors.danger}
-                                                />
-                                            ))}
-                                        </Bar>
-                                        <Line
-                                            type="monotone"
-                                            dataKey="urgesDefeated"
-                                            name="Urges Defeated"
-                                            stroke={primaryStroke}
-                                            strokeWidth={2.5}
-                                            dot={{ r: 4, fill: primaryStroke, stroke: colors.card, strokeWidth: 1.5 }}
-                                        />
-                                    </ComposedChart>
-                                </ResponsiveContainer>
-                            )
-                        ) : (
-                            <div
-                                style={{ backgroundColor: colors.elevated, borderColor: colors.border, color: colors.muted }}
-                                className="vt-h-full vt-box-xl vt-flex vt-items-center vt-justify-center vt-text-xs vt-font-semibold vt-p-4 vt-text-center"
-                            >
-                                Day 0 se start — upar "MARK TODAY 100% CLEAN" button dabayein aur apna daily growth curve plot hote dekhein.
-                            </div>
-                        )}
-                    </div>
-                </div>
+                <DisciplineEasyGraph
+                    disciplineStats={disciplineStats}
+                    colors={colors}
+                    isDark={isDark}
+                />
 
                 <RebootRadialGauge
                     pct={disciplineStats.rebootPct}
@@ -8130,6 +7951,391 @@ function PlanView({ colors, isDark, onSelectWorkoutDay }) {
                     );
                 })}
             </div>
+        </div>
+    );
+}
+
+function DisciplineEasyGraph({ disciplineStats, colors, isDark }) {
+    const [mode, setMode] = useState('streak'); // 'streak' | 'momentum' | 'urges'
+    const [rangeDays, setRangeDays] = useState(7); // 7 | 14 | 30
+    const [selectedDate, setSelectedDate] = useState(null);
+
+    const series = disciplineStats?.dailyGrowthSeries || [];
+
+    const visibleData = useMemo(() => {
+        if (!series.length) return [];
+        return rangeDays >= 30 ? series : series.slice(-rangeDays);
+    }, [series, rangeDays]);
+
+    const activeEntry = useMemo(() => {
+        if (!visibleData.length) return null;
+        return (
+            visibleData.find((d) => d.fullDate === selectedDate) ||
+            visibleData[visibleData.length - 1]
+        );
+    }, [visibleData, selectedDate]);
+
+    const maxScale = useMemo(() => {
+        if (!visibleData.length) return 1;
+        if (mode === 'urges') return 10;
+        const vals = visibleData.map((d) => (mode === 'streak' ? d.streak : d.momentum));
+        return Math.max(mode === 'streak' ? 3 : 20, ...vals);
+    }, [visibleData, mode]);
+
+    const getBarMetrics = (d) => {
+        const isClean = d.status === 'clean';
+
+        if (mode === 'streak') {
+            if (!isClean) {
+                return {
+                    heightPct: 16,
+                    topLabel: 'SLIP',
+                    barColor: colors.danger,
+                    labelColor: colors.danger
+                };
+            }
+            const pct = Math.max(20, Math.min(96, Math.round((d.streak / maxScale) * 100)));
+            return {
+                heightPct: pct,
+                topLabel: `${d.streak}d`,
+                barColor: colors.accent,
+                labelColor: isDark ? colors.accent : colors.text
+            };
+        }
+
+        if (mode === 'momentum') {
+            const pct = Math.max(16, Math.min(96, Math.round((d.momentum / maxScale) * 100)));
+            return {
+                heightPct: pct,
+                topLabel: `${d.momentum}`,
+                barColor: isClean ? colors.success : colors.danger,
+                labelColor: isClean ? colors.success : colors.danger
+            };
+        }
+
+        // 'urges' mode (0 - 10 scale)
+        const urgeVal = Number(d.urgeLevel || 0);
+        const pct = urgeVal === 0 ? 14 : Math.max(20, Math.min(96, Math.round((urgeVal / 10) * 100)));
+        return {
+            heightPct: pct,
+            topLabel: `${urgeVal}/10`,
+            barColor: !isClean ? colors.danger : urgeVal >= 6 ? colors.warning : colors.success,
+            labelColor: !isClean ? colors.danger : urgeVal >= 6 ? colors.warning : colors.success
+        };
+    };
+
+    // Next Milestone Progress Strip
+    const nextMs = disciplineStats?.nextMilestone || { days: 7, title: '1 Week Warrior' };
+    const currStreak = disciplineStats?.currentStreak || 0;
+    const msPct = Math.min(100, Math.round((currStreak / Math.max(1, nextMs.days)) * 100));
+    const daysToNext = Math.max(0, nextMs.days - currStreak);
+
+    return (
+        <div
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+            className="vt-col-span-lg-2 vt-card vt-p-card vt-col-between vt-stack-3-5 vt-tabular"
+        >
+            {/* Header + Easy Mode & Range Toggles */}
+            <div className="vt-between-center vt-flex-wrap vt-gap-2">
+                <div>
+                    <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
+                        {mode === 'streak'
+                            ? 'Daily Clean Streak Bars'
+                            : mode === 'momentum'
+                              ? 'Daily Growth Momentum Score'
+                              : 'Daily Urge Control (0–10)'}
+                    </h3>
+                    <p className="vt-text-xs" style={{ color: colors.muted }}>
+                        {mode === 'streak'
+                            ? 'Har clean din bar upar badhega — kisi bhi din par tap karke detail dekho.'
+                            : mode === 'momentum'
+                              ? 'Clean streak + defeated urges se aapka Discipline Score roz grow hota hai.'
+                              : 'Lower urge ya high urge par bhi clean rehna = real brain rewiring.'}
+                    </p>
+                </div>
+
+                <div className="vt-flex vt-items-center vt-gap-1-5 vt-flex-wrap">
+                    {[
+                        { id: 'streak', label: 'Streak' },
+                        { id: 'momentum', label: 'Growth' },
+                        { id: 'urges', label: 'Urges' }
+                    ].map((m) => (
+                        <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => setMode(m.id)}
+                            style={{
+                                backgroundColor: mode === m.id ? colors.accent : colors.elevated,
+                                color: mode === m.id ? colors.accentText : colors.text,
+                                borderColor: mode === m.id ? colors.accentBorder : colors.border
+                            }}
+                            className="vt-btn vt-h-32 vt-px-2-5 vt-rounded-lg vt-border vt-text-10 vt-font-extrabold vt-uppercase"
+                        >
+                            {m.label}
+                        </button>
+                    ))}
+
+                    <span style={{ width: 1, height: 18, backgroundColor: colors.border }} />
+
+                    {[
+                        { id: 7, label: '7D' },
+                        { id: 14, label: '14D' },
+                        { id: 30, label: 'All' }
+                    ].map((r) => (
+                        <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => setRangeDays(r.id)}
+                            style={{
+                                backgroundColor: rangeDays === r.id ? colors.accentSurface : colors.elevated,
+                                color: colors.text,
+                                borderColor: rangeDays === r.id ? colors.accentBorder : colors.border
+                            }}
+                            className="vt-btn vt-h-32 vt-px-2 vt-rounded-lg vt-border vt-text-10 vt-font-extrabold font-mono-num"
+                        >
+                            {r.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Next Rank Progress Strip */}
+            <div
+                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                className="vt-p-3 vt-box-xl vt-stack-1-5"
+            >
+                <div className="vt-between-center vt-text-11 font-mono-num vt-flex-wrap vt-gap-1">
+                    <span style={{ color: colors.muted }}>
+                        Streak: <strong style={{ color: colors.text }}>{currStreak} Days</strong>
+                    </span>
+                    <span style={{ color: isDark ? colors.accent : colors.text, fontWeight: 800 }}>
+                        {daysToNext === 0
+                            ? `${nextMs.title} Unlocked ✓`
+                            : `${daysToNext}d left → ${nextMs.title} (${nextMs.days}d)`}
+                    </span>
+                </div>
+                <div style={{ backgroundColor: colors.card }} className="vt-progress-track-sm">
+                    <div
+                        style={{ width: `${msPct}%`, backgroundColor: colors.accent }}
+                        className="vt-progress-fill"
+                    />
+                </div>
+            </div>
+
+            {/* Selected Day Live Readout Strip */}
+            {activeEntry && (
+                <div
+                    style={{
+                        backgroundColor: colors.elevated,
+                        borderColor:
+                            activeEntry.status === 'clean' ? colors.accentBorder : colors.danger
+                    }}
+                    className="vt-p-2-5 vt-box-xl vt-between-center vt-flex-wrap vt-gap-2 vt-text-xs font-mono-num"
+                >
+                    <div className="vt-flex vt-items-center vt-gap-1-5">
+                        <span
+                            style={{
+                                backgroundColor:
+                                    activeEntry.status === 'clean' ? colors.accent : colors.danger,
+                                color:
+                                    activeEntry.status === 'clean' ? colors.accentText : '#FFFFFF'
+                            }}
+                            className="vt-badge-xs vt-font-extrabold vt-uppercase"
+                        >
+                            {activeEntry.fullDate} • {activeEntry.status === 'clean' ? 'CLEAN ✓' : 'SLIP'}
+                        </span>
+                    </div>
+
+                    <div className="vt-row-wrap vt-gap-3">
+                        
+                        <span>
+                            Score: <strong style={{ color: colors.success }}>{activeEntry.momentum} pts</strong>
+                        </span>
+                 
+                     
+                        {activeEntry.urgesDefeated > 0 && (
+                            <span style={{ color: isDark ? colors.accent : colors.text, fontWeight: 800 }}>
+                                +{activeEntry.urgesDefeated} beat
+                            </span>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Main Easy-to-Read Vertical Bars */}
+            {visibleData.length > 0 ? (
+                <div className="vt-stack-2">
+                    <div
+                        style={{
+                            backgroundColor: colors.elevated,
+                            borderColor: colors.border,
+                            borderWidth: 1,
+                            borderStyle: 'solid',
+                            borderRadius: 12,
+                            padding: '16px 10px 10px',
+                            overflowX: 'auto'
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'flex-end',
+                                justifyContent: visibleData.length <= 7 ? 'space-around' : 'flex-start',
+                                gap: 8,
+                                minWidth: visibleData.length > 7 ? visibleData.length * 60 : '100%',
+                                height: 210
+                            }}
+                        >
+                            {visibleData.map((d) => {
+                                const isSelected = activeEntry?.fullDate === d.fullDate;
+                                const bar = getBarMetrics(d);
+
+                                return (
+                                    <button
+                                        key={d.fullDate}
+                                        type="button"
+                                        onClick={() => setSelectedDate(d.fullDate)}
+                                        style={{
+                                            flex: visibleData.length <= 7 ? '1 1 0' : '0 0 54px',
+                                            maxWidth: 74,
+                                            height: '100%',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'flex-end',
+                                            gap: 6,
+                                            padding: '6px 4px',
+                                            borderRadius: 10,
+                                            border: isSelected
+                                                ? `1px solid ${
+                                                      d.status === 'clean'
+                                                          ? colors.accentBorder
+                                                          : colors.danger
+                                                  }`
+                                                : '1px solid transparent',
+                                            backgroundColor: isSelected ? colors.card : 'transparent',
+                                            transition: 'background-color 140ms ease, border-color 140ms ease'
+                                        }}
+                                    >
+                                        {/* Bar Track */}
+                                        <div
+                                            style={{
+                                                width: '100%',
+                                                height: 162,
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'flex-end',
+                                                gap: 4
+                                            }}
+                                        >
+                                            <span
+                                                className="font-mono-num"
+                                                style={{
+                                                    fontSize: 10,
+                                                    fontWeight: 800,
+                                                    color: isSelected ? bar.labelColor : colors.muted,
+                                                    lineHeight: 1
+                                                }}
+                                            >
+                                                {bar.topLabel}
+                                            </span>
+
+                                            <div
+                                                style={{
+                                                    width: '72%',
+                                                    maxWidth: 34,
+                                                    height: `${bar.heightPct}%`,
+                                                    backgroundColor: bar.barColor,
+                                                    opacity: isSelected ? 1 : 0.8,
+                                                    borderRadius: '7px 7px 2px 2px',
+                                                    display: 'flex',
+                                                    alignItems: 'flex-end',
+                                                    justifyContent: 'center',
+                                                    paddingBottom: 4,
+                                                    transition: 'height 320ms cubic-bezier(.16, 1, .3, 1)'
+                                                }}
+                                            >
+                                                {d.urgesDefeated > 0 && (
+                                                    <span
+                                                        className="font-mono-num"
+                                                        title={`${d.urgesDefeated} urges defeated`}
+                                                        style={{
+                                                            fontSize: 9,
+                                                            fontWeight: 900,
+                                                            color:
+                                                                bar.barColor === colors.accent
+                                                                    ? colors.accentText
+                                                                    : '#FFFFFF',
+                                                            lineHeight: 1
+                                                        }}
+                                                    >
+                                                        +{d.urgesDefeated}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Date Label */}
+                                        <span
+                                            className="font-mono-num"
+                                            style={{
+                                                fontSize: 10,
+                                                fontWeight: isSelected ? 800 : 600,
+                                                color: isSelected ? colors.text : colors.muted,
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            {d.date}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Clean Legend Footer */}
+                    <div className="vt-between-center vt-flex-wrap vt-gap-2 vt-text-11 vt-font-bold">
+                        <div className="vt-row-wrap vt-gap-3">
+                            <span className="vt-flex vt-items-center vt-gap-1-5">
+                                <span
+                                    className="vt-legend-dot"
+                                    style={{
+                                        backgroundColor:
+                                            mode === 'streak' ? colors.accent : colors.success
+                                    }}
+                                />
+                                Clean Day
+                            </span>
+                            <span className="vt-flex vt-items-center vt-gap-1-5">
+                                <span
+                                    className="vt-legend-dot"
+                                    style={{ backgroundColor: colors.danger }}
+                                />
+                                Slip Day
+                            </span>
+                            <span style={{ color: colors.muted }}>
+                                (+N inside bar = urges defeated)
+                            </span>
+                        </div>
+                        <span className="font-mono-num" style={{ color: colors.muted }}>
+                            Showing {visibleData.length} of {series.length} days
+                        </span>
+                    </div>
+                </div>
+            ) : (
+                <div
+                    style={{
+                        backgroundColor: colors.elevated,
+                        borderColor: colors.border,
+                        color: colors.muted,
+                        minHeight: 210
+                    }}
+                    className="vt-box-xl vt-flex vt-items-center vt-justify-center vt-text-xs vt-font-semibold vt-p-4 vt-text-center"
+                >
+                    Day 0 se start — upar "MARK TODAY 100% CLEAN" button dabayein aur apna daily streak bar grow hote dekhein.
+                </div>
+            )}
         </div>
     );
 }
