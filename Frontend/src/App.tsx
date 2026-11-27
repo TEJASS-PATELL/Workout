@@ -4101,7 +4101,7 @@ export default function App() {
                       accentBorder: '#CCFF00',
                       danger: '#fd0000',
                       warning: '#ff5500',
-                      success: '#11ff00'
+                      success: '#9d00ff'
                   }
                 : {
                       bg: '#F4F4F2',
@@ -4116,7 +4116,7 @@ export default function App() {
                       accentBorder: '#0059FF',
                       danger: '#fd0000',
                       warning: '#ff5500',
-                      success: '#11ff00'
+                      success: '#9d00ff'
                   },
         [isDark]
     );
@@ -8154,69 +8154,6 @@ function DisciplineEasyGraph({ disciplineStats, colors, isDark }) {
                     ))}
                 </div>
             </div>
-
-            {/* Next Rank Progress Strip */}
-            <div
-                style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                className="vt-p-3 vt-box-xl vt-stack-1-5"
-            >
-                <div className="vt-between-center vt-text-11 font-mono-num vt-flex-wrap vt-gap-1">
-                    <span style={{ color: colors.muted }}>
-                        Streak: <strong style={{ color: colors.text }}>{currStreak} Days</strong>
-                    </span>
-                    <span style={{ color: isDark ? colors.accent : colors.text, fontWeight: 800 }}>
-                        {daysToNext === 0
-                            ? `${nextMs.title} Unlocked ✓`
-                            : `${daysToNext}d left → ${nextMs.title} (${nextMs.days}d)`}
-                    </span>
-                </div>
-                <div style={{ backgroundColor: colors.card }} className="vt-progress-track-sm">
-                    <div
-                        style={{ width: `${msPct}%`, backgroundColor: colors.accent }}
-                        className="vt-progress-fill"
-                    />
-                </div>
-            </div>
-
-            {/* Selected Day Live Readout Strip */}
-            {activeEntry && (
-                <div
-                    style={{
-                        backgroundColor: colors.elevated,
-                        borderColor:
-                            activeEntry.status === 'clean' ? colors.accentBorder : colors.danger
-                    }}
-                    className="vt-p-2-5 vt-box-xl vt-between-center vt-flex-wrap vt-gap-2 vt-text-xs font-mono-num"
-                >
-                    <div className="vt-flex vt-items-center vt-gap-1-5">
-                        <span
-                            style={{
-                                backgroundColor:
-                                    activeEntry.status === 'clean' ? colors.accent : colors.danger,
-                                color:
-                                    activeEntry.status === 'clean' ? colors.accentText : '#FFFFFF'
-                            }}
-                            className="vt-badge-xs vt-font-extrabold vt-uppercase"
-                        >
-                            {activeEntry.fullDate} • {activeEntry.status === 'clean' ? 'CLEAN ✓' : 'SLIP'}
-                        </span>
-                    </div>
-
-                    <div className="vt-row-wrap vt-gap-3">
-                        
-                        <span>
-                            Score: <strong style={{ color: colors.success }}>{activeEntry.momentum} pts</strong>
-                        </span>
-                 
-                     
-                        {activeEntry.urgesDefeated > 0 && (
-                            <span style={{ color: isDark ? colors.accent : colors.text, fontWeight: 800 }}>
-                                +{activeEntry.urgesDefeated} beat
-                            </span>
-                        )}
-                    </div>
-                </div>
-            )}
 
             {/* Main Easy-to-Read Vertical Bars */}
             {visibleData.length > 0 ? (
