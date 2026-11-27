@@ -3185,42 +3185,539 @@ function RebootRadialGauge({ pct, currentStreak, colors, isDark }) {
     );
 }
 
-function MuscleRadar({ colors, isDark }) {
-    const { primary } = useMemo(() => computeWeeklyMuscleVolumes(), []);
-    const data = Object.entries(primary).map(([g, v]) => ({ g, v, t: 12 }));
+export function computeLoggedWeeklyMuscleVolumes(
+    exerciseHistory = {},
+    referenceDateStr = getLocalDateStr()
+) {
+    const [y, m, d] = String(referenceDateStr).split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    const day = dt.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const weekStart = addDaysToDateStr(referenceDateStr, diffToMonday);
+    const weekEnd = addDaysToDateStr(weekStart, 6);
+
+    const { primary: targetPrimary, totalWithSecondary: targetEffective } =
+        computeWeeklyMuscleVolumes();
+
+    const loggedPrimary = {};
+    const loggedEffective = {};
+    Object.keys(EXPECTED_WEEKLY_PRIMARY_SETS).forEach((group) => {
+        loggedPrimary[group] = 0;
+        loggedEffective[group] = 0;
+    });
+
+    // Map exerciseId -> { primaryGroup, secondaryGroups } for accurate secondary credit
+    const exMetaMap = {};
+    WORKOUT_PLAN.forEach((dayPlan) => {
+        dayPlan.exercises.forEach((ex) => {
+            exMetaMap[ex.id] = {
+                primaryGroup: ex.primaryGroup,
+                secondaryGroups: ex.secondaryGroups || []
+            };
+        });
+    });
+
+    Object.entries(exerciseHistory || {}).forEach(([exerciseId, logs]) => {
+        const meta = exMetaMap[exerciseId] || null;
+        (Array.isArray(logs) ? logs : []).forEach((entry) => {
+            if (!entry?.date || entry.date < weekStart || entry.date > weekEnd) return;
+            const setsDone = Math.max(0, Number(entry.setsCompleted || 0));
+            if (setsDone <= 0) return;
+
+            const primaryGroup = meta?.primaryGroup || entry.primaryGroup;
+            if (primaryGroup && loggedPrimary[primaryGroup] !== undefined) {
+                loggedPrimary[primaryGroup] += setsDone;
+                loggedEffective[primaryGroup] += setsDone;
+            }
+
+            (meta?.secondaryGroups || []).forEach((sec) => {
+                if (loggedEffective[sec] !== undefined) {
+                    loggedEffective[sec] = Number(
+                        (
+                            loggedEffective[sec] +
+                            setsDone * SCIENCE_RULES.SECONDARY_MUSCLE_CREDIT
+                        ).toFixed(1)
+                    );
+                }
+            });
+        });
+    });
+
+    const totalLoggedDirect = Object.values(loggedPrimary).reduce((sum, v) => sum + v, 0);
+    const totalTargetDirect = Object.values(targetPrimary).reduce((sum, v) => sum + v, 0);
+    const completionPct =
+        totalTargetDirect > 0
+            ? Math.min(100, Math.round((totalLoggedDirect / totalTargetDirect) * 100))
+            : 0;
+
+    return {
+        weekStart,
+        weekEnd,
+        weekLabel: `${weekStart.slice(5)} → ${weekEnd.slice(5)}`,
+        loggedPrimary,
+        loggedEffective,
+        targetPrimary,
+        targetEffective,
+        totalLoggedDirect,
+        totalTargetDirect,
+        completionPct
+    };
+}
+
+function MuscleRadar({ loggedWeekly, colors, isDark }) {
+    const [viewMode, setViewMode] = useState('wheel'); // 'wheel' | 'gaps'
+    const [selectedGroup, setSelectedGroup] = useState(null);
+
+    const muscles = useMemo(() => {
+        const targetMap = loggedWeekly?.targetPrimary || EXPECTED_WEEKLY_PRIMARY_SETS || {};
+        const loggedMap = loggedWeekly?.loggedPrimary || {};
+        const effMap = loggedWeekly?.loggedEffective || {};
+
+        const getSplitTag = (name) => {
+            const n = String(name).toLowerCase();
+            if (n.includes('chest') || n.includes('tricep') || n.includes('front') || n.includes('side') || n.includes('shoulder') || n.includes('delt')) {
+                return n.includes('rear') ? 'Pull' : 'Push';
+            }
+            if (n.includes('lat') || n.includes('back') || n.includes('trap') || n.includes('bicep') || n.includes('forearm') || n.includes('rear')) {
+                return 'Pull';
+            }
+            if (n.includes('quad') || n.includes('ham') || n.includes('glute') || n.includes('calf') || n.includes('calves') || n.includes('leg')) {
+                return 'Legs';
+            }
+            return 'Core';
+        };
+
+        const shortenLabel = (name) => {
+            const map = {
+                'Upper Back': 'U.Back',
+                'Side Delts': 'S.Delts',
+                'Rear Delts': 'R.Delts',
+                'Front Delts': 'F.Delts',
+                'Hamstrings': 'Hams',
+                'Forearms': 'Arms',
+                'Lower Back': 'L.Back'
+            };
+            if (map[name]) return map[name];
+            return name.length > 8 ? `${name.slice(0, 7)}.` : name;
+        };
+
+        return Object.entries(targetMap).map(([group, targetRaw]) => {
+            const target = Math.max(0, Number(targetRaw || 0));
+            const logged = Math.max(0, Number(loggedMap[group] || 0));
+            const effective = Number(effMap[group] || 0);
+            const rawPct = target > 0 ? Math.round((logged / target) * 100) : 0;
+            const visualPct = Math.min(100, rawPct);
+            const remaining = Math.max(0, target - logged);
+
+            let status = 'pending';
+            if (target > 0 && logged >= target) status = 'hit';
+            else if (rawPct >= 50) status = 'track';
+            else if (logged > 0) status = 'started';
+
+            return {
+                group,
+                short: shortenLabel(group),
+                split: getSplitTag(group),
+                logged,
+                target,
+                effective,
+                rawPct,
+                visualPct,
+                remaining,
+                status
+            };
+        });
+    }, [loggedWeekly]);
+
+    const activeMuscle = useMemo(() => {
+        if (!muscles.length) return null;
+        if (selectedGroup) {
+            const match = muscles.find((m) => m.group === selectedGroup);
+            if (match) return match;
+        }
+        // Default to highest logged muscle, or first muscle if week just started
+        const best = [...muscles].sort((a, b) => b.logged - a.logged)[0];
+        return best && best.logged > 0 ? best : muscles[0];
+    }, [muscles, selectedGroup]);
+
+    // Push / Pull / Legs balance summary
+    const splitSummary = useMemo(() => {
+        const buckets = {
+            Push: { logged: 0, target: 0 },
+            Pull: { logged: 0, target: 0 },
+            Legs: { logged: 0, target: 0 }
+        };
+        muscles.forEach((m) => {
+            const key = m.split === 'Core' ? 'Legs' : m.split;
+            if (buckets[key]) {
+                buckets[key].logged += m.logged;
+                buckets[key].target += m.target;
+            }
+        });
+        return Object.entries(buckets).map(([name, v]) => ({
+            name,
+            logged: v.logged,
+            target: v.target,
+            pct: v.target > 0 ? Math.min(100, Math.round((v.logged / v.target) * 100)) : 0
+        }));
+    }, [muscles]);
+
+    const sortedForGaps = useMemo(
+        () => [...muscles].sort((a, b) => b.visualPct - a.visualPct || b.logged - a.logged),
+        [muscles]
+    );
+
+    const getStatusColor = (status) => {
+        if (status === 'hit') return colors.success;
+        if (status === 'track') return colors.accent;
+        if (status === 'started') return colors.warning;
+        return colors.muted;
+    };
+
+    // SVG Polar Geometry (340 x 340 crisp coordinate system)
+    const cx = 170;
+    const cy = 170;
+    const innerR = 46;
+    const maxR = 114;
+    const labelR = 138;
+    const count = Math.max(1, muscles.length);
+    const stepDeg = 360 / count;
+    const gapDeg = 4;
+
+    const polarToXY = (r, angleDeg) => {
+        const rad = (angleDeg * Math.PI) / 180;
+        return {
+            x: cx + r * Math.cos(rad),
+            y: cy + r * Math.sin(rad)
+        };
+    };
+
+    const describeSector = (rIn, rOut, startDeg, endDeg) => {
+        if (endDeg <= startDeg || rOut <= rIn) return '';
+        const p1 = polarToXY(rOut, startDeg);
+        const p2 = polarToXY(rOut, endDeg);
+        const p3 = polarToXY(rIn, endDeg);
+        const p4 = polarToXY(rIn, startDeg);
+        const largeArc = endDeg - startDeg > 180 ? 1 : 0;
+
+        return [
+            `M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`,
+            `A ${rOut} ${rOut} 0 ${largeArc} 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`,
+            `L ${p3.x.toFixed(2)} ${p3.y.toFixed(2)}`,
+            `A ${rIn} ${rIn} 0 ${largeArc} 0 ${p4.x.toFixed(2)} ${p4.y.toFixed(2)}`,
+            'Z'
+        ].join(' ');
+    };
+
+    const hitCount = muscles.filter((m) => m.status === 'hit').length;
 
     return (
         <div
             style={{ backgroundColor: colors.card, borderColor: colors.border }}
-            className="vt-card vt-p-card"
+            className="vt-card vt-p-card vt-col-between vt-stack-3 vt-tabular"
         >
-            <h3 className="vt-section-title font-display">Muscle Balance Radar</h3>
-            <p className="vt-radar-sub" style={{ color: colors.muted }}>
-                Direct weekly sets ({TOTAL_WEEKLY_PRIMARY_SETS} total) vs 12-set hypertrophy ring
-            </p>
-            <div className="vt-radar-chart">
-                <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={data} outerRadius="72%">
-                        <PolarGrid stroke={colors.border} />
-                        <PolarAngleAxis dataKey="g" tick={{ fill: colors.muted, fontSize: 10 }} />
-                        <Tooltip content={<ModernChartTooltip colors={colors} suffixMap={{ v: 'sets', t: 'sets' }} />} />
-                        <Radar
-                            name="Target Ring"
-                            dataKey="t"
-                            stroke={colors.muted}
-                            fill="none"
-                            strokeDasharray="4 4"
-                        />
-                        <Radar
-                            name="Prescribed Sets"
-                            dataKey="v"
-                            stroke={isDark ? colors.accent : '#0059ff'}
-                            fill={colors.accent}
-                            fillOpacity={0.28}
-                            strokeWidth={2.5}
-                        />
-                    </RadarChart>
-                </ResponsiveContainer>
+            {/* Header + View Switch */}
+            <div className="vt-between-start vt-gap-2">
+                <div>
+                    <h3 className="vt-section-title font-display">Muscle Balance Wheel</h3>
+                    <p className="vt-text-11" style={{ color: colors.muted, marginTop: 2 }}>
+                        {loggedWeekly.weekLabel} • {hitCount}/{muscles.length} targets hit
+                    </p>
+                </div>
+
+                <div className="vt-flex vt-items-center vt-gap-1">
+                    {[
+                        { id: 'wheel', label: 'Wheel' },
+                        { id: 'gaps', label: 'Rank' }
+                    ].map((t) => (
+                        <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => setViewMode(t.id)}
+                            style={{
+                                backgroundColor: viewMode === t.id ? colors.accent : colors.elevated,
+                                color: viewMode === t.id ? colors.accentText : colors.text,
+                                borderColor: viewMode === t.id ? colors.accentBorder : colors.border
+                            }}
+                            className="vt-btn vt-h-30 vt-px-2-5 vt-rounded-lg vt-border vt-text-10 vt-font-extrabold vt-uppercase"
+                        >
+                            {t.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Mode 1: Interactive 12-Sector Polar Balance Wheel */}
+            {viewMode === 'wheel' ? (
+                <div className="vt-stack-2-5">
+                    <div style={{ width: '100%', maxWidth: 310, margin: '0 auto' }}>
+                        <svg
+                            viewBox="0 0 340 340"
+                            style={{ width: '100%', height: 'auto', display: 'block', overflow: 'visible' }}
+                            role="img"
+                            aria-label="Weekly muscle balance radial chart"
+                        >
+                            {/* 50% & 100% Reference Rings */}
+                            <circle
+                                cx={cx}
+                                cy={cy}
+                                r={innerR + (maxR - innerR) * 0.5}
+                                fill="none"
+                                stroke={colors.border}
+                                strokeWidth="1"
+                                strokeDasharray="3 3"
+                                opacity="0.7"
+                            />
+                            <circle
+                                cx={cx}
+                                cy={cy}
+                                r={maxR}
+                                fill="none"
+                                stroke={colors.border}
+                                strokeWidth="1"
+                                opacity="0.85"
+                            />
+
+                            {/* 12 Interactive Muscle Sectors */}
+                            {muscles.map((m, idx) => {
+                                const startDeg = -90 + idx * stepDeg + gapDeg / 2;
+                                const endDeg = -90 + (idx + 1) * stepDeg - gapDeg / 2;
+                                const midDeg = (startDeg + endDeg) / 2;
+                                const isActive = activeMuscle?.group === m.group;
+                                const statusColor = getStatusColor(m.status);
+
+                                const fillR =
+                                    m.logged > 0
+                                        ? innerR + Math.max(0.16, m.visualPct / 100) * (maxR - innerR)
+                                        : innerR;
+
+                                const labelPos = polarToXY(labelR, midDeg);
+
+                                return (
+                                    <g
+                                        key={m.group}
+                                        onClick={() => setSelectedGroup(m.group)}
+                                        onMouseEnter={() => setSelectedGroup(m.group)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {/* Outer Target Track Sector */}
+                                        <path
+                                            d={describeSector(innerR, maxR, startDeg, endDeg)}
+                                            fill={isActive ? colors.accentSurface : colors.elevated}
+                                            stroke={isActive ? colors.accentBorder : colors.border}
+                                            strokeWidth={isActive ? 1.5 : 0.8}
+                                            style={{ transition: 'fill 160ms ease, stroke 160ms ease' }}
+                                        />
+
+                                        {/* Filled Logged Volume Sector */}
+                                        {m.logged > 0 && (
+                                            <path
+                                                d={describeSector(innerR, fillR, startDeg, endDeg)}
+                                                fill={statusColor}
+                                                fillOpacity={isActive ? 0.96 : 0.78}
+                                                stroke={colors.card}
+                                                strokeWidth="1"
+                                                style={{ transition: 'all 260ms cubic-bezier(.16, 1, .3, 1)' }}
+                                            />
+                                        )}
+
+                                        {/* Crisp Perimeter Muscle Label */}
+                                        <text
+                                            x={labelPos.x}
+                                            y={labelPos.y}
+                                            textAnchor="middle"
+                                            dominantBaseline="middle"
+                                            fill={isActive ? colors.text : colors.muted}
+                                            fontSize={isActive ? '10.5' : '9.5'}
+                                            fontWeight={isActive ? '800' : '700'}
+                                            style={{
+                                                fontFamily: "'JetBrains Mono', monospace",
+                                                userSelect: 'none',
+                                                transition: 'fill 150ms ease'
+                                            }}
+                                        >
+                                            {m.short}
+                                        </text>
+                                    </g>
+                                );
+                            })}
+
+                            {/* Center Total Completion Hub */}
+                            <circle
+                                cx={cx}
+                                cy={cy}
+                                r={innerR - 4}
+                                fill={colors.card}
+                                stroke={colors.border}
+                                strokeWidth="1.5"
+                            />
+                            <text
+                                x={cx}
+                                y={cy - 6}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fill={colors.accent}
+                                fontSize="22"
+                                fontWeight="900"
+                                style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
+                            >
+                                {loggedWeekly.completionPct}%
+                            </text>
+                            <text
+                                x={cx}
+                                y={cy + 14}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fill={colors.muted}
+                                fontSize="9.5"
+                                fontWeight="700"
+                                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                            >
+                                {loggedWeekly.totalLoggedDirect}/{loggedWeekly.totalTargetDirect} sets
+                            </text>
+                        </svg>
+                    </div>
+
+                    {/* Selected Muscle Live Inspector Card */}
+                    {activeMuscle && (
+                        <div
+                            style={{
+                                backgroundColor: colors.elevated,
+                                borderColor: getStatusColor(activeMuscle.status)
+                            }}
+                            className="vt-p-3 vt-box-xl vt-stack-1-5"
+                        >
+                            <div className="vt-between-center vt-gap-2">
+                                <div className="vt-flex vt-items-center vt-gap-1-5">
+                                    <span
+                                        className="vt-legend-dot"
+                                        style={{ backgroundColor: getStatusColor(activeMuscle.status) }}
+                                    />
+                                    <span className="vt-text-xs vt-font-extrabold vt-uppercase">
+                                        {activeMuscle.group}
+                                    </span>
+                                    <span
+                                        style={{ backgroundColor: colors.card, borderColor: colors.border, color: colors.muted }}
+                                        className="vt-badge-xs vt-border vt-text-10 vt-font-bold"
+                                    >
+                                        {activeMuscle.split}
+                                    </span>
+                                </div>
+                                <span
+                                    style={{
+                                        color: getStatusColor(activeMuscle.status),
+                                        fontWeight: 800
+                                    }}
+                                    className="font-mono-num vt-text-xs"
+                                >
+                                    {activeMuscle.rawPct}%
+                                </span>
+                            </div>
+
+                            <div className="vt-between-center vt-text-11 font-mono-num" style={{ color: colors.muted }}>
+                                <span>
+                                    Direct:{' '}
+                                    <strong style={{ color: colors.text }}>
+                                        {activeMuscle.logged}/{activeMuscle.target}
+                                    </strong>{' '}
+                                    • Eff: <strong style={{ color: colors.text }}>{activeMuscle.effective}</strong>
+                                </span>
+                                <span style={{ color: colors.text, fontWeight: 700 }}>
+                                    {activeMuscle.remaining === 0
+                                        ? 'Target Hit ✓'
+                                        : `${activeMuscle.remaining} sets left`}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                /* Mode 2: Ranked Completion Bars (Lagging vs Leading Muscles) */
+                <div className="vt-stack-2" style={{ maxHeight: 330, overflowY: 'auto', paddingRight: 2 }}>
+                    {sortedForGaps.map((m) => {
+                        const statusColor = getStatusColor(m.status);
+                        return (
+                            <button
+                                key={m.group}
+                                type="button"
+                                onClick={() => {
+                                    setSelectedGroup(m.group);
+                                    setViewMode('wheel');
+                                }}
+                                style={{
+                                    backgroundColor: colors.elevated,
+                                    borderColor: colors.border,
+                                    color: colors.text,
+                                    width: '100%',
+                                    textAlign: 'left'
+                                }}
+                                className="vt-p-2-5 vt-box-xl vt-stack-1 vt-cursor-pointer"
+                            >
+                                <div className="vt-between-center vt-text-11 font-mono-num">
+                                    <span className="vt-font-extrabold">
+                                        {m.group}{' '}
+                                        <span style={{ color: colors.muted, fontWeight: 600 }}>({m.split})</span>
+                                    </span>
+                                    <span>
+                                        <strong style={{ color: m.logged > 0 ? statusColor : colors.muted }}>
+                                            {m.logged}/{m.target}
+                                        </strong>{' '}
+                                        <span style={{ color: colors.muted }}>({m.rawPct}%)</span>
+                                    </span>
+                                </div>
+                                <div style={{ backgroundColor: colors.card }} className="vt-progress-track-sm">
+                                    <div
+                                        style={{
+                                            width: `${m.visualPct}%`,
+                                            backgroundColor: statusColor
+                                        }}
+                                        className="vt-progress-fill"
+                                    />
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Push / Pull / Legs Live Split Balance Strip */}
+            <div className="vt-grid-3 vt-gap-1-5 vt-pt-2 vt-border-t" style={{ borderColor: colors.border }}>
+                {splitSummary.map((sp) => (
+                    <div
+                        key={sp.name}
+                        style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                        className="vt-p-2 vt-rounded-lg vt-border vt-text-center"
+                    >
+                        <div className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
+                            {sp.name}
+                        </div>
+                        <div
+                            className="font-display vt-text-lg vt-font-black"
+                            style={{ color: sp.pct >= 100 ? colors.success : colors.text }}
+                        >
+                            {sp.pct}%
+                        </div>
+                        <div className="font-mono-num vt-text-10" style={{ color: colors.muted }}>
+                            {sp.logged}/{sp.target}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Compact 3-Dot Status Legend */}
+            <div className="vt-row-wrap vt-gap-3 vt-text-10 vt-font-bold" style={{ color: colors.muted }}>
+                <span className="vt-flex vt-items-center vt-gap-1">
+                    <span className="vt-legend-dot" style={{ backgroundColor: colors.success }} />
+                    100% Hit
+                </span>
+                <span className="vt-flex vt-items-center vt-gap-1">
+                    <span className="vt-legend-dot" style={{ backgroundColor: colors.accent }} />
+                    50–99%
+                </span>
+                <span className="vt-flex vt-items-center vt-gap-1">
+                    <span className="vt-legend-dot" style={{ backgroundColor: colors.warning }} />
+                    1–49%
+                </span>
             </div>
         </div>
     );
@@ -4099,7 +4596,7 @@ export default function App() {
                       accentText: '#0A0A0B',
                       accentSurface: '#1A2205',
                       accentBorder: '#CCFF00',
-                      danger: '#fd0000',
+                      danger: '#a30000',
                       warning: '#ff5500',
                       success: '#9d00ff'
                   }
@@ -4114,7 +4611,7 @@ export default function App() {
                       accentText: '#FFFFFF',
                       accentSurface: '#DBEAFE',
                       accentBorder: '#0059FF',
-                      danger: '#fd0000',
+                      danger: '#a30000',
                       warning: '#ff5500',
                       success: '#9d00ff'
                   },
@@ -10338,8 +10835,10 @@ function StatsView({
     formatWeight,
     overviewRefreshKey
 }) {
-    const volumes = useMemo(() => computeWeeklyMuscleVolumes(), []);
-    const unitTests = useMemo(() => runBuiltInUnitTests(), []);
+    const loggedWeekly = useMemo(
+        () => computeLoggedWeeklyMuscleVolumes(appState.exerciseHistory),
+        [appState.exerciseHistory]
+    );
 
     const [overviewPeriod, setOverviewPeriod] = useState('weekly');
     const [overviewData, setOverviewData] = useState(null);
@@ -10477,7 +10976,10 @@ function StatsView({
                             className="vt-p-4 vt-box-xl vt-resp-row-md vt-gap-3"
                         >
                             <div className="vt-stack-1 vt-flex-1">
-                                <div className="vt-text-xs vt-font-extrabold vt-uppercase" style={{ color: isDark ? colors.accent : colors.text }}>
+                                <div
+                                    className="vt-text-xs vt-font-extrabold vt-uppercase"
+                                    style={{ color: isDark ? colors.accent : colors.text }}
+                                >
                                     Progress Summary ({overviewPeriod === 'weekly' ? 'Week-over-Week' : 'Month-over-Month'})
                                 </div>
                                 {highlights.length > 0 ? (
@@ -10572,10 +11074,11 @@ function StatsView({
                                     </strong>{' '}
                                     • {currentPeriod.weight.daysLogged} weigh-ins
                                 </div>
-                                {deltas && formatDeltaChip(
-                                    deltas.weightAvgDiffKg !== null ? formatWeight(deltas.weightAvgDiffKg) : null,
-                                    ` ${appState.unit}`
-                                )}
+                                {deltas &&
+                                    formatDeltaChip(
+                                        deltas.weightAvgDiffKg !== null ? formatWeight(deltas.weightAvgDiffKg) : null,
+                                        ` ${appState.unit}`
+                                    )}
                             </div>
 
                             {/* Pillar 3: Nutrition & Protein */}
@@ -10593,7 +11096,10 @@ function StatsView({
                                     {currentPeriod.nutrition.avgKcal} kcal • {currentPeriod.nutrition.avgProteinG}g P
                                 </div>
                                 <div className="vt-text-xs font-mono-num" style={{ color: colors.muted }}>
-                                    110g+ Protein: <strong style={{ color: colors.text }}>{currentPeriod.nutrition.proteinFloorHitDays}/{currentPeriod.nutrition.daysLogged}d</strong>
+                                    110g+ Protein:{' '}
+                                    <strong style={{ color: colors.text }}>
+                                        {currentPeriod.nutrition.proteinFloorHitDays}/{currentPeriod.nutrition.daysLogged}d
+                                    </strong>
                                 </div>
                                 {deltas && formatDeltaChip(deltas.avgProteinDiffG, 'g P/day')}
                             </div>
@@ -10631,10 +11137,14 @@ function StatsView({
                                     <Droplets size={15} style={{ color: isDark ? colors.accent : colors.text }} />
                                 </div>
                                 <div className="font-display vt-text-2xl vt-font-black">
-                                    {(currentPeriod.nutrition.avgWaterMl / 1000).toFixed(2)}L • {currentPeriod.nutrition.avgSleepHours || 0}h
+                                    {(currentPeriod.nutrition.avgWaterMl / 1000).toFixed(2)}L •{' '}
+                                    {currentPeriod.nutrition.avgSleepHours || 0}h
                                 </div>
                                 <div className="vt-text-xs font-mono-num" style={{ color: colors.muted }}>
-                                    3.5L Goal Hit: <strong style={{ color: colors.text }}>{currentPeriod.nutrition.waterGoalHitDays} days</strong>
+                                    3.5L Goal Hit:{' '}
+                                    <strong style={{ color: colors.text }}>
+                                        {currentPeriod.nutrition.waterGoalHitDays} days
+                                    </strong>
                                 </div>
                             </div>
 
@@ -10650,7 +11160,8 @@ function StatsView({
                                     <Activity size={15} style={{ color: isDark ? colors.accent : colors.text }} />
                                 </div>
                                 <div className="font-display vt-text-2xl vt-font-black">
-                                    {currentPeriod.recovery.cardioSessions} Cardio • {currentPeriod.recovery.pelvicSessions} Rehab
+                                    {currentPeriod.recovery.cardioSessions} Cardio •{' '}
+                                    {currentPeriod.recovery.pelvicSessions} Rehab
                                 </div>
                                 <div className="vt-text-xs font-mono-num" style={{ color: colors.muted }}>
                                     V-Taper:{' '}
@@ -10666,7 +11177,8 @@ function StatsView({
                         {timeline.length > 0 && (
                             <div className="vt-stack-2-5 vt-pt-2 vt-border-t" style={{ borderColor: colors.border }}>
                                 <div className="vt-text-xs vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
-                                    Complete {overviewPeriod === 'weekly' ? 'Week-by-Week' : 'Month-by-Month'} History ({timeline.length})
+                                    Complete {overviewPeriod === 'weekly' ? 'Week-by-Week' : 'Month-by-Month'} History (
+                                    {timeline.length})
                                 </div>
                                 <div className="vt-grid-md-2 vt-gap-3 vt-tabular">
                                     {timeline.map((item) => (
@@ -10680,8 +11192,13 @@ function StatsView({
                                         >
                                             <div className="vt-between-center vt-gap-2">
                                                 <div>
-                                                    <span className="vt-text-10 vt-font-extrabold vt-uppercase" style={{ color: colors.muted }}>
-                                                        {overviewPeriod === 'weekly' ? `Week #${item.index}` : `Month #${item.index}`}
+                                                    <span
+                                                        className="vt-text-10 vt-font-extrabold vt-uppercase"
+                                                        style={{ color: colors.muted }}
+                                                    >
+                                                        {overviewPeriod === 'weekly'
+                                                            ? `Week #${item.index}`
+                                                            : `Month #${item.index}`}
                                                         {item.isCurrent ? ' • CURRENT' : ''}
                                                     </span>
                                                     <div className="font-display vt-text-xl vt-font-black">{item.label}</div>
@@ -10696,7 +11213,8 @@ function StatsView({
 
                                             <div className="vt-grid-2 vt-gap-2 vt-text-11 font-mono-num">
                                                 <div>
-                                                    Gym: <strong>{item.workout.sessions}</strong> ({formatWeight(item.workout.totalVolumeKg)} {appState.unit})
+                                                    Gym: <strong>{item.workout.sessions}</strong> (
+                                                    {formatWeight(item.workout.totalVolumeKg)} {appState.unit})
                                                 </div>
                                                 <div>
                                                     Weight AM:{' '}
@@ -10707,10 +11225,14 @@ function StatsView({
                                                     </strong>
                                                 </div>
                                                 <div>
-                                                    Diet: <strong>{item.nutrition.avgKcal} kcal / {item.nutrition.avgProteinG}g P</strong>
+                                                    Diet:{' '}
+                                                    <strong>
+                                                        {item.nutrition.avgKcal} kcal / {item.nutrition.avgProteinG}g P
+                                                    </strong>
                                                 </div>
                                                 <div>
-                                                    Clean: <strong>{item.discipline.cleanRatePct}%</strong> ({item.discipline.cleanDays}d)
+                                                    Clean: <strong>{item.discipline.cleanRatePct}%</strong> (
+                                                    {item.discipline.cleanDays}d)
                                                 </div>
                                             </div>
 
@@ -10719,8 +11241,10 @@ function StatsView({
                                                     className="vt-text-11 vt-pt-1-5 vt-border-t font-mono-num"
                                                     style={{ color: colors.muted, borderColor: colors.border }}
                                                 >
-                                                    Top Lift: <strong style={{ color: colors.text }}>{item.workout.topLift.name}</strong> (
-                                                    {formatWeight(item.workout.topLift.topWeightKg)} {appState.unit} × {item.workout.topLift.bestReps})
+                                                    Top Lift:{' '}
+                                                    <strong style={{ color: colors.text }}>{item.workout.topLift.name}</strong> (
+                                                    {formatWeight(item.workout.topLift.topWeightKg)} {appState.unit} ×{' '}
+                                                    {item.workout.topLift.bestReps})
                                                 </div>
                                             )}
                                         </div>
@@ -10732,7 +11256,7 @@ function StatsView({
                 ) : null}
             </div>
 
-            {/* 2. Top Lifetime KPI Cards */}
+            {/* 2. TOP LIFETIME & LIVE WEEKLY KPI CARDS */}
             <div className="vt-grid-kpi vt-gap-3 vt-tabular">
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
@@ -10764,10 +11288,15 @@ function StatsView({
                     className="vt-card vt-p-4"
                 >
                     <div className="vt-text-xs vt-font-bold vt-uppercase" style={{ color: colors.muted }}>
-                        Prescribed Sets
+                        Sets This Week
                     </div>
-                    <div className="font-display vt-text-3xl vt-font-black vt-mt-1">
-                        {TOTAL_WEEKLY_PRIMARY_SETS} / wk
+                    <div
+                        style={{
+                            color: loggedWeekly.totalLoggedDirect > 0 ? colors.accent : colors.text
+                        }}
+                        className="font-display vt-text-3xl vt-font-black vt-mt-1"
+                    >
+                        {loggedWeekly.totalLoggedDirect} / {loggedWeekly.totalTargetDirect}
                     </div>
                 </div>
                 <div
@@ -10783,42 +11312,69 @@ function StatsView({
                 </div>
             </div>
 
-            {/* 3. Muscle Balance Radar + Weekly Sets Per Muscle Group */}
+            {/* 3. LIVE MUSCLE BALANCE RADAR + WEEKLY LOGGED VOLUME PER MUSCLE GROUP */}
             <div className="vt-grid-lg-3 vt-gap-4">
-                <MuscleRadar colors={colors} isDark={isDark} />
+                <MuscleRadar loggedWeekly={loggedWeekly} colors={colors} isDark={isDark} />
 
                 <div
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
                     className="vt-col-span-lg-2 vt-card vt-p-card vt-stack-4"
                 >
-                    <div>
-                        <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
-                            Weekly Hypertrophy Volume Per Muscle Group ({TOTAL_WEEKLY_PRIMARY_SETS} Direct Sets)
-                        </h3>
-                        <p className="vt-text-xs" style={{ color: colors.muted }}>
-                            Shows direct primary sets and effective sets including 0.5× secondary compound credit.
-                        </p>
+                    <div className="vt-between-center vt-flex-wrap vt-gap-2">
+                        <div>
+                            <h3 className="font-display vt-text-resp-2xl-3xl vt-font-black vt-uppercase">
+                                Live Weekly Volume Per Muscle ({loggedWeekly.weekLabel})
+                            </h3>
+                            <p className="vt-text-xs" style={{ color: colors.muted }}>
+                                Is hafte kitne direct sets complete huye vs plan target (plus 0.5× secondary compound credit).
+                            </p>
+                        </div>
+                        <span
+                            style={{ backgroundColor: colors.accent, color: colors.accentText }}
+                            className="vt-badge font-mono-num vt-text-xs vt-font-extrabold"
+                        >
+                            {loggedWeekly.completionPct}% Weekly Volume
+                        </span>
                     </div>
 
                     <div className="vt-grid-sm-2 vt-gap-3 vt-tabular">
-                        {Object.entries(volumes.primary).map(([group, primSets]) => {
-                            const effSets = volumes.totalWithSecondary[group];
-                            const pct = Math.min(100, Math.round((primSets / 22) * 100));
+                        {Object.entries(loggedWeekly.targetPrimary).map(([group, targetSets]) => {
+                            const doneDirect = loggedWeekly.loggedPrimary[group] || 0;
+                            const doneEff = loggedWeekly.loggedEffective[group] || 0;
+                            const pct =
+                                targetSets > 0
+                                    ? Math.min(100, Math.round((doneDirect / targetSets) * 100))
+                                    : 0;
+                            const hitGoal = doneDirect >= targetSets && targetSets > 0;
+
                             return (
                                 <div
                                     key={group}
-                                    style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
+                                    style={{
+                                        backgroundColor: hitGoal ? colors.accentSurface : colors.elevated,
+                                        borderColor: hitGoal ? colors.accentBorder : colors.border
+                                    }}
                                     className="vt-p-3-5 vt-box-xl vt-stack-2"
                                 >
-                                    <div className="vt-between-center vt-text-xs">
-                                        <span className="vt-font-extrabold vt-uppercase">{group}</span>
+                                    <div className="vt-between-center vt-gap-2 vt-text-xs">
+                                        <span className="vt-font-extrabold vt-uppercase">
+                                            {group}
+                                            {hitGoal ? ' ✓' : ''}
+                                        </span>
                                         <span className="font-mono-num vt-font-bold">
-                                            {primSets} direct ({effSets} eff)
+                                            <strong style={{ color: doneDirect > 0 ? colors.text : colors.muted }}>
+                                                {doneDirect}
+                                            </strong>{' '}
+                                            / {targetSets} sets{' '}
+                                            <span style={{ color: colors.muted }}>({doneEff} eff)</span>
                                         </span>
                                     </div>
                                     <div style={{ backgroundColor: colors.card }} className="vt-progress-track-sm">
                                         <div
-                                            style={{ width: `${pct}%`, backgroundColor: colors.accent }}
+                                            style={{
+                                                width: `${pct}%`,
+                                                backgroundColor: hitGoal ? colors.success : colors.accent
+                                            }}
                                             className="vt-progress-fill"
                                         />
                                     </div>
@@ -10826,42 +11382,6 @@ function StatsView({
                             );
                         })}
                     </div>
-                </div>
-            </div>
-
-            {/* 4. Built-in Science & Logic Verification Suite */}
-            <div
-                style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                className="vt-card vt-p-card vt-stack-3"
-            >
-                <h3 className="font-display vt-text-2xl vt-font-black vt-uppercase">
-                    Automated Science, Overload & Discipline Unit Tests (
-                    {unitTests.filter((t) => t.passed).length}/{unitTests.length} Passing)
-                </h3>
-                <div className="vt-stack-2">
-                    {unitTests.map((t, idx) => (
-                        <div
-                            key={idx}
-                            style={{ backgroundColor: colors.elevated, borderColor: colors.border }}
-                            className="vt-p-3 vt-box-xl vt-resp-row vt-text-xs"
-                        >
-                            <div>
-                                <div className="vt-font-extrabold">{t.name}</div>
-                                <div className="font-mono-num vt-text-11" style={{ color: colors.muted }}>
-                                    Actual: {t.actual}
-                                </div>
-                            </div>
-                            <span
-                                style={{
-                                    backgroundColor: t.passed ? colors.accent : colors.danger,
-                                    color: t.passed ? colors.accentText : '#FFFFFF'
-                                }}
-                                className="vt-test-badge vt-font-extrabold vt-uppercase vt-text-10 vt-shrink-0"
-                            >
-                                {t.passed ? 'PASS' : 'FAIL'}
-                            </span>
-                        </div>
-                    ))}
                 </div>
             </div>
         </div>
@@ -11353,7 +11873,7 @@ function SettingsView({
                             className="vt-btn vt-h-46 vt-px-4 vt-rounded-xl vt-text-xs vt-font-extrabold vt-uppercase vt-gap-2 vt-ml-auto"
                         >
                             <Trash2 className="vt-icon-4" />
-                            <span>Reset All to 0</span>
+                            <span>Reset All</span>
                         </button>
                     ) : (
                         <div className="vt-flex vt-items-center vt-gap-2 vt-ml-auto">
